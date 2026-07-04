@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Compatikink",
+    "slug": "compatikink",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "compatikink",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f0a14"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.compatikink.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f0a14"
+      },
+      "package": "com.compatikink.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ]
+  }
+}
