@@ -15,15 +15,21 @@ import { Button } from '@/components/Button';
 import { RatingPicker } from '@/components/RatingPicker';
 import { RolePicker } from '@/components/RolePicker';
 import { IntensityPicker } from '@/components/IntensityPicker';
+import { PronounsPicker } from '@/components/PronounsPicker';
+import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import { CATEGORY_LABELS } from '@/types';
+import { CATEGORY_LABELS, ExperienceLevel, UserProfile } from '@/types';
 import { createSession } from '@/lib/sessions';
 
 export default function QuestionnaireScreen() {
   const router = useRouter();
   const [nickname, setNickname] = useState('');
+  const [pronouns, setPronouns] = useState('');
+  const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | undefined>(undefined);
+  const [userNotes, setUserNotes] = useState('');
+
   const [guestNickname, setGuestNickname] = useState('');
   const [guestNotes, setGuestNotes] = useState('');
   const [step, setStep] = useState<'intro' | 'questions'>('intro');
@@ -35,11 +41,18 @@ export default function QuestionnaireScreen() {
     const name = nickname.trim() || 'Anónimo';
     setLoading(true);
     try {
-      const gProfile = guestNickname.trim() || guestNotes.trim()
+      const initiatorProfile: UserProfile = {
+        nickname: name,
+        pronouns: pronouns || undefined,
+        experienceLevel,
+        notes: userNotes.trim() || undefined,
+      };
+
+      const privateGuestNotes = guestNickname.trim() || guestNotes.trim()
         ? { nickname: guestNickname.trim() || 'Invitado', notes: guestNotes.trim() }
         : undefined;
 
-      const session = await createSession(name, q.getAllResponses(), gProfile);
+      const session = await createSession(name, q.getAllResponses(), privateGuestNotes, initiatorProfile);
       router.replace({ pathname: '/invite', params: { token: session.initiatorToken } });
     } catch (e) {
       Alert.alert('Error', 'No se pudo guardar. Revisa tu conexión o configuración.');
@@ -57,7 +70,11 @@ export default function QuestionnaireScreen() {
             Responderás ~70 actividades. Tus respuestas son privadas hasta que decidas compartir
             resultados. Puedes marcar límites duros sin miedo — se respetarán en el reporte.
           </Text>
-          <Text style={styles.label}>Tu nick (opcional)</Text>
+
+          <View style={styles.divider} />
+          <Text style={styles.sectionSubTitle}>1. Tu Perfil (Iniciador)</Text>
+
+          <Text style={styles.label}>Tu nick o nombre *</Text>
           <TextInput
             style={styles.input}
             placeholder="Ej: Alex"
@@ -66,11 +83,28 @@ export default function QuestionnaireScreen() {
             onChangeText={setNickname}
           />
 
+          <Text style={styles.label}>Pronombres (opcional)</Text>
+          <PronounsPicker value={pronouns} onChange={setPronouns} />
+
+          <Text style={[styles.label, styles.fieldGap]}>Nivel de experiencia (opcional)</Text>
+          <ExperiencePicker value={experienceLevel} onChange={setExperienceLevel} />
+
+          <Text style={[styles.label, styles.fieldGap]}>Sobre ti / Límites generales (opcional)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Ej: Prefiero avanzar gradualmente. Límites en zonas sensibles..."
+            placeholderTextColor={colors.textMuted}
+            value={userNotes}
+            onChangeText={setUserNotes}
+            multiline
+            numberOfLines={3}
+          />
+
           <View style={styles.divider} />
 
-          <Text style={styles.sectionSubTitle}>Sobre la otra persona (Ficha)</Text>
+          <Text style={styles.sectionSubTitle}>2. Ficha Privada de la Otra Persona</Text>
           <Text style={styles.introTextSmall}>
-            Define un apodo y añade notas privadas (límites conocidos, dónde os conocisteis...). Solo tú verás esta información en tu reporte.
+            Define un apodo y añade notas privadas (límites conocidos, contexto...). Solo tú verás esta información en tu reporte.
           </Text>
 
           <Text style={styles.label}>Su nick o nombre (opcional)</Text>
@@ -82,15 +116,15 @@ export default function QuestionnaireScreen() {
             onChangeText={setGuestNickname}
           />
 
-          <Text style={styles.label}>Notas privadas y detalles (opcional)</Text>
+          <Text style={styles.label}>Notas privadas sobre la otra persona (opcional)</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Ej: Nos conocimos en Tinder. Interés en cuerdas. Límites físicos en la espalda..."
+            placeholder="Ej: Nos conocimos en Tinder. Interés en cuerdas..."
             placeholderTextColor={colors.textMuted}
             value={guestNotes}
             onChangeText={setGuestNotes}
             multiline
-            numberOfLines={4}
+            numberOfLines={3}
           />
 
           <Button title="Comenzar cuestionario" onPress={() => setStep('questions')} />
@@ -206,6 +240,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
     marginBottom: spacing.sm,
+  },
+  fieldGap: {
+    marginTop: spacing.md,
   },
   sectionGap: {
     marginTop: spacing.lg,

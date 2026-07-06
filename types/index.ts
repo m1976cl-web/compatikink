@@ -28,6 +28,15 @@ export interface ActivityResponse {
   privateNote?: string;
 }
 
+export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export interface UserProfile {
+  nickname: string;
+  pronouns?: string;
+  experienceLevel?: ExperienceLevel;
+  notes?: string;
+}
+
 export type SessionStatus = 'draft' | 'waiting' | 'complete';
 
 export interface Session {
@@ -36,6 +45,8 @@ export interface Session {
   initiatorToken: string;
   initiatorNickname?: string;
   guestNickname?: string;
+  initiatorProfile?: UserProfile;
+  guestProfile?: UserProfile;
   initiatorResponses: ActivityResponse[];
   guestResponses: ActivityResponse[] | null;
   status: SessionStatus;
@@ -89,7 +100,15 @@ export interface CompatibilityReport {
     guestOnlyCount: number;
     sharedCount: number;
   };
+  initiatorProfile?: UserProfile;
+  guestProfile?: UserProfile;
 }
+
+export const EXPERIENCE_LABELS: Record<ExperienceLevel, string> = {
+  beginner: 'Principiante / Curioso',
+  intermediate: 'Intermedio / Experimentado',
+  advanced: 'Avanzado / Experto',
+};
 
 export const RATING_LABELS: Record<Rating, string> = {
   hard_limit: 'Límite duro',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, Dimensions } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import { CompatibilityReport, CATEGORY_LABELS } from '@/types';
+import { CompatibilityReport, CATEGORY_LABELS, EXPERIENCE_LABELS } from '@/types';
 import { CATEGORY_ORDER } from '@/data/activities';
 
 interface Props {
@@ -18,6 +18,8 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
     guestArchetype,
     categoryCompatibilities,
     overlapStats,
+    initiatorProfile,
+    guestProfile,
   } = report;
 
   return (
@@ -49,7 +51,7 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
             ]}
           >
             <View style={styles.dotPulse} />
-            <Text style={styles.dotLabel}>Tú</Text>
+            <Text style={styles.dotLabel}>{initiatorProfile?.nickname || initiatorName || 'Tú'}</Text>
           </View>
 
           {/* Guest Dot */}
@@ -61,22 +63,55 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
             ]}
           >
             <View style={styles.dotPulse} />
-            <Text style={styles.dotLabel}>{guestName}</Text>
+            <Text style={styles.dotLabel}>{guestProfile?.nickname || guestName || 'Invitado'}</Text>
           </View>
         </View>
       </View>
 
-      {/* 2. Arquetipos */}
+      {/* 2. Perfiles y Arquetipos */}
       <View style={styles.card}>
-        <Text style={styles.cardHeader}>Arquetipos Kink</Text>
+        <Text style={styles.cardHeader}>Perfiles y Arquetipos Kink</Text>
         <View style={styles.archetypeRow}>
+          {/* Initiator Card */}
           <View style={styles.archetypeBox}>
-            <Text style={styles.archetypeUser}>Tú</Text>
+            <Text style={styles.archetypeUser}>{initiatorProfile?.nickname || initiatorName || 'Tú'}</Text>
+            {initiatorProfile?.pronouns ? (
+              <Text style={styles.badgeText}>{initiatorProfile.pronouns}</Text>
+            ) : null}
             <Text style={styles.archetypeValue}>{initiatorArchetype}</Text>
+
+            {initiatorProfile?.experienceLevel ? (
+              <View style={styles.experienceTag}>
+                <Text style={styles.experienceTagText}>
+                  {EXPERIENCE_LABELS[initiatorProfile.experienceLevel]}
+                </Text>
+              </View>
+            ) : null}
+
+            {initiatorProfile?.notes ? (
+              <Text style={styles.profileBio}>"{initiatorProfile.notes}"</Text>
+            ) : null}
           </View>
+
+          {/* Guest Card */}
           <View style={styles.archetypeBox}>
-            <Text style={styles.archetypeUser}>{guestName}</Text>
+            <Text style={styles.archetypeUser}>{guestProfile?.nickname || guestName || 'Invitado'}</Text>
+            {guestProfile?.pronouns ? (
+              <Text style={styles.badgeText}>{guestProfile.pronouns}</Text>
+            ) : null}
             <Text style={styles.archetypeValue}>{guestArchetype}</Text>
+
+            {guestProfile?.experienceLevel ? (
+              <View style={styles.experienceTag}>
+                <Text style={styles.experienceTagText}>
+                  {EXPERIENCE_LABELS[guestProfile.experienceLevel]}
+                </Text>
+              </View>
+            ) : null}
+
+            {guestProfile?.notes ? (
+              <Text style={styles.profileBio}>"{guestProfile.notes}"</Text>
+            ) : null}
           </View>
         </View>
       </View>
@@ -272,17 +307,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   archetypeUser: {
+    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  badgeText: {
     color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    marginBottom: 4,
+    fontSize: 10,
+    marginBottom: 6,
   },
   archetypeValue: {
-    color: colors.text,
+    color: colors.accent,
     fontSize: fontSize.md,
     fontWeight: '700',
     textAlign: 'center',
+    marginBottom: 6,
+  },
+  experienceTag: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 6,
+  },
+  experienceTagText: {
+    color: colors.primaryLight,
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  profileBio: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 15,
   },
   vennBar: {
     flexDirection: 'row',

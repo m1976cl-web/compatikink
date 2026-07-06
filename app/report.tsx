@@ -58,8 +58,16 @@ export default function ReportScreen() {
         setLoading(false);
         return;
       }
-      setGuestName(session.guestNickname ?? 'Invitado');
-      setReport(generateReport(session.id, session.initiatorResponses, session.guestResponses));
+      setGuestName(session.guestNickname ?? session.guestProfile?.nickname ?? 'Invitado');
+      setReport(
+        generateReport(
+          session.id,
+          session.initiatorResponses,
+          session.guestResponses,
+          session.initiatorProfile,
+          session.guestProfile
+        )
+      );
       const gp = await getGuestProfile(session.id);
       setGuestProfile(gp);
       setLoading(false);

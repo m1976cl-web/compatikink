@@ -7,6 +7,8 @@ create table if not exists sessions (
   initiator_token text unique not null,
   initiator_nickname text,
   guest_nickname text,
+  initiator_profile jsonb,
+  guest_profile jsonb,
   initiator_responses jsonb not null default '[]',
   guest_responses jsonb,
   status text not null default 'waiting' check (status in ('draft', 'waiting', 'complete')),

@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import { ActivityResponse, Session, GuestProfile } from '@/types';
+import { ActivityResponse, Session, GuestProfile, UserProfile } from '@/types';
 
 const TOKEN_KEY = 'initiator_token';
 const SESSIONS_KEY = 'local_sessions';
@@ -47,7 +47,8 @@ async function saveLocalSessions(sessions: Record<string, Session>): Promise<voi
 
 export async function createLocalSession(
   initiatorNickname: string,
-  initiatorResponses: ActivityResponse[]
+  initiatorResponses: ActivityResponse[],
+  initiatorProfile?: UserProfile
 ): Promise<Session> {
   const token = generateToken();
   const session: Session = {
@@ -55,6 +56,7 @@ export async function createLocalSession(
     inviteCode: generateCode(),
     initiatorToken: token,
     initiatorNickname,
+    initiatorProfile: initiatorProfile ?? { nickname: initiatorNickname },
     initiatorResponses,
     guestResponses: null,
     status: 'waiting',
@@ -81,7 +83,8 @@ export async function getLocalSessionByCode(code: string): Promise<Session | nul
 export async function submitLocalGuestResponses(
   inviteCode: string,
   guestNickname: string,
-  guestResponses: ActivityResponse[]
+  guestResponses: ActivityResponse[],
+  guestProfile?: UserProfile
 ): Promise<Session | null> {
   const sessions = await loadLocalSessions();
   const session = Object.values(sessions).find((s) => s.inviteCode === inviteCode.toUpperCase());
@@ -90,6 +93,7 @@ export async function submitLocalGuestResponses(
   const updated: Session = {
     ...session,
     guestNickname,
+    guestProfile: guestProfile ?? { nickname: guestNickname },
     guestResponses,
     status: 'complete',
     completedAt: new Date().toISOString(),

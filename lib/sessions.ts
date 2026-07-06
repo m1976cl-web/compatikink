@@ -5,28 +5,29 @@ import {
   getLocalSessionByToken,
   submitLocalGuestResponses,
 } from '@/lib/storage';
-import { ActivityResponse, Session, GuestProfile } from '@/types';
+import { ActivityResponse, Session, GuestProfile, UserProfile } from '@/types';
 
 export async function createSession(
   nickname: string,
   responses: ActivityResponse[],
-  guestProfile?: GuestProfile
+  privateGuestNotes?: GuestProfile,
+  initiatorProfile?: UserProfile
 ): Promise<Session> {
   let session: Session;
   if (isSupabaseConfigured) {
     const { generateInviteCode, generateToken } = await import('@/lib/utils');
     const inviteCode = generateInviteCode();
     const token = generateToken();
-    session = await createRemoteSession(inviteCode, token, nickname, responses);
+    session = await createRemoteSession(inviteCode, token, nickname, responses, initiatorProfile);
     const { saveInitiatorToken } = await import('@/lib/storage');
     await saveInitiatorToken(token);
   } else {
-    session = await createLocalSession(nickname, responses);
+    session = await createLocalSession(nickname, responses, initiatorProfile);
   }
 
-  if (guestProfile) {
+  if (privateGuestNotes) {
     const { saveGuestProfile } = await import('@/lib/storage');
-    await saveGuestProfile(session.id, guestProfile);
+    await saveGuestProfile(session.id, privateGuestNotes);
   }
 
   return session;
@@ -53,13 +54,14 @@ export async function getSessionByInviteCode(code: string): Promise<Session | nu
 export async function submitGuestResponses(
   inviteCode: string,
   guestNickname: string,
-  guestResponses: ActivityResponse[]
+  guestResponses: ActivityResponse[],
+  guestProfile?: UserProfile
 ): Promise<Session> {
   if (isSupabaseConfigured) {
     const { submitGuestResponses: remote } = await import('@/lib/supabase');
-    return remote(inviteCode, guestNickname, guestResponses);
+    return remote(inviteCode, guestNickname, guestResponses, guestProfile);
   }
-  const session = await submitLocalGuestResponses(inviteCode, guestNickname, guestResponses);
+  const session = await submitLocalGuestResponses(inviteCode, guestNickname, guestResponses, guestProfile);
   if (!session) throw new Error('Sesión no encontrada o ya completada');
   return session;
 }

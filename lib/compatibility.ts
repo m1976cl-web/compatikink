@@ -92,7 +92,9 @@ function buildPrompt(section: ReportSectionType, activityName: string): string |
 export function generateReport(
   sessionId: string,
   initiatorResponses: ActivityResponse[],
-  guestResponses: ActivityResponse[]
+  guestResponses: ActivityResponse[],
+  initiatorProfile?: UserProfile,
+  guestProfile?: UserProfile
 ): CompatibilityReport {
   const guestMap = new Map(guestResponses.map((r) => [r.activityId, r]));
   const items: ReportItem[] = [];
@@ -198,6 +200,8 @@ export function generateReport(
       guestOnlyCount,
       sharedCount,
     },
+    initiatorProfile,
+    guestProfile,
   };
 }
 

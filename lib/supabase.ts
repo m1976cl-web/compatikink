@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
-import { ActivityResponse, Session, SessionStatus } from '@/types';
+import { ActivityResponse, Session, SessionStatus, UserProfile } from '@/types';
 
 const supabaseUrl =
   process.env.EXPO_PUBLIC_SUPABASE_URL ??
@@ -23,6 +23,8 @@ export interface DbSession {
   initiator_token: string;
   initiator_nickname: string | null;
   guest_nickname: string | null;
+  initiator_profile: UserProfile | null;
+  guest_profile: UserProfile | null;
   initiator_responses: ActivityResponse[];
   guest_responses: ActivityResponse[] | null;
   status: SessionStatus;
@@ -35,8 +37,10 @@ function mapSession(row: DbSession): Session {
     id: row.id,
     inviteCode: row.invite_code,
     initiatorToken: row.initiator_token,
-    initiatorNickname: row.initiator_nickname ?? undefined,
-    guestNickname: row.guest_nickname ?? undefined,
+    initiatorNickname: row.initiator_nickname ?? row.initiator_profile?.nickname ?? undefined,
+    guestNickname: row.guest_nickname ?? row.guest_profile?.nickname ?? undefined,
+    initiatorProfile: row.initiator_profile ?? undefined,
+    guestProfile: row.guest_profile ?? undefined,
     initiatorResponses: row.initiator_responses,
     guestResponses: row.guest_responses,
     status: row.status,
@@ -49,7 +53,8 @@ export async function createSession(
   inviteCode: string,
   initiatorToken: string,
   initiatorNickname: string,
-  initiatorResponses: ActivityResponse[]
+  initiatorResponses: ActivityResponse[],
+  initiatorProfile?: UserProfile
 ): Promise<Session> {
   if (!supabase) throw new Error('Supabase no configurado');
 
@@ -59,6 +64,7 @@ export async function createSession(
       invite_code: inviteCode,
       initiator_token: initiatorToken,
       initiator_nickname: initiatorNickname,
+      initiator_profile: initiatorProfile ?? { nickname: initiatorNickname },
       initiator_responses: initiatorResponses,
       status: 'waiting',
     })
@@ -98,7 +104,8 @@ export async function getSessionByInviteCode(code: string): Promise<Session | nu
 export async function submitGuestResponses(
   inviteCode: string,
   guestNickname: string,
-  guestResponses: ActivityResponse[]
+  guestResponses: ActivityResponse[],
+  guestProfile?: UserProfile
 ): Promise<Session> {
   if (!supabase) throw new Error('Supabase no configurado');
 
@@ -106,6 +113,7 @@ export async function submitGuestResponses(
     .from('sessions')
     .update({
       guest_nickname: guestNickname,
+      guest_profile: guestProfile ?? { nickname: guestNickname },
       guest_responses: guestResponses,
       status: 'complete',
       completed_at: new Date().toISOString(),

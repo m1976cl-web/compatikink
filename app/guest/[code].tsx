@@ -15,16 +15,22 @@ import { Button } from '@/components/Button';
 import { RatingPicker } from '@/components/RatingPicker';
 import { RolePicker } from '@/components/RolePicker';
 import { IntensityPicker } from '@/components/IntensityPicker';
+import { PronounsPicker } from '@/components/PronounsPicker';
+import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import { CATEGORY_LABELS } from '@/types';
+import { CATEGORY_LABELS, ExperienceLevel, UserProfile } from '@/types';
 import { getSessionByInviteCode, submitGuestResponses } from '@/lib/sessions';
 
 export default function GuestQuestionnaireScreen() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const router = useRouter();
   const [nickname, setNickname] = useState('');
+  const [pronouns, setPronouns] = useState('');
+  const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | undefined>(undefined);
+  const [userNotes, setUserNotes] = useState('');
+
   const [step, setStep] = useState<'consent' | 'questions'>('consent');
   const [loading, setLoading] = useState(false);
   const [valid, setValid] = useState<boolean | null>(null);
@@ -47,9 +53,17 @@ export default function GuestQuestionnaireScreen() {
 
   const finish = async () => {
     if (!code) return;
+    const name = nickname.trim() || 'Invitado';
     setLoading(true);
     try {
-      await submitGuestResponses(code, nickname.trim() || 'Invitado', q.getAllResponses());
+      const guestProfile: UserProfile = {
+        nickname: name,
+        pronouns: pronouns || undefined,
+        experienceLevel,
+        notes: userNotes.trim() || undefined,
+      };
+
+      await submitGuestResponses(code, name, q.getAllResponses(), guestProfile);
       router.replace('/guest/done');
     } catch {
       Alert.alert('Error', 'No se pudieron enviar las respuestas. Verifica el código.');
@@ -87,7 +101,11 @@ export default function GuestQuestionnaireScreen() {
             • No verás sus respuestas ni el reporte (salvo que decidan compartirlo).{'\n'}
             • Puedes marcar límites duros en cualquier actividad.
           </Text>
-          <Text style={styles.label}>Tu nick (opcional)</Text>
+
+          <View style={styles.divider} />
+          <Text style={styles.sectionSubTitle}>Tu Perfil (Invitado)</Text>
+
+          <Text style={styles.label}>Tu nick o nombre (opcional)</Text>
           <TextInput
             style={styles.input}
             placeholder="Ej: Sam"
@@ -95,6 +113,24 @@ export default function GuestQuestionnaireScreen() {
             value={nickname}
             onChangeText={setNickname}
           />
+
+          <Text style={styles.label}>Pronombres (opcional)</Text>
+          <PronounsPicker value={pronouns} onChange={setPronouns} />
+
+          <Text style={[styles.label, styles.fieldGap]}>Nivel de experiencia (opcional)</Text>
+          <ExperiencePicker value={experienceLevel} onChange={setExperienceLevel} />
+
+          <Text style={[styles.label, styles.fieldGap]}>Sobre ti / Límites generales (opcional)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Ej: Curiosidad por probar cosas nuevas con calma..."
+            placeholderTextColor={colors.textMuted}
+            value={userNotes}
+            onChangeText={setUserNotes}
+            multiline
+            numberOfLines={3}
+          />
+
           <Button title="Entendido, empezar" onPress={() => setStep('questions')} />
         </ScrollView>
       </SafeAreaView>
@@ -219,6 +255,24 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     backgroundColor: colors.background,
     gap: spacing.md,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.md,
+  },
+  sectionSubTitle: {
+    color: colors.text,
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  fieldGap: {
+    marginTop: spacing.md,
+  },
+  textArea: {
+    minHeight: 70,
+    textAlignVertical: 'top',
   },
   error: { color: colors.danger, textAlign: 'center' },
   muted: { color: colors.textMuted },
