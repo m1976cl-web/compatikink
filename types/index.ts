@@ -32,9 +32,13 @@ export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export interface UserProfile {
   nickname: string;
+  pin?: string;
   pronouns?: string;
   experienceLevel?: ExperienceLevel;
   notes?: string;
+  baseResponses?: ActivityResponse[];
+  createdSessionIds?: string[];
+  receivedSessionIds?: string[];
 }
 
 export type SessionStatus = 'draft' | 'waiting' | 'complete';

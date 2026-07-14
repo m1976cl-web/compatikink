@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -8,6 +8,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
+  Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,11 +22,15 @@ import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import { CATEGORY_LABELS, ExperienceLevel, UserProfile } from '@/types';
+import { CATEGORY_LABELS, ExperienceLevel, UserProfile, ActivityCategory, Rating } from '@/types';
 import { createSession } from '@/lib/sessions';
+import { CATEGORY_ORDER, ACTIVITIES } from '@/data/activities';
+
+import { getCurrentProfile, saveProfile } from '@/lib/storage';
 
 export default function QuestionnaireScreen() {
   const router = useRouter();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState('');
   const [pronouns, setPronouns] = useState('');
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | undefined>(undefined);
@@ -32,27 +38,60 @@ export default function QuestionnaireScreen() {
 
   const [guestNickname, setGuestNickname] = useState('');
   const [guestNotes, setGuestNotes] = useState('');
-  const [step, setStep] = useState<'intro' | 'questions'>('intro');
+  const [step, setStep] = useState<'intro' | 'categories' | 'questions'>('intro');
+  const [enabledCategories, setEnabledCategories] = useState<ActivityCategory[]>([...CATEGORY_ORDER]);
   const [loading, setLoading] = useState(false);
 
-  const q = useQuestionnaire();
+  useEffect(() => {
+    (async () => {
+      const p = await getCurrentProfile();
+      if (p) {
+        setProfile(p);
+        setNickname(p.nickname);
+        setPronouns(p.pronouns || '');
+        setExperienceLevel(p.experienceLevel);
+        setUserNotes(p.notes || '');
+      }
+    })();
+  }, []);
 
-  const finish = async () => {
+  const toggleCategory = (cat: ActivityCategory) => {
+    setEnabledCategories((prev) => {
+      if (prev.includes(cat)) {
+        // Keep at least one category enabled
+        if (prev.length === 1) return prev;
+        return prev.filter((c) => c !== cat);
+      } else {
+        return [...prev, cat];
+      }
+    });
+  };
+
+  const selectedQuestionsCount = useMemo(() => {
+    return ACTIVITIES.filter((a) => enabledCategories.includes(a.category)).length;
+  }, [enabledCategories]);
+
+  const handleFinish = async (finalResponses: any[]) => {
     const name = nickname.trim() || 'Anónimo';
     setLoading(true);
     try {
       const initiatorProfile: UserProfile = {
+        ...profile,
         nickname: name,
+        pin: profile?.pin || undefined,
         pronouns: pronouns || undefined,
         experienceLevel,
         notes: userNotes.trim() || undefined,
+        baseResponses: finalResponses,
       };
+
+      await saveProfile(initiatorProfile);
 
       const privateGuestNotes = guestNickname.trim() || guestNotes.trim()
         ? { nickname: guestNickname.trim() || 'Invitado', notes: guestNotes.trim() }
         : undefined;
 
-      const session = await createSession(name, q.getAllResponses(), privateGuestNotes, initiatorProfile);
+      const session = await createSession(name, finalResponses, privateGuestNotes, initiatorProfile);
       router.replace({ pathname: '/invite', params: { token: session.initiatorToken } });
     } catch (e) {
       Alert.alert('Error', 'No se pudo guardar. Revisa tu conexión o configuración.');
@@ -67,8 +106,8 @@ export default function QuestionnaireScreen() {
         <ScrollView contentContainerStyle={styles.intro}>
           <Text style={styles.introTitle}>Antes de empezar</Text>
           <Text style={styles.introText}>
-            Responderás ~70 actividades. Tus respuestas son privadas hasta que decidas compartir
-            resultados. Puedes marcar límites duros sin miedo — se respetarán en el reporte.
+            Responderás preguntas sobre tus preferencias eróticas de forma 100% privada. 
+            Tus respuestas solo se cruzarán con tu invitado cuando ambos terminen.
           </Text>
 
           <View style={styles.divider} />
@@ -127,11 +166,116 @@ export default function QuestionnaireScreen() {
             numberOfLines={3}
           />
 
-          <Button title="Comenzar cuestionario" onPress={() => setStep('questions')} />
+          <Button 
+            title="Siguiente: Filtrar Categorías" 
+            onPress={() => {
+              if (!nickname.trim()) {
+                Alert.alert('Nick requerido', 'Por favor ingresa tu nick para continuar.');
+                return;
+              }
+              setStep('categories');
+            }} 
+          />
         </ScrollView>
       </SafeAreaView>
     );
   }
+
+  if (step === 'categories') {
+    return (
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScrollView contentContainerStyle={styles.intro}>
+          <Text style={styles.introTitle}>Filtro de Categorías</Text>
+          <Text style={styles.introText}>
+            Desmarca las categorías que no te interesen. Las actividades correspondientes se guardarán automáticamente como "No me interesa" para hacer el test más corto.
+          </Text>
+
+          <View style={styles.categoryGrid}>
+            {CATEGORY_ORDER.map((cat) => {
+              const active = enabledCategories.includes(cat);
+              return (
+                <TouchableOpacity
+                  key={cat}
+                  activeOpacity={0.8}
+                  style={[styles.categoryCard, active && styles.categoryCardActive]}
+                  onPress={() => toggleCategory(cat)}
+                >
+                  <Text style={[styles.categoryCardText, active && styles.categoryCardTextActive]}>
+                    {CATEGORY_LABELS[cat]}
+                  </Text>
+                  <Text style={styles.categoryCardSub}>
+                    {active ? '✓ Activa' : '✕ Omitida'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={styles.divider} />
+
+          <Button
+            title={`Comenzar (${selectedQuestionsCount} preguntas)`}
+            onPress={() => setStep('questions')}
+          />
+          <Button
+            title="Volver"
+            variant="ghost"
+            onPress={() => setStep('intro')}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <QuestionnaireActiveFlow
+      nickname={nickname}
+      enabledCategories={enabledCategories}
+      onFinish={handleFinish}
+      loading={loading}
+      onBack={() => setStep('categories')}
+    />
+  );
+}
+
+// Subcomponent to isolate the useQuestionnaire hook lifecycle
+function QuestionnaireActiveFlow({
+  nickname,
+  enabledCategories,
+  onFinish,
+  loading,
+  onBack,
+}: {
+  nickname: string;
+  enabledCategories: ActivityCategory[];
+  onFinish: (responses: any[]) => void;
+  loading: boolean;
+  onBack: () => void;
+}) {
+  const q = useQuestionnaire(undefined, enabledCategories);
+  const [fastMode, setFastMode] = useState(true);
+  const [showDetails, setShowDetails] = useState(false);
+
+  const handleRatingSelect = (rating: Rating) => {
+    q.setRating(rating);
+    // If fastMode is active and it's either negative or we don't want to expand details, auto-advance
+    if (fastMode) {
+      if (rating === 'hard_limit' || rating === 'not_interested' || !showDetails) {
+        // Auto default positive interests
+        if (rating !== 'hard_limit' && rating !== 'not_interested') {
+          q.setRole('flexible');
+          q.setIntensity(3);
+        }
+        
+        // Brief timeout for visual feedback before auto-advancing
+        setTimeout(() => {
+          if (!q.isLast) {
+            q.goNext();
+          }
+        }, 120);
+      }
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -140,6 +284,23 @@ export default function QuestionnaireScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.scroll}>
+          {/* Top Control Bar */}
+          <View style={styles.controlHeader}>
+            <TouchableOpacity onPress={onBack} style={styles.backLink}>
+              <Text style={styles.backLinkText}>← Salir</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.fastModeContainer}>
+              <Text style={styles.fastModeLabel}>Modo Rápido ⚡</Text>
+              <Switch
+                value={fastMode}
+                onValueChange={setFastMode}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={colors.text}
+              />
+            </View>
+          </View>
+
           <ProgressBar progress={q.progress} />
           <ProgressLabel current={q.currentIndex + 1} total={q.total} />
 
@@ -148,20 +309,41 @@ export default function QuestionnaireScreen() {
           <Text style={styles.description}>{q.currentActivity.description}</Text>
 
           <Text style={styles.sectionLabel}>¿Qué te parece?</Text>
-          <RatingPicker value={q.currentResponse.rating} onChange={q.setRating} />
+          <RatingPicker value={q.currentResponse.rating} onChange={handleRatingSelect} />
 
+          {/* Details toggle for positive rating responses in fast mode */}
           {q.currentResponse.rating !== 'hard_limit' &&
           q.currentResponse.rating !== 'not_interested' ? (
-            <>
-              <Text style={[styles.sectionLabel, styles.sectionGap]}>Rol preferido</Text>
-              <RolePicker value={q.currentResponse.role} onChange={q.setRole} />
+            <View style={styles.detailsSection}>
+              {!showDetails && fastMode ? (
+                <TouchableOpacity 
+                  style={styles.detailsToggle} 
+                  onPress={() => setShowDetails(true)}
+                >
+                  <Text style={styles.detailsToggleText}>⚙️ Personalizar Rol e Intensidad</Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <Text style={[styles.sectionLabel, styles.sectionGap]}>Rol preferido</Text>
+                  <RolePicker value={q.currentResponse.role} onChange={q.setRole} />
 
-              <Text style={[styles.sectionLabel, styles.sectionGap]}>Intensidad</Text>
-              <IntensityPicker
-                value={q.currentResponse.intensity}
-                onChange={q.setIntensity}
-              />
-            </>
+                  <Text style={[styles.sectionLabel, styles.sectionGap]}>Intensidad</Text>
+                  <IntensityPicker
+                    value={q.currentResponse.intensity}
+                    onChange={q.setIntensity}
+                  />
+
+                  {fastMode && (
+                    <TouchableOpacity 
+                      style={styles.detailsToggleClose} 
+                      onPress={() => setShowDetails(false)}
+                    >
+                      <Text style={styles.detailsToggleCloseText}>Ocultar personalización</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </View>
           ) : null}
 
           <View style={styles.nav}>
@@ -172,8 +354,8 @@ export default function QuestionnaireScreen() {
             )}
             {q.isLast ? (
               <Button
-                title={loading ? 'Guardando...' : 'Finalizar y crear invitación'}
-                onPress={finish}
+                title={loading ? 'Guardando...' : 'Finalizar e Invitar'}
+                onPress={() => onFinish(q.getAllResponses())}
                 disabled={loading}
                 style={styles.navBtn}
               />
@@ -275,5 +457,88 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 80,
     textAlignVertical: 'top',
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  categoryCard: {
+    width: '47%',
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+  },
+  categoryCardActive: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+  },
+  categoryCardText: {
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  categoryCardTextActive: {
+    color: colors.text,
+  },
+  categoryCardSub: {
+    fontSize: 10,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  },
+  controlHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  backLink: {
+    paddingVertical: spacing.xs,
+  },
+  backLinkText: {
+    color: colors.textMuted,
+    fontSize: fontSize.md,
+  },
+  fastModeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  fastModeLabel: {
+    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  detailsSection: {
+    marginTop: spacing.md,
+  },
+  detailsToggle: {
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    marginVertical: spacing.sm,
+  },
+  detailsToggleText: {
+    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  detailsToggleClose: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    marginTop: spacing.md,
+  },
+  detailsToggleCloseText: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    textDecorationLine: 'underline',
   },
 });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -8,6 +8,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
+  Switch,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,8 +22,10 @@ import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import { CATEGORY_LABELS, ExperienceLevel, UserProfile } from '@/types';
+import { CATEGORY_LABELS, ExperienceLevel, UserProfile, ActivityCategory, Rating } from '@/types';
 import { getSessionByInviteCode, submitGuestResponses } from '@/lib/sessions';
+import { CATEGORY_ORDER, ACTIVITIES } from '@/data/activities';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GuestQuestionnaireScreen() {
   const { code } = useLocalSearchParams<{ code: string }>();
@@ -31,11 +35,10 @@ export default function GuestQuestionnaireScreen() {
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | undefined>(undefined);
   const [userNotes, setUserNotes] = useState('');
 
-  const [step, setStep] = useState<'consent' | 'questions'>('consent');
+  const [step, setStep] = useState<'consent' | 'categories' | 'questions'>('consent');
+  const [enabledCategories, setEnabledCategories] = useState<ActivityCategory[]>([...CATEGORY_ORDER]);
   const [loading, setLoading] = useState(false);
   const [valid, setValid] = useState<boolean | null>(null);
-
-  const q = useQuestionnaire();
 
   useEffect(() => {
     if (!code) return;
@@ -51,7 +54,22 @@ export default function GuestQuestionnaireScreen() {
     });
   }, [code]);
 
-  const finish = async () => {
+  const toggleCategory = (cat: ActivityCategory) => {
+    setEnabledCategories((prev) => {
+      if (prev.includes(cat)) {
+        if (prev.length === 1) return prev;
+        return prev.filter((c) => c !== cat);
+      } else {
+        return [...prev, cat];
+      }
+    });
+  };
+
+  const selectedQuestionsCount = useMemo(() => {
+    return ACTIVITIES.filter((a) => enabledCategories.includes(a.category)).length;
+  }, [enabledCategories]);
+
+  const handleFinish = async (finalResponses: any[]) => {
     if (!code) return;
     const name = nickname.trim() || 'Invitado';
     setLoading(true);
@@ -63,7 +81,9 @@ export default function GuestQuestionnaireScreen() {
         notes: userNotes.trim() || undefined,
       };
 
-      await submitGuestResponses(code, name, q.getAllResponses(), guestProfile);
+      const session = await submitGuestResponses(code, name, finalResponses, guestProfile);
+      // Save session token temporarily to local storage to allow converting to profile in done.tsx
+      await AsyncStorage.setItem('last_completed_guest_session_token', session.initiatorToken);
       router.replace('/guest/done');
     } catch {
       Alert.alert('Error', 'No se pudieron enviar las respuestas. Verifica el código.');
@@ -96,16 +116,15 @@ export default function GuestQuestionnaireScreen() {
           <Text style={styles.consentTitle}>Antes de responder</Text>
           <Text style={styles.consentText}>
             • Solo para mayores de 18 años.{'\n'}
-            • Tus respuestas son privadas.{'\n'}
-            • Quien te invitó verá el cruce de compatibilidad cuando termines.{'\n'}
-            • No verás sus respuestas ni el reporte (salvo que decidan compartirlo).{'\n'}
+            • Tus respuestas son privadas y confidenciales.{'\n'}
+            • Quien te invitó verá la compatibilidad de vuestros intereses mutuos.{'\n'}
             • Puedes marcar límites duros en cualquier actividad.
           </Text>
 
           <View style={styles.divider} />
           <Text style={styles.sectionSubTitle}>Tu Perfil (Invitado)</Text>
 
-          <Text style={styles.label}>Tu nick o nombre (opcional)</Text>
+          <Text style={styles.label}>Tu nick o nombre *</Text>
           <TextInput
             style={styles.input}
             placeholder="Ej: Sam"
@@ -131,11 +150,108 @@ export default function GuestQuestionnaireScreen() {
             numberOfLines={3}
           />
 
-          <Button title="Entendido, empezar" onPress={() => setStep('questions')} />
+          <Button 
+            title="Siguiente: Filtrar Categorías" 
+            onPress={() => {
+              if (!nickname.trim()) {
+                Alert.alert('Nick requerido', 'Por favor ingresa tu nick para continuar.');
+                return;
+              }
+              setStep('categories');
+            }} 
+          />
         </ScrollView>
       </SafeAreaView>
     );
   }
+
+  if (step === 'categories') {
+    return (
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScrollView contentContainerStyle={styles.consent}>
+          <Text style={styles.consentTitle}>Filtro de Categorías</Text>
+          <Text style={styles.consentText}>
+            Desmarca las categorías que no te interesen para omitir esas preguntas automáticamente.
+          </Text>
+
+          <View style={styles.categoryGrid}>
+            {CATEGORY_ORDER.map((cat) => {
+              const active = enabledCategories.includes(cat);
+              return (
+                <TouchableOpacity
+                  key={cat}
+                  activeOpacity={0.8}
+                  style={[styles.categoryCard, active && styles.categoryCardActive]}
+                  onPress={() => toggleCategory(cat)}
+                >
+                  <Text style={[styles.categoryCardText, active && styles.categoryCardTextActive]}>
+                    {CATEGORY_LABELS[cat]}
+                  </Text>
+                  <Text style={styles.categoryCardSub}>
+                    {active ? '✓ Activa' : '✕ Omitida'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={styles.divider} />
+
+          <Button
+            title={`Comenzar (${selectedQuestionsCount} preguntas)`}
+            onPress={() => setStep('questions')}
+          />
+          <Button
+            title="Volver"
+            variant="ghost"
+            onPress={() => setStep('consent')}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <GuestQuestionnaireActiveFlow
+      enabledCategories={enabledCategories}
+      onFinish={handleFinish}
+      loading={loading}
+      onBack={() => setStep('categories')}
+    />
+  );
+}
+
+function GuestQuestionnaireActiveFlow({
+  enabledCategories,
+  onFinish,
+  loading,
+  onBack,
+}: {
+  enabledCategories: ActivityCategory[];
+  onFinish: (responses: any[]) => void;
+  loading: boolean;
+  onBack: () => void;
+}) {
+  const q = useQuestionnaire(undefined, enabledCategories);
+  const [fastMode, setFastMode] = useState(true);
+  const [showDetails, setShowDetails] = useState(false);
+
+  const handleRatingSelect = (rating: Rating) => {
+    q.setRating(rating);
+    if (fastMode) {
+      if (rating === 'hard_limit' || rating === 'not_interested' || !showDetails) {
+        if (rating !== 'hard_limit' && rating !== 'not_interested') {
+          q.setRole('flexible');
+          q.setIntensity(3);
+        }
+        setTimeout(() => {
+          if (!q.isLast) {
+            q.goNext();
+          }
+        }, 120);
+      }
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -144,6 +260,23 @@ export default function GuestQuestionnaireScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.scroll}>
+          {/* Top Control Bar */}
+          <View style={styles.controlHeader}>
+            <TouchableOpacity onPress={onBack} style={styles.backLink}>
+              <Text style={styles.backLinkText}>← Salir</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.fastModeContainer}>
+              <Text style={styles.fastModeLabel}>Modo Rápido ⚡</Text>
+              <Switch
+                value={fastMode}
+                onValueChange={setFastMode}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={colors.text}
+              />
+            </View>
+          </View>
+
           <ProgressBar progress={q.progress} />
           <ProgressLabel current={q.currentIndex + 1} total={q.total} />
 
@@ -152,19 +285,41 @@ export default function GuestQuestionnaireScreen() {
           <Text style={styles.description}>{q.currentActivity.description}</Text>
 
           <Text style={styles.sectionLabel}>¿Qué te parece?</Text>
-          <RatingPicker value={q.currentResponse.rating} onChange={q.setRating} />
+          <RatingPicker value={q.currentResponse.rating} onChange={handleRatingSelect} />
 
+          {/* Details toggle for positive rating responses in fast mode */}
           {q.currentResponse.rating !== 'hard_limit' &&
           q.currentResponse.rating !== 'not_interested' ? (
-            <>
-              <Text style={[styles.sectionLabel, styles.sectionGap]}>Rol preferido</Text>
-              <RolePicker value={q.currentResponse.role} onChange={q.setRole} />
-              <Text style={[styles.sectionLabel, styles.sectionGap]}>Intensidad</Text>
-              <IntensityPicker
-                value={q.currentResponse.intensity}
-                onChange={q.setIntensity}
-              />
-            </>
+            <View style={styles.detailsSection}>
+              {!showDetails && fastMode ? (
+                <TouchableOpacity 
+                  style={styles.detailsToggle} 
+                  onPress={() => setShowDetails(true)}
+                >
+                  <Text style={styles.detailsToggleText}>⚙️ Personalizar Rol e Intensidad</Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <Text style={[styles.sectionLabel, styles.sectionGap]}>Rol preferido</Text>
+                  <RolePicker value={q.currentResponse.role} onChange={q.setRole} />
+
+                  <Text style={[styles.sectionLabel, styles.sectionGap]}>Intensidad</Text>
+                  <IntensityPicker
+                    value={q.currentResponse.intensity}
+                    onChange={q.setIntensity}
+                  />
+
+                  {fastMode && (
+                    <TouchableOpacity 
+                      style={styles.detailsToggleClose} 
+                      onPress={() => setShowDetails(false)}
+                    >
+                      <Text style={styles.detailsToggleCloseText}>Ocultar personalización</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </View>
           ) : null}
 
           <View style={styles.nav}>
@@ -175,8 +330,8 @@ export default function GuestQuestionnaireScreen() {
             )}
             {q.isLast ? (
               <Button
-                title={loading ? 'Enviando...' : 'Enviar respuestas'}
-                onPress={finish}
+                title={loading ? 'Enviando...' : 'Enviar Respuestas'}
+                onPress={() => onFinish(q.getAllResponses())}
                 disabled={loading}
                 style={styles.navBtn}
               />
@@ -241,6 +396,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: spacing.sm,
   },
+  fieldGap: {
+    marginTop: spacing.md,
+  },
   sectionGap: { marginTop: spacing.lg },
   nav: {
     flexDirection: 'row',
@@ -256,6 +414,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     gap: spacing.md,
   },
+  error: { color: colors.danger, textAlign: 'center' },
+  muted: { color: colors.textMuted },
   divider: {
     height: 1,
     backgroundColor: colors.border,
@@ -267,13 +427,91 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: spacing.xs,
   },
-  fieldGap: {
-    marginTop: spacing.md,
-  },
   textArea: {
     minHeight: 70,
     textAlignVertical: 'top',
   },
-  error: { color: colors.danger, textAlign: 'center' },
-  muted: { color: colors.textMuted },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  categoryCard: {
+    width: '47%',
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+  },
+  categoryCardActive: {
+    borderColor: colors.accent,
+    backgroundColor: 'rgba(244, 114, 182, 0.1)',
+  },
+  categoryCardText: {
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  categoryCardTextActive: {
+    color: colors.text,
+  },
+  categoryCardSub: {
+    fontSize: 10,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  },
+  controlHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  backLink: {
+    paddingVertical: spacing.xs,
+  },
+  backLinkText: {
+    color: colors.textMuted,
+    fontSize: fontSize.md,
+  },
+  fastModeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  fastModeLabel: {
+    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  detailsSection: {
+    marginTop: spacing.md,
+  },
+  detailsToggle: {
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    marginVertical: spacing.sm,
+  },
+  detailsToggleText: {
+    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  detailsToggleClose: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    marginTop: spacing.md,
+  },
+  detailsToggleCloseText: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    textDecorationLine: 'underline',
+  },
 });
