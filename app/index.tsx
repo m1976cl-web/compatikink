@@ -15,6 +15,7 @@ import {
 } from '@/lib/storage';
 import { UserProfile, Session, EXPERIENCE_LABELS } from '@/types';
 import { PolyComparatorModal } from '@/components/PolyComparatorModal';
+import { OnboardingOverlay } from '@/components/OnboardingOverlay';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -115,12 +116,24 @@ export default function HomeScreen() {
   const renderLanding = () => (
     <ScrollView contentContainerStyle={styles.scroll}>
       <View style={styles.hero}>
-        <Text style={styles.emoji}>🔐</Text>
+        <Text style={styles.emoji}>🔥</Text>
         <Text style={styles.titleText}>Compatikink</Text>
         <Text style={styles.tagline}>
           Define tus preferencias, invita a alguien y recibe un reporte de compatibilidad privado y consensuado.
         </Text>
       </View>
+
+      {/* ⚡ Quick Profile CTA — Primary action */}
+      <TouchableOpacity style={styles.quickProfileCard} onPress={() => router.push('/quick-profile')}>
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>⚡</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Crear Perfil Rápido</Text>
+            <Text style={styles.quickProfileDesc}>Solo 10 preguntas · ~2 minutos · Privado</Text>
+          </View>
+          <Text style={styles.quickProfileArrow}>›</Text>
+        </View>
+      </TouchableOpacity>
 
       {/* Login Card */}
       {profilesList.length > 0 ? (
@@ -360,6 +373,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <OnboardingOverlay onDone={() => {}} />
       {profile ? renderDashboard() : renderLanding()}
     </SafeAreaView>
   );
@@ -536,5 +550,41 @@ const styles = StyleSheet.create({
   sessionActionBtn: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
+  },
+  quickProfileCard: {
+    backgroundColor: 'rgba(192, 132, 252, 0.1)',
+    borderRadius: 16,
+    marginBottom: spacing.lg,
+    borderWidth: 1.5,
+    borderColor: 'rgba(192, 132, 252, 0.4)',
+    overflow: 'hidden',
+  },
+  quickProfileInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  quickProfileEmoji: {
+    fontSize: 32,
+  },
+  quickProfileText: {
+    flex: 1,
+  },
+  quickProfileTitle: {
+    color: colors.text,
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  quickProfileDesc: {
+    color: colors.neonPurple,
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  quickProfileArrow: {
+    color: colors.neonPurple,
+    fontSize: 28,
+    fontWeight: '300',
   },
 });
