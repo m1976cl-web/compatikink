@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import { ActivityResponse, Session, GuestProfile, UserProfile } from '@/types';
+import { ActivityResponse, Session, GuestProfile, UserProfile, SceneAgreement } from '@/types';
 
 const TOKEN_KEY = 'initiator_token';
 const SESSIONS_KEY = 'local_sessions';
@@ -269,4 +269,25 @@ export async function convertSessionToProfile(
   await saveProfile(profile);
   await setCurrentProfile(profile.nickname);
   return profile;
+}
+
+// Scene Agreements Storage
+const SCENE_AGREEMENTS_PREFIX = 'scene_agreements_';
+
+export async function saveSceneAgreement(agreement: SceneAgreement): Promise<void> {
+  const existing = await getSceneAgreements(agreement.sessionId);
+  const updated = existing.filter((a) => a.activityId !== agreement.activityId);
+  updated.push(agreement);
+  await AsyncStorage.setItem(`${SCENE_AGREEMENTS_PREFIX}${agreement.sessionId}`, JSON.stringify(updated));
+}
+
+export async function getSceneAgreements(sessionId: string): Promise<SceneAgreement[]> {
+  const raw = await AsyncStorage.getItem(`${SCENE_AGREEMENTS_PREFIX}${sessionId}`);
+  if (!raw) return [];
+  return JSON.parse(raw) as SceneAgreement[];
+}
+
+export async function getSceneAgreementByActivity(sessionId: string, activityId: string): Promise<SceneAgreement | null> {
+  const list = await getSceneAgreements(sessionId);
+  return list.find((a) => a.activityId === activityId) ?? null;
 }

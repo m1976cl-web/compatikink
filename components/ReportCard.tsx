@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import {
   CATEGORY_LABELS,
@@ -12,12 +12,16 @@ import { ratingEmoji } from '@/lib/compatibility';
 interface Props {
   item: ReportItem;
   showInitiatorOnly?: boolean;
+  onPlanScene?: (item: ReportItem) => void;
+  hasAgreement?: boolean;
 }
 
-export function ReportCard({ item, showInitiatorOnly = true }: Props) {
+export function ReportCard({ item, showInitiatorOnly = true, onPlanScene, hasAgreement }: Props) {
   if (item.section === 'initiator_only' && !showInitiatorOnly) {
     return null;
   }
+
+  const isPlannable = item.section === 'mutual_match' || item.section === 'explore_together';
 
   return (
     <View style={styles.card}>
@@ -42,8 +46,25 @@ export function ReportCard({ item, showInitiatorOnly = true }: Props) {
       <Text style={styles.meta}>
         Intensidad — Tú: {item.initiatorIntensity} · Ellos: {item.guestIntensity}
       </Text>
+
       {item.conversationPrompt ? (
         <Text style={styles.prompt}>💬 {item.conversationPrompt}</Text>
+      ) : null}
+
+      {isPlannable && onPlanScene ? (
+        <View style={styles.planFooter}>
+          {hasAgreement ? (
+            <View style={styles.agreedBadge}>
+              <Text style={styles.agreedBadgeText}>✓ Escena Acordada</Text>
+            </View>
+          ) : null}
+
+          <TouchableOpacity style={styles.planBtn} onPress={() => onPlanScene(item)}>
+            <Text style={styles.planBtnText}>
+              {hasAgreement ? '📜 Ver / Editar Acuerdo' : '🤝 Planificar Escena'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       ) : null}
     </View>
   );
@@ -105,5 +126,41 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     marginTop: spacing.sm,
     lineHeight: 20,
+  },
+  planFooter: {
+    marginTop: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  agreedBadge: {
+    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.success,
+  },
+  agreedBadgeText: {
+    color: colors.success,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  planBtn: {
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginLeft: 'auto',
+  },
+  planBtnText: {
+    color: colors.text,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
   },
 });

@@ -1,18 +1,22 @@
-import { useEffect, useState, useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { ScrollView, StyleSheet, Text, View, Alert, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { ReportCard } from '@/components/ReportCard';
 import { CompatibilityInfographic } from '@/components/CompatibilityInfographic';
+import { SocialShareModal } from '@/components/SocialShareModal';
+import { ScenePlannerModal } from '@/components/ScenePlannerModal';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { generateReport } from '@/lib/compatibility';
 import { getSessionByToken, refreshSession } from '@/lib/sessions';
-import { getInitiatorToken, getGuestProfile } from '@/lib/storage';
+import { getInitiatorToken, getGuestProfile, getSceneAgreements } from '@/lib/storage';
 import {
   CompatibilityReport,
   GuestProfile,
+  ReportItem,
   ReportSectionType,
+  SceneAgreement,
   SECTION_DESCRIPTIONS,
   SECTION_LABELS,
 } from '@/types';
@@ -33,6 +37,16 @@ export default function ReportScreen() {
   const [guestProfile, setGuestProfile] = useState<GuestProfile | null>(null);
   const [guestName, setGuestName] = useState<string>('Invitado');
   const [loading, setLoading] = useState(true);
+
+  // New Modals State
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [planningItem, setPlanningItem] = useState<ReportItem | null>(null);
+  const [agreements, setAgreements] = useState<SceneAgreement[]>([]);
+
+  const loadAgreements = useCallback(async (sessionId: string) => {
+    const list = await getSceneAgreements(sessionId);
+    setAgreements(list);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -59,20 +73,22 @@ export default function ReportScreen() {
         return;
       }
       setGuestName(session.guestNickname ?? session.guestProfile?.nickname ?? 'Invitado');
-      setReport(
-        generateReport(
-          session.id,
-          session.initiatorResponses,
-          session.guestResponses,
-          session.initiatorProfile,
-          session.guestProfile
-        )
+      const rep = generateReport(
+        session.id,
+        session.initiatorResponses,
+        session.guestResponses,
+        session.initiatorProfile,
+        session.guestProfile
       );
+      setReport(rep);
       const gp = await getGuestProfile(session.id);
       setGuestProfile(gp);
+
+      await loadAgreements(session.id);
+
       setLoading(false);
     })();
-  }, [params.token, router]);
+  }, [params.token, router, loadAgreements]);
 
   const grouped = useMemo(() => {
     if (!report) return [];
@@ -102,6 +118,8 @@ export default function ReportScreen() {
     );
   }
 
+  const agreedActivityIds = new Set(agreements.map((a) => a.activityId));
+
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -113,6 +131,14 @@ export default function ReportScreen() {
             <Stat value={report.exploreCount} label="Explorar" color={colors.info} />
             <Stat value={report.conflictCount} label="Atención" color={colors.warning} />
           </View>
+
+          {/* Social Share Trigger */}
+          <TouchableOpacity
+            style={styles.shareCardTrigger}
+            onPress={() => setShowShareModal(true)}
+          >
+            <Text style={styles.shareCardTriggerText}>📸 Generar Tarjeta de Infografía</Text>
+          </TouchableOpacity>
         </View>
 
         {guestProfile ? (
@@ -140,7 +166,13 @@ export default function ReportScreen() {
             <Text style={styles.sectionTitle}>{SECTION_LABELS[section]}</Text>
             <Text style={styles.sectionDesc}>{SECTION_DESCRIPTIONS[section]}</Text>
             {items.map((item) => (
-              <ReportCard key={item.activityId} item={item} showInitiatorOnly />
+              <ReportCard
+                key={item.activityId}
+                item={item}
+                showInitiatorOnly
+                onPlanScene={(selectedItem) => setPlanningItem(selectedItem)}
+                hasAgreement={agreedActivityIds.has(item.activityId)}
+              />
             ))}
           </View>
         ))}
@@ -152,6 +184,23 @@ export default function ReportScreen() {
           }
         />
         <Button title="Volver al inicio" onPress={() => router.replace('/')} variant="ghost" />
+
+        {/* Modals */}
+        <SocialShareModal
+          visible={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          report={report}
+          initiatorName="Tú"
+          guestName={guestName}
+        />
+
+        <ScenePlannerModal
+          visible={Boolean(planningItem)}
+          onClose={() => setPlanningItem(null)}
+          sessionId={report.sessionId}
+          item={planningItem}
+          onSaved={() => loadAgreements(report.sessionId)}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -197,10 +246,25 @@ const styles = StyleSheet.create({
   stats: {
     flexDirection: 'row',
     gap: spacing.xl,
+    marginBottom: spacing.md,
   },
   stat: { alignItems: 'center' },
   statValue: { fontSize: fontSize.xl, fontWeight: '700' },
   statLabel: { color: colors.textMuted, fontSize: fontSize.sm },
+  shareCardTrigger: {
+    backgroundColor: 'rgba(147, 51, 234, 0.15)',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    marginTop: spacing.xs,
+  },
+  shareCardTriggerText: {
+    color: colors.primaryLight,
+    fontWeight: '700',
+    fontSize: fontSize.sm,
+  },
   guestNote: {
     color: colors.textMuted,
     fontSize: fontSize.sm,

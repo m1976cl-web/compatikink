@@ -166,3 +166,19 @@ export const SECTION_DESCRIPTIONS: Record<ReportSectionType, string> = {
   hard_limit_conflict: 'Hay un límite duro involucrado. Requiere respeto absoluto.',
   role_mismatch: 'Interés mutuo pero roles o intensidad distintos.',
 };
+
+export interface SceneAgreement {
+  id: string;
+  sessionId: string;
+  activityId: string;
+  activityName: string;
+  safewordGreen: string;
+  safewordYellow: string;
+  safewordRed: string;
+  nonVerbalSignal?: string;
+  durationLimit?: string;
+  agreedLimits?: string;
+  equipmentChecklist?: string[];
+  aftercarePlan?: string[];
+  createdAt: string;
+}
