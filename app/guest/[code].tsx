@@ -40,8 +40,23 @@ export default function GuestQuestionnaireScreen() {
   const [loading, setLoading] = useState(false);
   const [valid, setValid] = useState<boolean | null>(null);
 
+  // Item 6: Restore guest name if they return to the link
+  const GUEST_DRAFT_KEY = `guest_draft_${code}`;
+
   useEffect(() => {
     if (!code) return;
+    // Restore nickname draft
+    AsyncStorage.getItem(GUEST_DRAFT_KEY).then((raw) => {
+      if (raw) {
+        try {
+          const draft = JSON.parse(raw);
+          if (draft.nickname) setNickname(draft.nickname);
+          if (draft.pronouns) setPronouns(draft.pronouns);
+          if (draft.userNotes) setUserNotes(draft.userNotes);
+        } catch {}
+      }
+    });
+
     getSessionByInviteCode(code).then((session) => {
       if (!session) {
         setValid(false);
@@ -53,6 +68,12 @@ export default function GuestQuestionnaireScreen() {
       }
     });
   }, [code]);
+
+  // Save draft whenever nickname/pronouns/notes change
+  useEffect(() => {
+    if (!code || !nickname) return;
+    AsyncStorage.setItem(GUEST_DRAFT_KEY, JSON.stringify({ nickname, pronouns, userNotes }));
+  }, [nickname, pronouns, userNotes, code]);
 
   const toggleCategory = (cat: ActivityCategory) => {
     setEnabledCategories((prev) => {
@@ -82,6 +103,8 @@ export default function GuestQuestionnaireScreen() {
       };
 
       const session = await submitGuestResponses(code, name, finalResponses, guestProfile);
+      // Clear draft on successful submission
+      await AsyncStorage.removeItem(GUEST_DRAFT_KEY);
       // Save session token temporarily to local storage to allow converting to profile in done.tsx
       await AsyncStorage.setItem('last_completed_guest_session_token', session.initiatorToken);
       router.replace('/guest/done');
@@ -122,7 +145,18 @@ export default function GuestQuestionnaireScreen() {
           </Text>
 
           <View style={styles.divider} />
+
+          {/* Restored draft banner */}
+          {nickname ? (
+            <View style={styles.restoredBanner}>
+              <Text style={styles.restoredBannerText}>
+                ✅ Recuperamos tu nombre de una sesión anterior: <Text style={{ fontWeight: '800' }}>{nickname}</Text>. Puedes cambiarlo si quieres.
+              </Text>
+            </View>
+          ) : null}
+
           <Text style={styles.sectionSubTitle}>Tu Perfil (Invitado)</Text>
+
 
           <Text style={styles.label}>Tu nick o nombre *</Text>
           <TextInput
@@ -513,5 +547,18 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: fontSize.xs,
     textDecorationLine: 'underline',
+  },
+  restoredBanner: {
+    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+    borderRadius: 10,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 222, 128, 0.3)',
+    marginBottom: spacing.sm,
+  },
+  restoredBannerText: {
+    color: colors.success,
+    fontSize: fontSize.xs,
+    lineHeight: 18,
   },
 });

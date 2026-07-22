@@ -311,3 +311,16 @@ export async function saveCustomActivity(activity: Activity): Promise<Activity[]
   registerCustomActivity(activity);
   return existing;
 }
+
+// Get all scene agreements across all sessions (for Dashboard overview)
+export async function getAllSceneAgreements(): Promise<{ sessionId: string; agreements: SceneAgreement[] }[]> {
+  const sessions = await loadLocalSessions();
+  const result: { sessionId: string; agreements: SceneAgreement[] }[] = [];
+  for (const session of Object.values(sessions)) {
+    const agreements = await getSceneAgreements(session.id);
+    if (agreements.length > 0) {
+      result.push({ sessionId: session.id, agreements });
+    }
+  }
+  return result;
+}

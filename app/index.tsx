@@ -12,8 +12,9 @@ import {
   listAllProfiles,
   listMyLocalSessions,
   createLocalSession,
+  getAllSceneAgreements,
 } from '@/lib/storage';
-import { UserProfile, Session, EXPERIENCE_LABELS } from '@/types';
+import { UserProfile, Session, EXPERIENCE_LABELS, SceneAgreement } from '@/types';
 import { PolyComparatorModal } from '@/components/PolyComparatorModal';
 import { OnboardingOverlay } from '@/components/OnboardingOverlay';
 
@@ -22,6 +23,7 @@ export default function HomeScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profilesList, setProfilesList] = useState<UserProfile[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [sceneAgreements, setSceneAgreements] = useState<{ sessionId: string; agreements: SceneAgreement[] }[]>([]);
 
   // Guest input code
   const [guestCode, setGuestCode] = useState('');
@@ -51,6 +53,8 @@ export default function HomeScreen() {
     setProfilesList(allProfs);
     const mySessions = await listMyLocalSessions();
     setSessions(mySessions);
+    const agreements = await getAllSceneAgreements();
+    setSceneAgreements(agreements);
   };
 
   const handleLogin = async () => {
@@ -308,8 +312,40 @@ export default function HomeScreen() {
           onPress={() => router.push('/questionnaire')}
         />
       </View>
+      {/* Scene Agreements Access — Item 5 */}
+      {sceneAgreements.length > 0 ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📋 Mis Acuerdos de Escena</Text>
+          <Text style={styles.cardDesc}>Acuerdos de safewords y límites guardados por pareja.</Text>
+          {sceneAgreements.map(({ sessionId, agreements }) => {
+            const session = sessions.find((s) => s.id === sessionId);
+            const partner = session
+              ? (session.guestNickname || session.initiatorNickname || 'Invitado')
+              : sessionId.slice(0, 8);
+            return (
+              <View key={sessionId} style={styles.sceneAgreementGroup}>
+                <Text style={styles.sceneAgreementPartner}>Con {partner}</Text>
+                {agreements.map((ag) => (
+                  <TouchableOpacity
+                    key={ag.id}
+                    style={styles.sceneAgreementRow}
+                    onPress={() => router.push({ pathname: '/report', params: { token: session?.initiatorToken ?? '' } })}
+                  >
+                    <View style={styles.sceneAgreementInfo}>
+                      <Text style={styles.sceneAgreementActivity}>{ag.activityName}</Text>
+                      <Text style={styles.sceneAgreementSafewords}>
+                        🟢 {ag.safewordGreen} · 🟡 {ag.safewordYellow} · 🔴 {ag.safewordRed}
+                      </Text>
+                    </View>
+                    <Text style={styles.sceneAgreementArrow}>›</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
 
-      {/* Historial de Sesiones */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Historial de Compatibilidades</Text>
         {sessions.length === 0 ? (
@@ -320,30 +356,64 @@ export default function HomeScreen() {
               const isInitiator = s.initiatorNickname === profile?.nickname;
               const partner = isInitiator ? (s.guestNickname || 'Invitado') : (s.initiatorNickname || 'Iniciador');
               const isComplete = s.status === 'complete';
+              const isWaiting = s.status === 'waiting';
+
+              // Time-ago helper
+              const timeAgo = (iso?: string) => {
+                if (!iso) return '';
+                const diff = Date.now() - new Date(iso).getTime();
+                const mins = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+                if (mins < 2) return 'hace un momento';
+                if (mins < 60) return `hace ${mins} min`;
+                if (hours < 24) return `hace ${hours}h`;
+                return `hace ${days}d`;
+              };
+
+              const statusLabel = isComplete
+                ? `✅ Completado ${timeAgo(s.completedAt)}`
+                : isWaiting
+                ? `⏳ Esperando respuesta`
+                : '📝 Borrador';
+              const statusColor = isComplete ? colors.success : isWaiting ? colors.warning : colors.textMuted;
 
               return (
-                <View key={s.id} style={styles.sessionRow}>
-                  <View style={styles.sessionInfo}>
-                    <Text style={styles.sessionPartner}>vs. {partner}</Text>
-                    <Text style={styles.sessionDetails}>
-                      Código: {s.inviteCode} · {isInitiator ? 'Iniciada por ti' : 'Recibida'}
-                    </Text>
+                <View key={s.id} style={styles.sessionCard}>
+                  <View style={styles.sessionCardHeader}>
+                    <View style={[styles.sessionStatusBadge, { borderColor: statusColor }]}>
+                      <Text style={[styles.sessionStatusText, { color: statusColor }]}>{statusLabel}</Text>
+                    </View>
+                    <Text style={styles.sessionTime}>{timeAgo(s.createdAt)}</Text>
                   </View>
-                  <View style={styles.sessionActions}>
-                    {isComplete ? (
-                      <Button
-                        title="Ver Reporte"
-                        style={styles.sessionActionBtn}
-                        onPress={() => router.push({ pathname: '/report', params: { token: s.initiatorToken } })}
-                      />
-                    ) : (
-                      <Button
-                        title="Invitar"
-                        variant="secondary"
-                        style={styles.sessionActionBtn}
-                        onPress={() => router.push({ pathname: '/invite', params: { token: s.initiatorToken } })}
-                      />
-                    )}
+
+                  <View style={styles.sessionCardBody}>
+                    <View style={styles.sessionInfo}>
+                      <Text style={styles.sessionPartner}>
+                        {isInitiator ? '↗ Tú → ' : '↙ '}
+                        <Text style={{ color: isComplete ? colors.neonPurple : colors.text }}>{partner}</Text>
+                      </Text>
+                      <Text style={styles.sessionDetails}>
+                        Código: <Text style={{ fontWeight: '700', letterSpacing: 1 }}>{s.inviteCode}</Text>
+                        {!isComplete && isWaiting ? ' · Compartir para recibir respuestas' : ''}
+                      </Text>
+                    </View>
+                    <View style={styles.sessionActions}>
+                      {isComplete ? (
+                        <Button
+                          title="📊 Reporte"
+                          style={styles.sessionActionBtn}
+                          onPress={() => router.push({ pathname: '/report', params: { token: s.initiatorToken } })}
+                        />
+                      ) : (
+                        <Button
+                          title="📨 Invitar"
+                          variant="secondary"
+                          style={styles.sessionActionBtn}
+                          onPress={() => router.push({ pathname: '/invite', params: { token: s.initiatorToken } })}
+                        />
+                      )}
+                    </View>
                   </View>
                 </View>
               );
@@ -351,6 +421,7 @@ export default function HomeScreen() {
           </View>
         )}
       </View>
+
 
       <Button title="Cerrar Sesión" variant="ghost" onPress={handleLogout} />
 
@@ -520,22 +591,50 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   sessionsList: {
-    gap: spacing.md,
+    gap: spacing.sm,
   },
-  sessionRow: {
+  sessionCard: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  sessionCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  sessionCardBody: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  sessionStatusBadge: {
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+  },
+  sessionStatusText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  sessionTime: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
   },
   sessionInfo: {
     flex: 2,
   },
   sessionPartner: {
     color: colors.text,
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   sessionDetails: {
@@ -551,6 +650,49 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
   },
+
+  // Scene Agreement styles
+  sceneAgreementGroup: {
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  sceneAgreementPartner: {
+    color: colors.neonPurple,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  sceneAgreementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 10,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  sceneAgreementInfo: {
+    flex: 1,
+  },
+  sceneAgreementActivity: {
+    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  sceneAgreementSafewords: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    marginTop: 2,
+  },
+  sceneAgreementArrow: {
+    color: colors.textMuted,
+    fontSize: 22,
+    paddingLeft: spacing.sm,
+  },
+
   quickProfileCard: {
     backgroundColor: 'rgba(192, 132, 252, 0.1)',
     borderRadius: 16,
