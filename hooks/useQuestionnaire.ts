@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
-import { ActivityResponse, Rating, RolePreference, ActivityCategory } from '@/types';
-import { ACTIVITIES } from '@/data/activities';
+import { ActivityResponse, Rating, RolePreference, ActivityCategory, Activity } from '@/types';
+import { ACTIVITIES, getAllActivities } from '@/data/activities';
 
 const defaultResponse = (activityId: string): ActivityResponse => ({
   activityId,
@@ -9,15 +9,21 @@ const defaultResponse = (activityId: string): ActivityResponse => ({
   intensity: 2,
 });
 
-export function useQuestionnaire(initial?: ActivityResponse[], enabledCategories?: ActivityCategory[]) {
+export function useQuestionnaire(
+  initial?: ActivityResponse[],
+  enabledCategories?: ActivityCategory[],
+  customs?: Activity[]
+) {
+  const allActs = useMemo(() => getAllActivities(customs), [customs]);
+
   const filteredActivities = useMemo(() => {
-    if (!enabledCategories || enabledCategories.length === 0) return ACTIVITIES;
-    return ACTIVITIES.filter((a) => enabledCategories.includes(a.category));
-  }, [enabledCategories]);
+    if (!enabledCategories || enabledCategories.length === 0) return allActs;
+    return allActs.filter((a) => enabledCategories.includes(a.category));
+  }, [enabledCategories, allActs]);
 
   const [responses, setResponses] = useState<Record<string, ActivityResponse>>(() => {
     const map: Record<string, ActivityResponse> = {};
-    for (const activity of ACTIVITIES) {
+    for (const activity of allActs) {
       const existing = initial?.find((r) => r.activityId === activity.id);
       // If category is disabled, force it to not_interested
       if (enabledCategories && enabledCategories.length > 0 && !enabledCategories.includes(activity.category)) {
@@ -35,7 +41,7 @@ export function useQuestionnaire(initial?: ActivityResponse[], enabledCategories
   });
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentActivity = filteredActivities[currentIndex] || ACTIVITIES[0];
+  const currentActivity = filteredActivities[currentIndex] || allActs[0];
   const currentResponse = responses[currentActivity.id];
 
   const updateCurrent = useCallback(

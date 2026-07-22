@@ -22,13 +22,16 @@ export function ReportCard({ item, showInitiatorOnly = true, onPlanScene, hasAgr
   }
 
   const isPlannable = item.section === 'mutual_match' || item.section === 'explore_together';
+  const isHotMatch = item.section === 'mutual_match';
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isHotMatch && styles.cardMatch]}>
       <View style={styles.header}>
         <Text style={styles.activity}>{item.activityName}</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{SECTION_LABELS[item.section]}</Text>
+        <View style={[styles.badge, isHotMatch && styles.badgeMatch]}>
+          <Text style={[styles.badgeText, isHotMatch && styles.badgeTextMatch]}>
+            {isHotMatch ? '🔥 ' : ''}{SECTION_LABELS[item.section]}
+          </Text>
         </View>
       </View>
       <Text style={styles.category}>{CATEGORY_LABELS[item.category]}</Text>
@@ -79,6 +82,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  cardMatch: {
+    borderColor: 'rgba(192, 132, 252, 0.5)',
+    backgroundColor: 'rgba(192, 132, 252, 0.06)',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -97,10 +109,19 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 8,
   },
+  badgeMatch: {
+    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.4)',
+  },
   badgeText: {
     color: colors.primary,
     fontSize: 11,
     fontWeight: '600',
+  },
+  badgeTextMatch: {
+    color: colors.neonPurple,
+    fontWeight: '700',
   },
   category: {
     color: colors.textMuted,

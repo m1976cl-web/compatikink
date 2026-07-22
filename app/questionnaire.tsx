@@ -22,11 +22,11 @@ import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import { CATEGORY_LABELS, ExperienceLevel, UserProfile, ActivityCategory, Rating } from '@/types';
+import { CATEGORY_LABELS, ExperienceLevel, UserProfile, ActivityCategory, Rating, Activity } from '@/types';
 import { createSession } from '@/lib/sessions';
-import { CATEGORY_ORDER, ACTIVITIES } from '@/data/activities';
-
-import { getCurrentProfile, saveProfile } from '@/lib/storage';
+import { CATEGORY_ORDER, ACTIVITIES, getAllActivities } from '@/data/activities';
+import { CustomActivityModal } from '@/components/CustomActivityModal';
+import { getCurrentProfile, saveProfile, getCustomActivities } from '@/lib/storage';
 
 export default function QuestionnaireScreen() {
   const router = useRouter();
@@ -40,6 +40,8 @@ export default function QuestionnaireScreen() {
   const [guestNotes, setGuestNotes] = useState('');
   const [step, setStep] = useState<'intro' | 'categories' | 'questions'>('intro');
   const [enabledCategories, setEnabledCategories] = useState<ActivityCategory[]>([...CATEGORY_ORDER]);
+  const [customActivities, setCustomActivities] = useState<Activity[]>([]);
+  const [showCustomModal, setShowCustomModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -52,13 +54,14 @@ export default function QuestionnaireScreen() {
         setExperienceLevel(p.experienceLevel);
         setUserNotes(p.notes || '');
       }
+      const customs = await getCustomActivities();
+      setCustomActivities(customs);
     })();
   }, []);
 
   const toggleCategory = (cat: ActivityCategory) => {
     setEnabledCategories((prev) => {
       if (prev.includes(cat)) {
-        // Keep at least one category enabled
         if (prev.length === 1) return prev;
         return prev.filter((c) => c !== cat);
       } else {
@@ -68,8 +71,8 @@ export default function QuestionnaireScreen() {
   };
 
   const selectedQuestionsCount = useMemo(() => {
-    return ACTIVITIES.filter((a) => enabledCategories.includes(a.category)).length;
-  }, [enabledCategories]);
+    return getAllActivities(customActivities).filter((a) => enabledCategories.includes(a.category)).length;
+  }, [enabledCategories, customActivities]);
 
   const handleFinish = async (finalResponses: any[]) => {
     const name = nickname.trim() || 'Anónimo';
@@ -214,6 +217,12 @@ export default function QuestionnaireScreen() {
           <View style={styles.divider} />
 
           <Button
+            title="➕ Añadir actividad propia"
+            variant="secondary"
+            onPress={() => setShowCustomModal(true)}
+          />
+
+          <Button
             title={`Comenzar (${selectedQuestionsCount} preguntas)`}
             onPress={() => setStep('questions')}
           />
@@ -221,6 +230,12 @@ export default function QuestionnaireScreen() {
             title="Volver"
             variant="ghost"
             onPress={() => setStep('intro')}
+          />
+
+          <CustomActivityModal
+            visible={showCustomModal}
+            onClose={() => setShowCustomModal(false)}
+            onActivityCreated={(newAct) => setCustomActivities((prev) => [...prev, newAct])}
           />
         </ScrollView>
       </SafeAreaView>
@@ -231,6 +246,7 @@ export default function QuestionnaireScreen() {
     <QuestionnaireActiveFlow
       nickname={nickname}
       enabledCategories={enabledCategories}
+      customActivities={customActivities}
       onFinish={handleFinish}
       loading={loading}
       onBack={() => setStep('categories')}
@@ -242,17 +258,19 @@ export default function QuestionnaireScreen() {
 function QuestionnaireActiveFlow({
   nickname,
   enabledCategories,
+  customActivities,
   onFinish,
   loading,
   onBack,
 }: {
   nickname: string;
   enabledCategories: ActivityCategory[];
+  customActivities: Activity[];
   onFinish: (responses: any[]) => void;
   loading: boolean;
   onBack: () => void;
 }) {
-  const q = useQuestionnaire(undefined, enabledCategories);
+  const q = useQuestionnaire(undefined, enabledCategories, customActivities);
   const [fastMode, setFastMode] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
 

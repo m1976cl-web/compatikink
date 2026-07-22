@@ -14,6 +14,7 @@ import {
   createLocalSession,
 } from '@/lib/storage';
 import { UserProfile, Session, EXPERIENCE_LABELS } from '@/types';
+import { PolyComparatorModal } from '@/components/PolyComparatorModal';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -34,6 +35,9 @@ export default function HomeScreen() {
   const [quickGuestNick, setQuickGuestNick] = useState('');
   const [quickGuestNotes, setQuickGuestNotes] = useState('');
   const [creatingInvite, setCreatingInvite] = useState(false);
+
+  // Poly Comparator
+  const [showPolyComparator, setShowPolyComparator] = useState(false);
 
   useEffect(() => {
     loadHomeData();
@@ -336,6 +340,21 @@ export default function HomeScreen() {
       </View>
 
       <Button title="Cerrar Sesión" variant="ghost" onPress={handleLogout} />
+
+      {sessions.filter((s) => s.status === 'complete').length >= 2 ? (
+        <Button
+          title="👥 Comparar Parejas (Poli / Multi-Vínculo)"
+          variant="secondary"
+          onPress={() => setShowPolyComparator(true)}
+        />
+      ) : null}
+
+      <PolyComparatorModal
+        visible={showPolyComparator}
+        onClose={() => setShowPolyComparator(false)}
+        sessions={sessions}
+        currentProfile={profile!}
+      />
     </ScrollView>
   );
 

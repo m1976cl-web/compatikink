@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Dimensions } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { CompatibilityReport, CATEGORY_LABELS, EXPERIENCE_LABELS } from '@/types';
 import { CATEGORY_ORDER } from '@/data/activities';
@@ -24,25 +24,29 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
 
   return (
     <View style={styles.container}>
-      {/* 1. Compás Kink */}
-      <View style={styles.card}>
-        <Text style={styles.cardHeader}>El Compás Kink</Text>
+      {/* 1. Compás Kink — Redesigned with Neon Glow */}
+      <View style={styles.neonCard}>
+        <Text style={styles.neonCardHeader}>🧭 El Compás Kink</Text>
         <Text style={styles.cardDesc}>
           Ubicación de ambos en los ejes de Rol (Dominante/Sumiso) e Intensidad/Exploración.
         </Text>
 
         <View style={styles.compassContainer}>
+          {/* Glowing quadrant hints */}
+          <View style={[styles.quadrant, styles.quadrantTR]} />
+          <View style={[styles.quadrant, styles.quadrantBL]} />
+
           {/* Axis Labels */}
-          <Text style={[styles.axisLabel, styles.axisTop]}>Dominación (Dom)</Text>
-          <Text style={[styles.axisLabel, styles.axisBottom]}>Sumisión (Sub)</Text>
+          <Text style={[styles.axisLabel, styles.axisTop]}>⬆ Dom</Text>
+          <Text style={[styles.axisLabel, styles.axisBottom]}>⬇ Sub</Text>
           <Text style={[styles.axisLabel, styles.axisLeft]}>Vanilla</Text>
-          <Text style={[styles.axisLabel, styles.axisRight]}>Experimental</Text>
+          <Text style={[styles.axisLabel, styles.axisRight]}>Exp</Text>
 
           {/* Grid lines */}
           <View style={styles.gridLineX} />
           <View style={styles.gridLineY} />
 
-          {/* Initiator Dot */}
+          {/* Initiator Dot — Neon Purple Glow */}
           <View
             style={[
               styles.dot,
@@ -50,11 +54,13 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
               { left: `${initiatorCompass.x}%`, bottom: `${initiatorCompass.y}%` },
             ]}
           >
-            <View style={styles.dotPulse} />
-            <Text style={styles.dotLabel}>{initiatorProfile?.nickname || initiatorName || 'Tú'}</Text>
+            <View style={styles.initiatorGlow} />
+            <Text style={[styles.dotLabel, styles.initiatorLabel]}>
+              {initiatorProfile?.nickname || initiatorName || 'Tú'}
+            </Text>
           </View>
 
-          {/* Guest Dot */}
+          {/* Guest Dot — Neon Pink Glow */}
           <View
             style={[
               styles.dot,
@@ -62,18 +68,33 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
               { left: `${guestCompass.x}%`, bottom: `${guestCompass.y}%` },
             ]}
           >
-            <View style={styles.dotPulse} />
-            <Text style={styles.dotLabel}>{guestProfile?.nickname || guestName || 'Invitado'}</Text>
+            <View style={styles.guestGlow} />
+            <Text style={[styles.dotLabel, styles.guestLabel]}>
+              {guestProfile?.nickname || guestName || 'Invitado'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Compass Legend */}
+        <View style={styles.legendRow}>
+          <View style={styles.legendItem}>
+            <View style={styles.legendDotPurple} />
+            <Text style={styles.legendText}>{initiatorProfile?.nickname || initiatorName || 'Tú'}</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={styles.legendDotPink} />
+            <Text style={styles.legendText}>{guestProfile?.nickname || guestName || 'Invitado'}</Text>
           </View>
         </View>
       </View>
 
-      {/* 2. Perfiles y Arquetipos */}
-      <View style={styles.card}>
-        <Text style={styles.cardHeader}>Perfiles y Arquetipos Kink</Text>
+      {/* 2. Perfiles y Arquetipos — Glassmorphism */}
+      <View style={styles.neonCard}>
+        <Text style={styles.neonCardHeader}>✨ Arquetipos Kink</Text>
         <View style={styles.archetypeRow}>
           {/* Initiator Card */}
-          <View style={styles.archetypeBox}>
+          <View style={[styles.archetypeBox, styles.archetypeBoxInit]}>
+            <View style={styles.archetypeGlowBorder} />
             <Text style={styles.archetypeUser}>{initiatorProfile?.nickname || initiatorName || 'Tú'}</Text>
             {initiatorProfile?.pronouns ? (
               <Text style={styles.badgeText}>{initiatorProfile.pronouns}</Text>
@@ -93,13 +114,18 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
             ) : null}
           </View>
 
+          {/* VS divider */}
+          <View style={styles.vsDivider}>
+            <Text style={styles.vsText}>VS</Text>
+          </View>
+
           {/* Guest Card */}
-          <View style={styles.archetypeBox}>
+          <View style={[styles.archetypeBox, styles.archetypeBoxGuest]}>
             <Text style={styles.archetypeUser}>{guestProfile?.nickname || guestName || 'Invitado'}</Text>
             {guestProfile?.pronouns ? (
               <Text style={styles.badgeText}>{guestProfile.pronouns}</Text>
             ) : null}
-            <Text style={styles.archetypeValue}>{guestArchetype}</Text>
+            <Text style={[styles.archetypeValue, styles.archetypeValuePink]}>{guestArchetype}</Text>
 
             {guestProfile?.experienceLevel ? (
               <View style={styles.experienceTag}>
@@ -116,9 +142,9 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
         </View>
       </View>
 
-      {/* 3. Conexión de Intereses (Venn Diagram alternativo) */}
-      <View style={styles.card}>
-        <Text style={styles.cardHeader}>Conexión de Intereses</Text>
+      {/* 3. Conexión de Intereses */}
+      <View style={styles.neonCard}>
+        <Text style={styles.neonCardHeader}>🔗 Conexión de Intereses</Text>
         <Text style={styles.cardDesc}>
           Distribución de las actividades en las que se expresó interés activo.
         </Text>
@@ -129,8 +155,8 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
             <Text style={styles.vennLabel} numberOfLines={1}>Solo Tú</Text>
           </View>
           <View style={[styles.vennSegment, styles.segmentCenter, { flex: Math.max(1, overlapStats.sharedCount) }]}>
-            <Text style={styles.vennNum}>{overlapStats.sharedCount}</Text>
-            <Text style={styles.vennLabel} numberOfLines={1}>Mutuos</Text>
+            <Text style={[styles.vennNum, styles.vennNumGlow]}>{overlapStats.sharedCount}</Text>
+            <Text style={styles.vennLabel} numberOfLines={1}>Mutuos 🔥</Text>
           </View>
           <View style={[styles.vennSegment, styles.segmentRight, { flex: Math.max(1, overlapStats.guestOnlyCount) }]}>
             <Text style={styles.vennNum}>{overlapStats.guestOnlyCount}</Text>
@@ -139,13 +165,13 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
         </View>
       </View>
 
-      {/* 4. Compatibilidad por Categorías */}
-      <View style={styles.card}>
-        <Text style={styles.cardHeader}>Compatibilidad por Categorías</Text>
+      {/* 4. Compatibilidad por Categorías — Neon Progress Bars */}
+      <View style={styles.neonCard}>
+        <Text style={styles.neonCardHeader}>📊 Compatibilidad por Categorías</Text>
         <View style={styles.categoryList}>
           {CATEGORY_ORDER.map((cat) => {
             const pct = categoryCompatibilities[cat] ?? 100;
-            let barColor = colors.success;
+            let barColor = colors.neonGreen;
             if (pct < 40) barColor = colors.danger;
             else if (pct < 75) barColor = colors.warning;
 
@@ -156,7 +182,18 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
                   <Text style={[styles.categoryPct, { color: barColor }]}>{pct}%</Text>
                 </View>
                 <View style={styles.progressBarBg}>
-                  <View style={[styles.progressBarFill, { width: `${pct}%`, backgroundColor: barColor }]} />
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: `${pct}%`,
+                        backgroundColor: barColor,
+                        shadowColor: barColor,
+                        shadowOpacity: 0.6,
+                        shadowRadius: 4,
+                      },
+                    ]}
+                  />
                 </View>
               </View>
             );
@@ -172,19 +209,24 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     marginBottom: spacing.lg,
   },
-  card: {
+  neonCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: 'rgba(192, 132, 252, 0.25)',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  cardHeader: {
-    color: colors.text,
-    fontSize: fontSize.md,
-    fontWeight: '700',
+  neonCardHeader: {
+    color: colors.neonPurple,
+    fontSize: fontSize.sm,
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    letterSpacing: 1.5,
     marginBottom: spacing.xs,
   },
   cardDesc: {
@@ -195,96 +237,89 @@ const styles = StyleSheet.create({
   },
   compassContainer: {
     height: 220,
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
+    backgroundColor: 'rgba(13, 8, 25, 0.9)',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(192, 132, 252, 0.2)',
     position: 'relative',
     marginVertical: spacing.sm,
     overflow: 'hidden',
   },
+  quadrant: {
+    position: 'absolute',
+    width: '50%',
+    height: '50%',
+  },
+  quadrantTR: {
+    top: 0,
+    right: 0,
+    backgroundColor: 'rgba(192, 132, 252, 0.04)',
+  },
+  quadrantBL: {
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(244, 114, 182, 0.04)',
+  },
   axisLabel: {
     position: 'absolute',
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '600',
+    color: 'rgba(192, 132, 252, 0.6)',
+    fontSize: 9,
+    fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  axisTop: {
-    top: 6,
-    alignSelf: 'center',
-  },
-  axisBottom: {
-    bottom: 6,
-    alignSelf: 'center',
-  },
-  axisLeft: {
-    left: 8,
-    top: '48%',
-  },
-  axisRight: {
-    right: 8,
-    top: '48%',
-  },
+  axisTop: { top: 6, alignSelf: 'center' },
+  axisBottom: { bottom: 6, alignSelf: 'center' },
+  axisLeft: { left: 8, top: '47%' },
+  axisRight: { right: 8, top: '47%' },
   gridLineX: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '50%',
+    left: 0, right: 0, top: '50%',
     height: 1,
-    backgroundColor: colors.border,
-    opacity: 0.6,
+    backgroundColor: 'rgba(192, 132, 252, 0.2)',
   },
   gridLineY: {
     position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: '50%',
+    top: 0, bottom: 0, left: '50%',
     width: 1,
-    backgroundColor: colors.border,
-    opacity: 0.6,
+    backgroundColor: 'rgba(192, 132, 252, 0.2)',
   },
   dot: {
     position: 'absolute',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateX: -6 }, { translateY: 6 }],
+    transform: [{ translateX: -7 }, { translateY: 7 }],
   },
   initiatorDot: {
-    backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-    elevation: 4,
+    backgroundColor: colors.neonPurple,
+    elevation: 6,
   },
   guestDot: {
-    backgroundColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-    elevation: 4,
+    backgroundColor: colors.neonPink,
+    elevation: 6,
   },
-  dotPulse: {
+  initiatorGlow: {
     position: 'absolute',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    opacity: 0.6,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(192, 132, 252, 0.3)',
+  },
+  guestGlow: {
+    position: 'absolute',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(244, 114, 182, 0.3)',
   },
   dotLabel: {
-    color: colors.text,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     position: 'absolute',
-    top: 14,
-    backgroundColor: 'rgba(15, 10, 20, 0.75)',
+    top: 16,
     paddingHorizontal: 5,
     paddingVertical: 2,
     borderRadius: 4,
@@ -292,19 +327,82 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     minWidth: 40,
   },
+  initiatorLabel: {
+    color: colors.neonPurple,
+    backgroundColor: 'rgba(10, 6, 18, 0.85)',
+  },
+  guestLabel: {
+    color: colors.neonPink,
+    backgroundColor: 'rgba(10, 6, 18, 0.85)',
+  },
+  legendRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.lg,
+    marginTop: spacing.xs,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  legendDotPurple: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.neonPurple,
+  },
+  legendDotPink: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.neonPink,
+  },
+  legendText: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
+  },
   archetypeRow: {
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: spacing.sm,
     marginTop: spacing.sm,
+    alignItems: 'stretch',
   },
   archetypeBox: {
     flex: 1,
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 10,
+    borderRadius: 14,
     padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.5,
     alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  archetypeBoxInit: {
+    backgroundColor: 'rgba(192, 132, 252, 0.08)',
+    borderColor: 'rgba(192, 132, 252, 0.4)',
+  },
+  archetypeBoxGuest: {
+    backgroundColor: 'rgba(244, 114, 182, 0.08)',
+    borderColor: 'rgba(244, 114, 182, 0.4)',
+  },
+  archetypeGlowBorder: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.1)',
+  },
+  vsDivider: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  vsText: {
+    color: colors.textMuted,
+    fontWeight: '800',
+    fontSize: fontSize.xs,
+    letterSpacing: 1,
   },
   archetypeUser: {
     color: colors.text,
@@ -318,14 +416,21 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   archetypeValue: {
-    color: colors.accent,
-    fontSize: fontSize.md,
-    fontWeight: '700',
+    color: colors.neonPurple,
+    fontSize: fontSize.sm,
+    fontWeight: '800',
     textAlign: 'center',
     marginBottom: 6,
+    textShadowColor: 'rgba(192, 132, 252, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  },
+  archetypeValuePink: {
+    color: colors.neonPink,
+    textShadowColor: 'rgba(244, 114, 182, 0.5)',
   },
   experienceTag: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(10, 6, 18, 0.6)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
@@ -334,9 +439,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   experienceTagText: {
-    color: colors.primaryLight,
+    color: colors.neonPurple,
     fontSize: 9,
-    fontWeight: '600',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   profileBio: {
     color: colors.textMuted,
@@ -348,10 +455,9 @@ const styles = StyleSheet.create({
   },
   vennBar: {
     flexDirection: 'row',
-    height: 48,
-    borderRadius: 10,
+    height: 56,
+    borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.border,
     marginTop: spacing.sm,
@@ -362,27 +468,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   segmentLeft: {
-    backgroundColor: 'rgba(147, 51, 234, 0.25)', // Primary dark transparent
+    backgroundColor: 'rgba(192, 132, 252, 0.15)',
     borderRightWidth: 1,
     borderColor: colors.border,
   },
   segmentCenter: {
-    backgroundColor: 'rgba(74, 222, 128, 0.2)', // Success transparent
+    backgroundColor: 'rgba(74, 222, 128, 0.18)',
     borderRightWidth: 1,
     borderColor: colors.border,
   },
   segmentRight: {
-    backgroundColor: 'rgba(244, 114, 182, 0.25)', // Accent transparent
+    backgroundColor: 'rgba(244, 114, 182, 0.15)',
   },
   vennNum: {
     color: colors.text,
     fontSize: fontSize.md,
-    fontWeight: '700',
+    fontWeight: '800',
+  },
+  vennNumGlow: {
+    color: colors.neonGreen,
+    textShadowColor: 'rgba(74, 222, 128, 0.6)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
   },
   vennLabel: {
     color: colors.textMuted,
     fontSize: 9,
-    fontWeight: '600',
+    fontWeight: '700',
     textTransform: 'uppercase',
     marginTop: 2,
   },
@@ -391,7 +503,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   categoryItem: {
-    gap: 4,
+    gap: 6,
   },
   categoryHeader: {
     flexDirection: 'row',
@@ -405,16 +517,16 @@ const styles = StyleSheet.create({
   },
   categoryPct: {
     fontSize: fontSize.sm,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   progressBarBg: {
-    height: 8,
+    height: 6,
     backgroundColor: colors.surfaceLight,
-    borderRadius: 4,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 3,
   },
 });

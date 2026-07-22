@@ -90,12 +90,36 @@ export const ACTIVITIES: Activity[] = [
   { id: 'ac_first_aid', category: 'aftercare', name: 'Cuidado de marcas/lesiones', description: 'Atención a moretones, irritaciones, etc.' },
 ];
 
-export function getActivitiesByCategory(category: ActivityCategory): Activity[] {
-  return ACTIVITIES.filter((a) => a.category === category);
+let customActivitiesRegistry: Activity[] = [];
+
+export function registerCustomActivity(activity: Activity): void {
+  if (!customActivitiesRegistry.some((a) => a.id === activity.id)) {
+    customActivitiesRegistry.push(activity);
+  }
 }
 
-export function getActivityById(id: string): Activity | undefined {
-  return ACTIVITIES.find((a) => a.id === id);
+export function setCustomActivitiesRegistry(activities: Activity[]): void {
+  customActivitiesRegistry = activities;
+}
+
+export function getAllActivities(customs?: Activity[]): Activity[] {
+  const merged = [...ACTIVITIES, ...customActivitiesRegistry];
+  if (customs) {
+    for (const c of customs) {
+      if (!merged.some((m) => m.id === c.id)) {
+        merged.push(c);
+      }
+    }
+  }
+  return merged;
+}
+
+export function getActivitiesByCategory(category: ActivityCategory, customs?: Activity[]): Activity[] {
+  return getAllActivities(customs).filter((a) => a.category === category);
+}
+
+export function getActivityById(id: string, customs?: Activity[]): Activity | undefined {
+  return getAllActivities(customs).find((a) => a.id === id);
 }
 
 export const CATEGORY_ORDER: ActivityCategory[] = [

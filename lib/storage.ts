@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import { ActivityResponse, Session, GuestProfile, UserProfile, SceneAgreement } from '@/types';
+import { ActivityResponse, Session, GuestProfile, UserProfile, SceneAgreement, Activity } from '@/types';
 
 const TOKEN_KEY = 'initiator_token';
 const SESSIONS_KEY = 'local_sessions';
@@ -290,4 +290,24 @@ export async function getSceneAgreements(sessionId: string): Promise<SceneAgreem
 export async function getSceneAgreementByActivity(sessionId: string, activityId: string): Promise<SceneAgreement | null> {
   const list = await getSceneAgreements(sessionId);
   return list.find((a) => a.activityId === activityId) ?? null;
+}
+
+// Custom Activities Storage
+const CUSTOM_ACTIVITIES_KEY = 'custom_activities_list';
+
+export async function getCustomActivities(): Promise<Activity[]> {
+  const raw = await AsyncStorage.getItem(CUSTOM_ACTIVITIES_KEY);
+  if (!raw) return [];
+  return JSON.parse(raw) as Activity[];
+}
+
+export async function saveCustomActivity(activity: Activity): Promise<Activity[]> {
+  const existing = await getCustomActivities();
+  if (!existing.some((a) => a.id === activity.id)) {
+    existing.push(activity);
+    await AsyncStorage.setItem(CUSTOM_ACTIVITIES_KEY, JSON.stringify(existing));
+  }
+  const { registerCustomActivity } = await import('@/data/activities');
+  registerCustomActivity(activity);
+  return existing;
 }
