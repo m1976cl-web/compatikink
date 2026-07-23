@@ -38,6 +38,7 @@ export default function HomeScreen() {
   const [quickGuestNick, setQuickGuestNick] = useState('');
   const [quickGuestNotes, setQuickGuestNotes] = useState('');
   const [creatingInvite, setCreatingInvite] = useState(false);
+  const [expiryOption, setExpiryOption] = useState<'24h' | '7d' | 'none'>('7d');
 
   // Poly Comparator
   const [showPolyComparator, setShowPolyComparator] = useState(false);
@@ -99,7 +100,16 @@ export default function HomeScreen() {
     setCreatingInvite(true);
     try {
       const guestNotesObj = { nickname: quickGuestNick.trim(), notes: quickGuestNotes.trim() };
-      const session = await createLocalSession(profile.nickname, profile.baseResponses, profile);
+
+      // Compute expiration date
+      let expiresAt: string | undefined;
+      if (expiryOption === '24h') {
+        expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      } else if (expiryOption === '7d') {
+        expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      }
+
+      const session = await createLocalSession(profile.nickname, profile.baseResponses, profile, expiresAt);
       // Save private guest notes if any
       const { saveGuestProfile } = await import('@/lib/storage');
       await saveGuestProfile(session.id, guestNotesObj);
@@ -282,6 +292,25 @@ export default function HomeScreen() {
               numberOfLines={3}
             />
 
+            <Text style={styles.label}>⏳ Expiración del código</Text>
+            <View style={styles.expiryRow}>
+              {([
+                { label: '24 horas', value: '24h' as const },
+                { label: '7 días', value: '7d' as const },
+                { label: 'Sin límite', value: 'none' as const },
+              ] as const).map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.expiryChip, expiryOption === opt.value && styles.expiryChipActive]}
+                  onPress={() => setExpiryOption(opt.value)}
+                >
+                  <Text style={[styles.expiryChipText, expiryOption === opt.value && styles.expiryChipTextActive]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <View style={styles.formRow}>
               <Button
                 title={creatingInvite ? 'Creando...' : 'Crear Código'}
@@ -299,6 +328,7 @@ export default function HomeScreen() {
           </View>
         )}
       </View>
+
 
       {/* Edit Responses */}
       <View style={styles.card}>
@@ -357,6 +387,7 @@ export default function HomeScreen() {
               const partner = isInitiator ? (s.guestNickname || 'Invitado') : (s.initiatorNickname || 'Iniciador');
               const isComplete = s.status === 'complete';
               const isWaiting = s.status === 'waiting';
+              const isExpired = !isComplete && s.expiresAt ? new Date(s.expiresAt) < new Date() : false;
 
               // Time-ago helper
               const timeAgo = (iso?: string) => {
@@ -371,12 +402,33 @@ export default function HomeScreen() {
                 return `hace ${days}d`;
               };
 
-              const statusLabel = isComplete
+              // Time-until helper (for future dates)
+              const timeUntil = (iso?: string) => {
+                if (!iso) return null;
+                const diff = new Date(iso).getTime() - Date.now();
+                if (diff <= 0) return null;
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+                if (hours < 24) return `Expira en ${hours}h`;
+                return `Expira en ${days}d`;
+              };
+
+              const statusLabel = isExpired
+                ? '🚫 Expirada'
+                : isComplete
                 ? `✅ Completado ${timeAgo(s.completedAt)}`
                 : isWaiting
                 ? `⏳ Esperando respuesta`
                 : '📝 Borrador';
-              const statusColor = isComplete ? colors.success : isWaiting ? colors.warning : colors.textMuted;
+              const statusColor = isExpired
+                ? colors.danger
+                : isComplete
+                ? colors.success
+                : isWaiting
+                ? colors.warning
+                : colors.textMuted;
+
+              const expiryLabel = !isComplete && !isExpired ? timeUntil(s.expiresAt) : null;
 
               return (
                 <View key={s.id} style={styles.sessionCard}>
@@ -396,6 +448,8 @@ export default function HomeScreen() {
                       <Text style={styles.sessionDetails}>
                         Código: <Text style={{ fontWeight: '700', letterSpacing: 1 }}>{s.inviteCode}</Text>
                         {!isComplete && isWaiting ? ' · Compartir para recibir respuestas' : ''}
+                        {expiryLabel ? <Text style={{ color: colors.warning }}>{`\n${expiryLabel}`}</Text> : null}
+                        {isExpired ? <Text style={{ color: colors.danger }}>{'\nCódigo ya no válido'}</Text> : null}
                       </Text>
                     </View>
                     <View style={styles.sessionActions}>
@@ -691,6 +745,34 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 22,
     paddingLeft: spacing.sm,
+  },
+
+  // Expiry picker chips
+  expiryRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  expiryChip: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceLight,
+  },
+  expiryChipActive: {
+    borderColor: colors.warning,
+    backgroundColor: 'rgba(251, 191, 36, 0.12)',
+  },
+  expiryChipText: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  expiryChipTextActive: {
+    color: colors.warning,
+    fontWeight: '700',
   },
 
   quickProfileCard: {

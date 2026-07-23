@@ -78,6 +78,17 @@ export default function InviteScreen() {
 
   const isComplete = session.status === 'complete';
 
+  // Expiry countdown
+  const expiryText = (() => {
+    if (!session.expiresAt) return null;
+    const diff = new Date(session.expiresAt).getTime() - Date.now();
+    if (diff <= 0) return '🚫 Código expirado';
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (hours < 24) return `⏳ Expira en ${hours}h`;
+    return `⏳ Expira en ${days} día${days > 1 ? 's' : ''}`;
+  })();
+
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -91,6 +102,11 @@ export default function InviteScreen() {
           <Text style={styles.codeLabel}>CÓDIGO DE INVITACIÓN</Text>
           <Text style={styles.code}>{session.inviteCode}</Text>
           <Text style={styles.codeHint}>Solo funciona una vez · Privado</Text>
+          {expiryText ? (
+            <Text style={[styles.codeHint, { color: expiryText.startsWith('🚫') ? colors.danger : colors.warning, marginTop: 4 }]}>
+              {expiryText}
+            </Text>
+          ) : null}
         </View>
 
         {/* Quick Share Buttons */}

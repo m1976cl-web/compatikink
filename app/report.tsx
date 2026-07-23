@@ -132,13 +132,26 @@ export default function ReportScreen() {
             <Stat value={report.conflictCount} label="Atención" color={colors.warning} />
           </View>
 
-          {/* Social Share Trigger */}
-          <TouchableOpacity
-            style={styles.shareCardTrigger}
-            onPress={() => setShowShareModal(true)}
-          >
-            <Text style={styles.shareCardTriggerText}>📸 Generar Tarjeta de Infografía</Text>
-          </TouchableOpacity>
+          {/* Export PDF and Social Share Triggers */}
+          <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <TouchableOpacity
+              style={styles.shareCardTrigger}
+              onPress={() => setShowShareModal(true)}
+            >
+              <Text style={styles.shareCardTriggerText}>📸 Tarjeta Infografía</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.shareCardTrigger, { borderColor: colors.secondary, backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}
+              onPress={() => {
+                import('@/lib/exportPDF').then(({ exportReportAsPDF }) => {
+                  exportReportAsPDF(report, 'Tú', guestName);
+                });
+              }}
+            >
+              <Text style={[styles.shareCardTriggerText, { color: '#60a5fa' }]}>📄 Exportar PDF</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {guestProfile ? (

@@ -48,7 +48,8 @@ async function saveLocalSessions(sessions: Record<string, Session>): Promise<voi
 export async function createLocalSession(
   initiatorNickname: string,
   initiatorResponses: ActivityResponse[],
-  initiatorProfile?: UserProfile
+  initiatorProfile?: UserProfile,
+  expiresAt?: string
 ): Promise<Session> {
   const token = generateToken();
   const session: Session = {
@@ -61,6 +62,7 @@ export async function createLocalSession(
     guestResponses: null,
     status: 'waiting',
     createdAt: new Date().toISOString(),
+    expiresAt,
   };
 
   const sessions = await loadLocalSessions();
@@ -77,6 +79,12 @@ export async function createLocalSession(
   }
 
   return session;
+}
+
+// Returns true if the session has an expiration date that is in the past
+export function isSessionExpired(session: Session): boolean {
+  if (!session.expiresAt) return false;
+  return new Date(session.expiresAt) < new Date();
 }
 
 export async function getLocalSessionByToken(token: string): Promise<Session | null> {

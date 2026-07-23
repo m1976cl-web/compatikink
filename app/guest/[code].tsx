@@ -63,6 +63,9 @@ export default function GuestQuestionnaireScreen() {
       } else if (session.status === 'complete') {
         setValid(false);
         Alert.alert('Sesión cerrada', 'Esta invitación ya fue completada.');
+      } else if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
+        setValid(false);
+        Alert.alert('Código expirado', 'Esta invitación ya no es válida. Pide a la otra persona que genere una nueva.');
       } else {
         setValid(true);
       }

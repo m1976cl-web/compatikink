@@ -56,6 +56,7 @@ export interface Session {
   status: SessionStatus;
   createdAt: string;
   completedAt?: string;
+  expiresAt?: string; // ISO string — undefined means no expiration
 }
 
 export interface GuestProfile {
