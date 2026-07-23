@@ -17,6 +17,7 @@ import {
 import { UserProfile, Session, EXPERIENCE_LABELS, SceneAgreement } from '@/types';
 import { PolyComparatorModal } from '@/components/PolyComparatorModal';
 import { OnboardingOverlay } from '@/components/OnboardingOverlay';
+import { RegisterProfileModal } from '@/components/RegisterProfileModal';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -40,8 +41,9 @@ export default function HomeScreen() {
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [expiryOption, setExpiryOption] = useState<'24h' | '7d' | 'none'>('7d');
 
-  // Poly Comparator
+  // Modals
   const [showPolyComparator, setShowPolyComparator] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   useEffect(() => {
     loadHomeData();
@@ -149,12 +151,27 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      {/* ⚡ Quick Profile CTA — Primary action */}
+      {/* 👤 Register Personal Profile Button */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(59, 130, 246, 0.4)', backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}
+        onPress={() => setShowRegisterModal(true)}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>👤</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Crear Perfil Personal</Text>
+            <Text style={[styles.quickProfileDesc, { color: '#60a5fa' }]}>Registra tu nombre + PIN de 4 dígitos</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: '#60a5fa' }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* ⚡ Quick Profile CTA — Secondary action */}
       <TouchableOpacity style={styles.quickProfileCard} onPress={() => router.push('/quick-profile')}>
         <View style={styles.quickProfileInner}>
           <Text style={styles.quickProfileEmoji}>⚡</Text>
           <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Crear Perfil Rápido</Text>
+            <Text style={styles.quickProfileTitle}>Perfil Rápido (10 Preguntas)</Text>
             <Text style={styles.quickProfileDesc}>Solo 10 preguntas · ~2 minutos · Privado</Text>
           </View>
           <Text style={styles.quickProfileArrow}>›</Text>
@@ -527,10 +544,16 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <OnboardingOverlay onDone={() => {}} />
+      <RegisterProfileModal
+        visible={showRegisterModal}
+        onClose={() => setShowRegisterModal(false)}
+        onSuccess={() => loadHomeData()}
+      />
       {profile ? renderDashboard() : renderLanding()}
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   safe: {
