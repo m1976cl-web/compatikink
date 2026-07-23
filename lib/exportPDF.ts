@@ -210,3 +210,71 @@ export function exportReportAsPDF(
   // Small delay so fonts load
   setTimeout(() => win.print(), 600);
 }
+
+/**
+ * Generates a clean PDF document specifically for a Scene Agreement / Safewords Contract
+ */
+export function exportSceneAgreementPDF(agreement: any, partnerName: string): void {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') {
+    alert('La exportación PDF solo está disponible en la versión web.');
+    return;
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Acuerdo de Escena — ${agreement.activityName}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+    body { font-family: 'Inter', sans-serif; background: #0f0a1e; color: #e2d9f3; padding: 32px; max-width: 600px; margin: 0 auto; }
+    h1 { color: #c084fc; font-size: 24px; font-weight: 900; margin-bottom: 4px; }
+    .sub { color: #9ca3af; font-size: 12px; margin-bottom: 24px; }
+    .box { background: #1a1030; border: 1.5px solid rgba(192,132,252,0.3); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+    .safeword { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; font-weight: 700; font-size: 14px; }
+    .sg { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+    .sy { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .sr { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+    .lbl { color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .val { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 12px; }
+    @media print {
+      body { background: white !important; color: #111 !important; }
+      .box { background: #f9f9f9 !important; border-color: #ddd !important; }
+      .val { color: #111 !important; }
+    }
+  </style>
+</head>
+<body>
+  <h1>📜 Acuerdo de Escena: ${agreement.activityName}</h1>
+  <p class="sub">Acuerdo consensuado con ${partnerName} · Generado el ${new Date().toLocaleDateString('es-ES')}</p>
+
+  <div class="box">
+    <div class="lbl">Palabras Clave (Safewords)</div>
+    <div class="safeword sg"><span>🟢 Verde (Seguir)</span> <span>${agreement.safewordGreen || 'VERDE'}</span></div>
+    <div class="safeword sy"><span>🟡 Amarillo (Bajar ritmo)</span> <span>${agreement.safewordYellow || 'AMARILLO'}</span></div>
+    <div class="safeword sr"><span>🔴 Rojo (Detener de inmediato)</span> <span>${agreement.safewordRed || 'ROJO'}</span></div>
+  </div>
+
+  <div class="box">
+    ${agreement.nonVerbalSignal ? `<div class="lbl">Señal No Verbal</div><div class="val">${agreement.nonVerbalSignal}</div>` : ''}
+    ${agreement.durationLimit ? `<div class="lbl">Duración Máxima</div><div class="val">${agreement.durationLimit}</div>` : ''}
+    ${agreement.agreedLimits ? `<div class="lbl">Límites Estrictos Negociados</div><div class="val">${agreement.agreedLimits}</div>` : ''}
+  </div>
+
+  <div style="text-align:center;font-size:10px;color:#6b7280;margin-top:24px;">
+    Documento de consentimiento privado · Compatikink
+  </div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) {
+    alert('Permite ventanas emergentes para exportar el acuerdo.');
+    return;
+  }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 600);
+}
+

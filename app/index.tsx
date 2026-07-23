@@ -13,11 +13,15 @@ import {
   listMyLocalSessions,
   createLocalSession,
   getAllSceneAgreements,
+  panicWipeData,
 } from '@/lib/storage';
 import { UserProfile, Session, EXPERIENCE_LABELS, SceneAgreement } from '@/types';
 import { PolyComparatorModal } from '@/components/PolyComparatorModal';
 import { OnboardingOverlay } from '@/components/OnboardingOverlay';
 import { RegisterProfileModal } from '@/components/RegisterProfileModal';
+import { CommunityTrendsModal } from '@/components/CommunityTrendsModal';
+import { SceneDebriefModal } from '@/components/SceneDebriefModal';
+import { exportSceneAgreementPDF } from '@/lib/exportPDF';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -44,6 +48,31 @@ export default function HomeScreen() {
   // Modals
   const [showPolyComparator, setShowPolyComparator] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showTrendsModal, setShowTrendsModal] = useState(false);
+  const [debriefTarget, setDebriefTarget] = useState<{ sessionId: string; activityId: string; activityName: string } | null>(null);
+
+  const handlePanicWipe = () => {
+    Alert.alert(
+      '🛡️ Borrado de Emergencia (Pánico)',
+      '¿Estás seguro/a? Se eliminarán inmediatamente todas las sesiones, perfiles y acuerdos guardados en este dispositivo.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sí, borrar todo ahora',
+          style: 'destructive',
+          onPress: async () => {
+            await panicWipeData();
+            setProfile(null);
+            setSessions([]);
+            setProfilesList([]);
+            setSceneAgreements([]);
+            Alert.alert('Datos Eliminados', 'El historial y los perfiles han sido borrados por completo.');
+            await loadHomeData();
+          },
+        },
+      ]
+    );
+  };
 
   useEffect(() => {
     loadHomeData();
@@ -412,8 +441,24 @@ export default function HomeScreen() {
                         🟢 {ag.safewordGreen} · 🟡 {ag.safewordYellow} · 🔴 {ag.safewordRed}
                       </Text>
                     </View>
-                    <Text style={styles.sceneAgreementArrow}>›</Text>
+
+                    <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                      <TouchableOpacity
+                        style={[styles.sessionActionBtn, { backgroundColor: 'rgba(192, 132, 252, 0.15)', borderRadius: 8 }]}
+                        onPress={() => setDebriefTarget({ sessionId: ag.sessionId, activityId: ag.activityId, activityName: ag.activityName })}
+                      >
+                        <Text style={{ color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '700' }}>📝 Debrief</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.sessionActionBtn, { backgroundColor: 'rgba(96, 165, 250, 0.15)', borderRadius: 8 }]}
+                        onPress={() => exportSceneAgreementPDF(ag, partner)}
+                      >
+                        <Text style={{ color: colors.info, fontSize: fontSize.xs, fontWeight: '700' }}>📄 PDF</Text>
+                      </TouchableOpacity>
+                    </View>
                   </TouchableOpacity>
+
                 ))}
               </View>
             );
@@ -532,12 +577,41 @@ export default function HomeScreen() {
         />
       ) : null}
 
+      <Button
+        title="📊 Radar de Tendencias de la Comunidad"
+        variant="secondary"
+        onPress={() => setShowTrendsModal(true)}
+      />
+
+      <Button
+        title="🛡️ Borrado de Emergencia / Pánico"
+        variant="ghost"
+        onPress={handlePanicWipe}
+        style={{ marginTop: spacing.sm }}
+      />
+
       <PolyComparatorModal
         visible={showPolyComparator}
         onClose={() => setShowPolyComparator(false)}
         sessions={sessions}
         currentProfile={profile!}
       />
+
+      <CommunityTrendsModal
+        visible={showTrendsModal}
+        onClose={() => setShowTrendsModal(false)}
+      />
+
+      {debriefTarget ? (
+        <SceneDebriefModal
+          visible={Boolean(debriefTarget)}
+          onClose={() => setDebriefTarget(null)}
+          sessionId={debriefTarget.sessionId}
+          activityId={debriefTarget.activityId}
+          activityName={debriefTarget.activityName}
+        />
+      ) : null}
+
     </ScrollView>
   );
 

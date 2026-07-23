@@ -333,3 +333,49 @@ export async function getAllSceneAgreements(): Promise<{ sessionId: string; agre
   }
   return result;
 }
+
+// 🛡️ Panic / Emergency Wipe
+export async function panicWipeData(): Promise<void> {
+  const keys = await AsyncStorage.getAllKeys();
+  const keysToRemove = keys.filter(
+    (k) =>
+      k.startsWith('initiator_') ||
+      k.startsWith('local_sessions') ||
+      k.startsWith('scene_agreements_') ||
+      k.startsWith('local_user_profiles') ||
+      k.startsWith('current_profile_') ||
+      k.startsWith('scene_debriefs_') ||
+      k.startsWith('guest_draft_')
+  );
+  if (keysToRemove.length > 0) {
+    await AsyncStorage.multiRemove(keysToRemove);
+  }
+}
+
+// 📝 Scene Debrief / Aftercare Log Storage
+export interface SceneDebrief {
+  id: string;
+  sessionId: string;
+  activityId: string;
+  activityName: string;
+  ratingStars: number; // 1-5
+  safewordsRespected: boolean;
+  aftercareRating: number; // 1-5
+  notes?: string;
+  createdAt: string;
+}
+
+const SCENE_DEBRIEFS_PREFIX = 'scene_debriefs_';
+
+export async function saveSceneDebrief(debrief: SceneDebrief): Promise<void> {
+  const existing = await getSceneDebriefs(debrief.sessionId);
+  const updated = existing.filter((d) => d.id !== debrief.id);
+  updated.push(debrief);
+  await AsyncStorage.setItem(`${SCENE_DEBRIEFS_PREFIX}${debrief.sessionId}`, JSON.stringify(updated));
+}
+
+export async function getSceneDebriefs(sessionId: string): Promise<SceneDebrief[]> {
+  const raw = await AsyncStorage.getItem(`${SCENE_DEBRIEFS_PREFIX}${sessionId}`);
+  if (!raw) return [];
+  return JSON.parse(raw) as SceneDebrief[];
+}
