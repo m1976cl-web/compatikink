@@ -241,12 +241,13 @@ export async function registerProfile(profile: UserProfile): Promise<UserProfile
 export async function loginProfile(nickname: string, pin: string): Promise<UserProfile | null> {
   const profile = await getProfile(nickname);
   if (!profile) return null;
-  if (profile.pin === pin) {
+  if (!profile.pin || profile.pin === pin) {
     await setCurrentProfile(profile.nickname);
     return profile;
   }
   return null;
 }
+
 
 export async function logoutProfile(): Promise<void> {
   await setCurrentProfile(null);

@@ -59,8 +59,20 @@ export default function HomeScreen() {
   };
 
   const handleLogin = async () => {
-    if (!loginNick.trim() || !loginPin) {
-      Alert.alert('Datos incompletos', 'Por favor ingresa tu nick y PIN.');
+    if (!loginNick.trim()) {
+      Alert.alert('Datos incompletos', 'Por favor selecciona o ingresa tu nick.');
+      return;
+    }
+    const selectedProfile = profilesList.find((p) => p.nickname.toLowerCase() === loginNick.trim().toLowerCase());
+    if (selectedProfile && !selectedProfile.pin) {
+      const { setCurrentProfile } = await import('@/lib/storage');
+      await setCurrentProfile(selectedProfile.nickname);
+      setLoginPin('');
+      await loadHomeData();
+      return;
+    }
+    if (!loginPin) {
+      Alert.alert('PIN requerido', 'Por favor ingresa tu PIN de seguridad.');
       return;
     }
     const res = await loginProfile(loginNick.trim(), loginPin);
@@ -152,7 +164,7 @@ export default function HomeScreen() {
       {/* Login Card */}
       {profilesList.length > 0 ? (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Inicia Sesión con tu PIN</Text>
+          <Text style={styles.cardTitle}>Inicia Sesión con tu Perfil</Text>
           <View style={styles.profilesRow}>
             {profilesList.map((p) => (
               <TouchableOpacity
@@ -160,26 +172,42 @@ export default function HomeScreen() {
                 style={[styles.profileButton, loginNick === p.nickname && styles.profileButtonActive]}
                 onPress={() => setLoginNick(p.nickname)}
               >
-                <Text style={styles.profileButtonText}>{p.nickname}</Text>
+                <Text style={styles.profileButtonText}>
+                  {p.nickname} {p.pin ? '🔐' : ''}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
-          {loginNick ? (
-            <View style={styles.loginForm}>
-              <Text style={styles.label}>PIN de seguridad para {loginNick}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Introduce tu PIN"
-                placeholderTextColor={colors.textMuted}
-                value={loginPin}
-                onChangeText={setLoginPin}
-                secureTextEntry
-                keyboardType="numeric"
-                maxLength={8}
-              />
-              <Button title="Entrar" onPress={handleLogin} />
-            </View>
-          ) : null}
+          {loginNick ? (() => {
+            const selProfile = profilesList.find((p) => p.nickname.toLowerCase() === loginNick.toLowerCase());
+            const hasPin = selProfile ? Boolean(selProfile.pin) : false;
+
+            return (
+              <View style={styles.loginForm}>
+                {hasPin ? (
+                  <>
+                    <Text style={styles.label}>PIN de seguridad para {loginNick}</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Introduce tu PIN"
+                      placeholderTextColor={colors.textMuted}
+                      value={loginPin}
+                      onChangeText={setLoginPin}
+                      secureTextEntry
+                      keyboardType="numeric"
+                      maxLength={8}
+                    />
+                    <Button title="Entrar" onPress={handleLogin} />
+                  </>
+                ) : (
+                  <>
+                    <Text style={[styles.label, { color: colors.success }]}>✓ Perfil sin PIN (Acceso directo)</Text>
+                    <Button title={`Entrar como ${loginNick} 🚀`} onPress={handleLogin} />
+                  </>
+                )}
+              </View>
+            );
+          })() : null}
         </View>
       ) : null}
 

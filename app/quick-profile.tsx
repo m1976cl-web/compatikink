@@ -14,7 +14,7 @@ import { colors, fontSize, spacing } from '@/constants/theme';
 import { Activity, ActivityResponse, ExperienceLevel, Rating, RolePreference } from '@/types';
 import { QUICK_PROFILE_ACTIVITIES } from '@/data/quickProfile';
 import { createSession } from '@/lib/sessions';
-import { saveProfile, getCurrentProfile } from '@/lib/storage';
+import { saveProfile, getCurrentProfile, setCurrentProfile, getProfile } from '@/lib/storage';
 import { PronounsPicker } from '@/components/PronounsPicker';
 import { ExperiencePicker } from '@/components/ExperiencePicker';
 
@@ -89,28 +89,30 @@ export default function QuickProfileScreen() {
     setSaving(true);
     try {
       const finalResponses = Object.values(responses);
+      const cleanNick = nickname.trim();
+      const existing = await getProfile(cleanNick);
 
       // Save profile locally
       const profile = {
-        nickname: nickname.trim(),
-        pronouns: pronouns || undefined,
-        experienceLevel,
-        pin: pin || undefined,
+        nickname: cleanNick,
+        pronouns: pronouns || existing?.pronouns || undefined,
+        experienceLevel: experienceLevel || existing?.experienceLevel,
+        pin: pin.trim() || existing?.pin || undefined,
         baseResponses: finalResponses,
-        createdSessionIds: [],
-        receivedSessionIds: [],
+        createdSessionIds: existing?.createdSessionIds ?? [],
+        receivedSessionIds: existing?.receivedSessionIds ?? [],
         isQuickProfile: true, // flag indicating it can be expanded
       };
       await saveProfile(profile as any);
+      await setCurrentProfile(cleanNick);
 
       // Mark onboarding as seen
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       await AsyncStorage.setItem('onboarding_done', 'true');
-      await AsyncStorage.setItem('current_profile_nickname', nickname.trim());
 
       Alert.alert(
         '¡Perfil Creado! 🎉',
-        `¡Bienvenido/a, ${nickname.trim()}! Tu perfil rápido está listo. Puedes ampliar tus respuestas cuando quieras desde el Dashboard.`,
+        `¡Bienvenido/a, ${cleanNick}! Tu perfil rápido está listo. Puedes ampliar tus respuestas cuando quieras desde el Dashboard.`,
         [{ text: 'Continuar', onPress: () => router.replace('/') }]
       );
     } catch (e) {
@@ -119,6 +121,7 @@ export default function QuickProfileScreen() {
       setSaving(false);
     }
   };
+
 
   if (step === 'intro') {
     return (
