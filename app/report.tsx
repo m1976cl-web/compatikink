@@ -7,6 +7,7 @@ import { ReportCard } from '@/components/ReportCard';
 import { CompatibilityInfographic } from '@/components/CompatibilityInfographic';
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { ScenePlannerModal } from '@/components/ScenePlannerModal';
+import { SceneRouletteModal } from '@/components/SceneRouletteModal';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { generateReport } from '@/lib/compatibility';
 import { getSessionByToken, refreshSession } from '@/lib/sessions';
@@ -40,6 +41,7 @@ export default function ReportScreen() {
 
   // New Modals State
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showRouletteModal, setShowRouletteModal] = useState(false);
   const [planningItem, setPlanningItem] = useState<ReportItem | null>(null);
   const [agreements, setAgreements] = useState<SceneAgreement[]>([]);
 
@@ -132,8 +134,15 @@ export default function ReportScreen() {
             <Stat value={report.conflictCount} label="Atención" color={colors.warning} />
           </View>
 
-          {/* Export PDF and Social Share Triggers */}
+          {/* Export PDF, Social Share and Scene Roulette Triggers */}
           <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <TouchableOpacity
+              style={[styles.shareCardTrigger, { borderColor: colors.neonPurple, backgroundColor: 'rgba(192, 132, 252, 0.15)' }]}
+              onPress={() => setShowRouletteModal(true)}
+            >
+              <Text style={[styles.shareCardTriggerText, { color: colors.neonPurple }]}>🎲 Ruleta de Citas</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.shareCardTrigger}
               onPress={() => setShowShareModal(true)}
@@ -213,6 +222,12 @@ export default function ReportScreen() {
           sessionId={report.sessionId}
           item={planningItem}
           onSaved={() => loadAgreements(report.sessionId)}
+        />
+        <SceneRouletteModal
+          visible={showRouletteModal}
+          onClose={() => setShowRouletteModal(false)}
+          report={report}
+          onSelectForPlanning={(selectedItem) => setPlanningItem(selectedItem)}
         />
       </ScrollView>
     </SafeAreaView>

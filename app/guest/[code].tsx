@@ -25,6 +25,7 @@ import { colors, fontSize, spacing } from '@/constants/theme';
 import { CATEGORY_LABELS, ExperienceLevel, UserProfile, ActivityCategory, Rating } from '@/types';
 import { getSessionByInviteCode, submitGuestResponses } from '@/lib/sessions';
 import { CATEGORY_ORDER, ACTIVITIES } from '@/data/activities';
+import { SwipeDeckView } from '@/components/SwipeDeckView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GuestQuestionnaireScreen() {
@@ -272,6 +273,24 @@ function GuestQuestionnaireActiveFlow({
   const q = useQuestionnaire(undefined, enabledCategories);
   const [fastMode, setFastMode] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
+  const [viewMode, setViewMode] = useState<'swipe' | 'list'>('swipe');
+
+  if (viewMode === 'swipe') {
+    return (
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <SwipeDeckView
+          activities={q.activities}
+          responses={q.responses}
+          onResponseChange={(actId, resp) => {
+            q.setRating(resp.rating);
+            if (resp.role) q.setRole(resp.role);
+          }}
+          onFinish={() => onFinish(q.finalResponses)}
+          onSwitchToForm={() => setViewMode('list')}
+        />
+      </SafeAreaView>
+    );
+  }
 
   const handleRatingSelect = (rating: Rating) => {
     q.setRating(rating);

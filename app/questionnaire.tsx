@@ -26,6 +26,7 @@ import { CATEGORY_LABELS, ExperienceLevel, UserProfile, ActivityCategory, Rating
 import { createSession } from '@/lib/sessions';
 import { CATEGORY_ORDER, ACTIVITIES, getAllActivities } from '@/data/activities';
 import { CustomActivityModal } from '@/components/CustomActivityModal';
+import { SwipeDeckView } from '@/components/SwipeDeckView';
 import { getCurrentProfile, saveProfile, getCustomActivities } from '@/lib/storage';
 
 export default function QuestionnaireScreen() {
@@ -223,7 +224,7 @@ export default function QuestionnaireScreen() {
           />
 
           <Button
-            title={`Comenzar (${selectedQuestionsCount} preguntas)`}
+            title={`🃏 Comenzar en Modo Tarjetas Swipe (${selectedQuestionsCount} preguntas)`}
             onPress={() => setStep('questions')}
           />
           <Button
@@ -273,6 +274,24 @@ function QuestionnaireActiveFlow({
   const q = useQuestionnaire(undefined, enabledCategories, customActivities);
   const [fastMode, setFastMode] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
+  const [viewMode, setViewMode] = useState<'swipe' | 'list'>('swipe');
+
+  if (viewMode === 'swipe') {
+    return (
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <SwipeDeckView
+          activities={q.activities}
+          responses={q.responses}
+          onResponseChange={(actId, resp) => {
+            q.setRating(resp.rating);
+            if (resp.role) q.setRole(resp.role);
+          }}
+          onFinish={() => onFinish(q.finalResponses)}
+          onSwitchToForm={() => setViewMode('list')}
+        />
+      </SafeAreaView>
+    );
+  }
 
   const handleRatingSelect = (rating: Rating) => {
     q.setRating(rating);
@@ -307,7 +326,11 @@ function QuestionnaireActiveFlow({
             <TouchableOpacity onPress={onBack} style={styles.backLink}>
               <Text style={styles.backLinkText}>← Salir</Text>
             </TouchableOpacity>
-            
+
+            <TouchableOpacity onPress={() => setViewMode('swipe')} style={styles.modeSwitchBtn}>
+              <Text style={styles.modeSwitchText}>🃏 Modo Tarjetas</Text>
+            </TouchableOpacity>
+
             <View style={styles.fastModeContainer}>
               <Text style={styles.fastModeLabel}>Modo Rápido ⚡</Text>
               <Switch
@@ -318,6 +341,7 @@ function QuestionnaireActiveFlow({
               />
             </View>
           </View>
+
 
           <ProgressBar progress={q.progress} />
           <ProgressLabel current={q.currentIndex + 1} total={q.total} />
@@ -532,6 +556,20 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
+  modeSwitchBtn: {
+    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.4)',
+  },
+  modeSwitchText: {
+    color: colors.neonPurple,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+
   detailsSection: {
     marginTop: spacing.md,
   },
