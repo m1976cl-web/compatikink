@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { CompatibilityReport, CATEGORY_LABELS, EXPERIENCE_LABELS } from '@/types';
 import { CATEGORY_ORDER } from '@/data/activities';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface Props {
   report: CompatibilityReport;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function CompatibilityInfographic({ report, initiatorName, guestName }: Props) {
+  const { isDesktop } = useResponsive();
   const {
     initiatorCompass,
     guestCompass,
@@ -22,184 +24,208 @@ export function CompatibilityInfographic({ report, initiatorName, guestName }: P
     guestProfile,
   } = report;
 
+  const sectionCompass = (
+    <View style={styles.neonCard}>
+      <Text style={styles.neonCardHeader}>🧭 El Compás Kink</Text>
+      <Text style={styles.cardDesc}>
+        Ubicación de ambos en los ejes de Rol (Dominante/Sumiso) e Intensidad/Exploración.
+      </Text>
+
+      <View style={styles.compassContainer}>
+        {/* Glowing quadrant hints */}
+        <View style={[styles.quadrant, styles.quadrantTR]} />
+        <View style={[styles.quadrant, styles.quadrantBL]} />
+
+        {/* Axis Labels */}
+        <Text style={[styles.axisLabel, styles.axisTop]}>⬆ Dom</Text>
+        <Text style={[styles.axisLabel, styles.axisBottom]}>⬇ Sub</Text>
+        <Text style={[styles.axisLabel, styles.axisLeft]}>Vanilla</Text>
+        <Text style={[styles.axisLabel, styles.axisRight]}>Exp</Text>
+
+        {/* Grid lines */}
+        <View style={styles.gridLineX} />
+        <View style={styles.gridLineY} />
+
+        {/* Initiator Dot — Neon Purple Glow */}
+        <View
+          style={[
+            styles.dot,
+            styles.initiatorDot,
+            { left: `${initiatorCompass.x}%`, bottom: `${initiatorCompass.y}%` },
+          ]}
+        >
+          <View style={styles.initiatorGlow} />
+          <Text style={[styles.dotLabel, styles.initiatorLabel]}>
+            {initiatorProfile?.nickname || initiatorName || 'Tú'}
+          </Text>
+        </View>
+
+        {/* Guest Dot — Neon Pink Glow */}
+        <View
+          style={[
+            styles.dot,
+            styles.guestDot,
+            { left: `${guestCompass.x}%`, bottom: `${guestCompass.y}%` },
+          ]}
+        >
+          <View style={styles.guestGlow} />
+          <Text style={[styles.dotLabel, styles.guestLabel]}>
+            {guestProfile?.nickname || guestName || 'Invitado'}
+          </Text>
+        </View>
+      </View>
+
+      {/* Compass Legend */}
+      <View style={styles.legendRow}>
+        <View style={styles.legendItem}>
+          <View style={styles.legendDotPurple} />
+          <Text style={styles.legendText}>{initiatorProfile?.nickname || initiatorName || 'Tú'}</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={styles.legendDotPink} />
+          <Text style={styles.legendText}>{guestProfile?.nickname || guestName || 'Invitado'}</Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  const sectionArchetypes = (
+    <View style={styles.neonCard}>
+      <Text style={styles.neonCardHeader}>✨ Arquetipos Kink</Text>
+      <View style={styles.archetypeRow}>
+        {/* Initiator Card */}
+        <View style={[styles.archetypeBox, styles.archetypeBoxInit]}>
+          <View style={styles.archetypeGlowBorder} />
+          <Text style={styles.archetypeUser}>{initiatorProfile?.nickname || initiatorName || 'Tú'}</Text>
+          {initiatorProfile?.pronouns ? (
+            <Text style={styles.badgeText}>{initiatorProfile.pronouns}</Text>
+          ) : null}
+          <Text style={styles.archetypeValue}>{initiatorArchetype}</Text>
+
+          {initiatorProfile?.experienceLevel ? (
+            <View style={styles.experienceTag}>
+              <Text style={styles.experienceTagText}>
+                {EXPERIENCE_LABELS[initiatorProfile.experienceLevel]}
+              </Text>
+            </View>
+          ) : null}
+
+          {initiatorProfile?.notes ? (
+            <Text style={styles.profileBio}>"{initiatorProfile.notes}"</Text>
+          ) : null}
+        </View>
+
+        {/* VS divider */}
+        <View style={styles.vsDivider}>
+          <Text style={styles.vsText}>VS</Text>
+        </View>
+
+        {/* Guest Card */}
+        <View style={[styles.archetypeBox, styles.archetypeBoxGuest]}>
+          <Text style={styles.archetypeUser}>{guestProfile?.nickname || guestName || 'Invitado'}</Text>
+          {guestProfile?.pronouns ? (
+            <Text style={styles.badgeText}>{guestProfile.pronouns}</Text>
+          ) : null}
+          <Text style={[styles.archetypeValue, styles.archetypeValuePink]}>{guestArchetype}</Text>
+
+          {guestProfile?.experienceLevel ? (
+            <View style={styles.experienceTag}>
+              <Text style={styles.experienceTagText}>
+                {EXPERIENCE_LABELS[guestProfile.experienceLevel]}
+              </Text>
+            </View>
+          ) : null}
+
+          {guestProfile?.notes ? (
+            <Text style={styles.profileBio}>"{guestProfile.notes}"</Text>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  );
+
+  const sectionInterests = (
+    <View style={styles.neonCard}>
+      <Text style={styles.neonCardHeader}>🔗 Conexión de Intereses</Text>
+      <Text style={styles.cardDesc}>
+        Distribución de las actividades en las que se expresó interés activo.
+      </Text>
+
+      <View style={styles.vennBar}>
+        <View style={[styles.vennSegment, styles.segmentLeft, { flex: Math.max(1, overlapStats.initiatorOnlyCount) }]}>
+          <Text style={styles.vennNum}>{overlapStats.initiatorOnlyCount}</Text>
+          <Text style={styles.vennLabel} numberOfLines={1}>Solo Tú</Text>
+        </View>
+        <View style={[styles.vennSegment, styles.segmentCenter, { flex: Math.max(1, overlapStats.sharedCount) }]}>
+          <Text style={[styles.vennNum, styles.vennNumGlow]}>{overlapStats.sharedCount}</Text>
+          <Text style={styles.vennLabel} numberOfLines={1}>Mutuos 🔥</Text>
+        </View>
+        <View style={[styles.vennSegment, styles.segmentRight, { flex: Math.max(1, overlapStats.guestOnlyCount) }]}>
+          <Text style={styles.vennNum}>{overlapStats.guestOnlyCount}</Text>
+          <Text style={styles.vennLabel} numberOfLines={1}>Solo Ellos</Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  const sectionCategories = (
+    <View style={styles.neonCard}>
+      <Text style={styles.neonCardHeader}>📊 Compatibilidad por Categorías</Text>
+      <View style={styles.categoryList}>
+        {CATEGORY_ORDER.map((cat) => {
+          const pct = categoryCompatibilities[cat] ?? 100;
+          let barColor = colors.neonGreen;
+          if (pct < 40) barColor = colors.danger;
+          else if (pct < 75) barColor = colors.warning;
+
+          return (
+            <View key={cat} style={styles.categoryItem}>
+              <View style={styles.categoryHeader}>
+                <Text style={styles.categoryName}>{CATEGORY_LABELS[cat]}</Text>
+                <Text style={[styles.categoryPct, { color: barColor }]}>{pct}%</Text>
+              </View>
+              <View style={styles.progressBarBg}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    {
+                      width: `${pct}%`,
+                      backgroundColor: barColor,
+                      shadowColor: barColor,
+                      shadowOpacity: 0.6,
+                      shadowRadius: 4,
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+
+  if (isDesktop) {
+    return (
+      <View style={styles.desktopGrid}>
+        <View style={styles.desktopColLeft}>
+          {sectionCompass}
+          {sectionArchetypes}
+        </View>
+        <View style={styles.desktopColRight}>
+          {sectionInterests}
+          {sectionCategories}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* 1. Compás Kink — Redesigned with Neon Glow */}
-      <View style={styles.neonCard}>
-        <Text style={styles.neonCardHeader}>🧭 El Compás Kink</Text>
-        <Text style={styles.cardDesc}>
-          Ubicación de ambos en los ejes de Rol (Dominante/Sumiso) e Intensidad/Exploración.
-        </Text>
-
-        <View style={styles.compassContainer}>
-          {/* Glowing quadrant hints */}
-          <View style={[styles.quadrant, styles.quadrantTR]} />
-          <View style={[styles.quadrant, styles.quadrantBL]} />
-
-          {/* Axis Labels */}
-          <Text style={[styles.axisLabel, styles.axisTop]}>⬆ Dom</Text>
-          <Text style={[styles.axisLabel, styles.axisBottom]}>⬇ Sub</Text>
-          <Text style={[styles.axisLabel, styles.axisLeft]}>Vanilla</Text>
-          <Text style={[styles.axisLabel, styles.axisRight]}>Exp</Text>
-
-          {/* Grid lines */}
-          <View style={styles.gridLineX} />
-          <View style={styles.gridLineY} />
-
-          {/* Initiator Dot — Neon Purple Glow */}
-          <View
-            style={[
-              styles.dot,
-              styles.initiatorDot,
-              { left: `${initiatorCompass.x}%`, bottom: `${initiatorCompass.y}%` },
-            ]}
-          >
-            <View style={styles.initiatorGlow} />
-            <Text style={[styles.dotLabel, styles.initiatorLabel]}>
-              {initiatorProfile?.nickname || initiatorName || 'Tú'}
-            </Text>
-          </View>
-
-          {/* Guest Dot — Neon Pink Glow */}
-          <View
-            style={[
-              styles.dot,
-              styles.guestDot,
-              { left: `${guestCompass.x}%`, bottom: `${guestCompass.y}%` },
-            ]}
-          >
-            <View style={styles.guestGlow} />
-            <Text style={[styles.dotLabel, styles.guestLabel]}>
-              {guestProfile?.nickname || guestName || 'Invitado'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Compass Legend */}
-        <View style={styles.legendRow}>
-          <View style={styles.legendItem}>
-            <View style={styles.legendDotPurple} />
-            <Text style={styles.legendText}>{initiatorProfile?.nickname || initiatorName || 'Tú'}</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={styles.legendDotPink} />
-            <Text style={styles.legendText}>{guestProfile?.nickname || guestName || 'Invitado'}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* 2. Perfiles y Arquetipos — Glassmorphism */}
-      <View style={styles.neonCard}>
-        <Text style={styles.neonCardHeader}>✨ Arquetipos Kink</Text>
-        <View style={styles.archetypeRow}>
-          {/* Initiator Card */}
-          <View style={[styles.archetypeBox, styles.archetypeBoxInit]}>
-            <View style={styles.archetypeGlowBorder} />
-            <Text style={styles.archetypeUser}>{initiatorProfile?.nickname || initiatorName || 'Tú'}</Text>
-            {initiatorProfile?.pronouns ? (
-              <Text style={styles.badgeText}>{initiatorProfile.pronouns}</Text>
-            ) : null}
-            <Text style={styles.archetypeValue}>{initiatorArchetype}</Text>
-
-            {initiatorProfile?.experienceLevel ? (
-              <View style={styles.experienceTag}>
-                <Text style={styles.experienceTagText}>
-                  {EXPERIENCE_LABELS[initiatorProfile.experienceLevel]}
-                </Text>
-              </View>
-            ) : null}
-
-            {initiatorProfile?.notes ? (
-              <Text style={styles.profileBio}>"{initiatorProfile.notes}"</Text>
-            ) : null}
-          </View>
-
-          {/* VS divider */}
-          <View style={styles.vsDivider}>
-            <Text style={styles.vsText}>VS</Text>
-          </View>
-
-          {/* Guest Card */}
-          <View style={[styles.archetypeBox, styles.archetypeBoxGuest]}>
-            <Text style={styles.archetypeUser}>{guestProfile?.nickname || guestName || 'Invitado'}</Text>
-            {guestProfile?.pronouns ? (
-              <Text style={styles.badgeText}>{guestProfile.pronouns}</Text>
-            ) : null}
-            <Text style={[styles.archetypeValue, styles.archetypeValuePink]}>{guestArchetype}</Text>
-
-            {guestProfile?.experienceLevel ? (
-              <View style={styles.experienceTag}>
-                <Text style={styles.experienceTagText}>
-                  {EXPERIENCE_LABELS[guestProfile.experienceLevel]}
-                </Text>
-              </View>
-            ) : null}
-
-            {guestProfile?.notes ? (
-              <Text style={styles.profileBio}>"{guestProfile.notes}"</Text>
-            ) : null}
-          </View>
-        </View>
-      </View>
-
-      {/* 3. Conexión de Intereses */}
-      <View style={styles.neonCard}>
-        <Text style={styles.neonCardHeader}>🔗 Conexión de Intereses</Text>
-        <Text style={styles.cardDesc}>
-          Distribución de las actividades en las que se expresó interés activo.
-        </Text>
-
-        <View style={styles.vennBar}>
-          <View style={[styles.vennSegment, styles.segmentLeft, { flex: Math.max(1, overlapStats.initiatorOnlyCount) }]}>
-            <Text style={styles.vennNum}>{overlapStats.initiatorOnlyCount}</Text>
-            <Text style={styles.vennLabel} numberOfLines={1}>Solo Tú</Text>
-          </View>
-          <View style={[styles.vennSegment, styles.segmentCenter, { flex: Math.max(1, overlapStats.sharedCount) }]}>
-            <Text style={[styles.vennNum, styles.vennNumGlow]}>{overlapStats.sharedCount}</Text>
-            <Text style={styles.vennLabel} numberOfLines={1}>Mutuos 🔥</Text>
-          </View>
-          <View style={[styles.vennSegment, styles.segmentRight, { flex: Math.max(1, overlapStats.guestOnlyCount) }]}>
-            <Text style={styles.vennNum}>{overlapStats.guestOnlyCount}</Text>
-            <Text style={styles.vennLabel} numberOfLines={1}>Solo Ellos</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* 4. Compatibilidad por Categorías — Neon Progress Bars */}
-      <View style={styles.neonCard}>
-        <Text style={styles.neonCardHeader}>📊 Compatibilidad por Categorías</Text>
-        <View style={styles.categoryList}>
-          {CATEGORY_ORDER.map((cat) => {
-            const pct = categoryCompatibilities[cat] ?? 100;
-            let barColor = colors.neonGreen;
-            if (pct < 40) barColor = colors.danger;
-            else if (pct < 75) barColor = colors.warning;
-
-            return (
-              <View key={cat} style={styles.categoryItem}>
-                <View style={styles.categoryHeader}>
-                  <Text style={styles.categoryName}>{CATEGORY_LABELS[cat]}</Text>
-                  <Text style={[styles.categoryPct, { color: barColor }]}>{pct}%</Text>
-                </View>
-                <View style={styles.progressBarBg}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${pct}%`,
-                        backgroundColor: barColor,
-                        shadowColor: barColor,
-                        shadowOpacity: 0.6,
-                        shadowRadius: 4,
-                      },
-                    ]}
-                  />
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      </View>
+      {sectionCompass}
+      {sectionArchetypes}
+      {sectionInterests}
+      {sectionCategories}
     </View>
   );
 }
@@ -208,6 +234,20 @@ const styles = StyleSheet.create({
   container: {
     gap: spacing.lg,
     marginBottom: spacing.lg,
+  },
+  desktopGrid: {
+    flexDirection: 'row',
+    gap: 24,
+    alignItems: 'flex-start',
+    marginBottom: spacing.lg,
+  },
+  desktopColLeft: {
+    flex: 1,
+    gap: spacing.lg,
+  },
+  desktopColRight: {
+    flex: 1,
+    gap: spacing.lg,
   },
   neonCard: {
     backgroundColor: colors.surface,
@@ -262,8 +302,8 @@ const styles = StyleSheet.create({
   },
   axisLabel: {
     position: 'absolute',
-    color: 'rgba(192, 132, 252, 0.6)',
-    fontSize: 9,
+    color: colors.neonPurple,
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -316,7 +356,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(244, 114, 182, 0.3)',
   },
   dotLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     position: 'absolute',
     top: 16,
@@ -359,8 +399,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neonPink,
   },
   legendText: {
-    color: colors.textMuted,
-    fontSize: 11,
+    color: colors.text,
+    fontSize: 12,
     fontWeight: '600',
   },
   archetypeRow: {
@@ -412,7 +452,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: colors.textMuted,
-    fontSize: 10,
+    fontSize: 11,
     marginBottom: 6,
   },
   archetypeValue: {
@@ -440,7 +480,7 @@ const styles = StyleSheet.create({
   },
   experienceTagText: {
     color: colors.neonPurple,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -493,7 +533,7 @@ const styles = StyleSheet.create({
   },
   vennLabel: {
     color: colors.textMuted,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
     marginTop: 2,

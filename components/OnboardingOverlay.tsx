@@ -166,7 +166,6 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.border,
-    transition: 'all 0.3s',
   },
   emoji: {
     fontSize: 60,

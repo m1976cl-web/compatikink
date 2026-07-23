@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# compatikink
-=======
 # CompatKink — App móvil de compatibilidad
 
 App móvil (iOS + Android) para explorar compatibilidad de preferencias de forma **privada y asimétrica**:
@@ -84,4 +81,3 @@ eas build --platform ios
 ## Aviso legal
 
 Solo para mayores de 18 años. Herramienta de comunicación consensuada, no sustituye conversación ni consejo profesional.
->>>>>>> 82236ce (initial_commit_for_compatikink)

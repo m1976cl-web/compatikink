@@ -25,6 +25,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
+    maxWidth: 1140,
+    alignSelf: 'center',
+    width: '100%',
   },
   header: {
     marginBottom: spacing.lg,

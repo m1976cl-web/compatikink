@@ -1,16 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  ScrollView,
   Animated,
   Easing,
   Dimensions,
 } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import { CompatibilityReport, ReportItem, CATEGORY_LABELS } from '@/types';
+import { CompatibilityReport, ReportItem, CATEGORY_LABELS, ActivityMood, MOOD_LABELS } from '@/types';
+import { getActivityById } from '@/data/activities';
 
 interface Props {
   visible: boolean;
@@ -20,9 +22,18 @@ interface Props {
 }
 
 export function SceneRouletteModal({ visible, onClose, report, onSelectForPlanning }: Props) {
-  const candidates = report.items.filter(
-    (item) => item.section === 'mutual_match' || item.section === 'explore_together'
-  );
+  const [selectedMoodFilter, setSelectedMoodFilter] = useState<'all' | ActivityMood>('all');
+
+  const candidates = useMemo(() => {
+    const base = report.items.filter(
+      (item) => item.section === 'mutual_match' || item.section === 'explore_together'
+    );
+    if (selectedMoodFilter === 'all') return base;
+    return base.filter((item) => {
+      const act = getActivityById(item.activityId);
+      return act?.moods?.includes(selectedMoodFilter);
+    });
+  }, [report, selectedMoodFilter]);
 
   const [selectedItem, setSelectedItem] = useState<ReportItem | null>(null);
   const [spinningIndex, setSpinningIndex] = useState<number>(0);
@@ -83,6 +94,51 @@ export function SceneRouletteModal({ visible, onClose, report, onSelectForPlanni
           <Text style={styles.subtitle}>
             Una idea aleatoria elegida solo entre vuestros puntos de encuentro consensuados.
           </Text>
+
+          {/* Atmosphere / Mood Filter Selector */}
+          <View style={styles.moodSelectorContainer}>
+            <Text style={styles.moodSelectorLabel}>Atmósfera / Mood:</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.moodChipsRow}
+            >
+              <TouchableOpacity
+                style={[styles.moodChip, selectedMoodFilter === 'all' && styles.moodChipActive]}
+                onPress={() => {
+                  if (isSpinning) return;
+                  setSelectedMoodFilter('all');
+                  setSelectedItem(null);
+                  setSpinningIndex(0);
+                }}
+              >
+                <Text style={[styles.moodChipText, selectedMoodFilter === 'all' && styles.moodChipTextActive]}>
+                  Todos
+                </Text>
+              </TouchableOpacity>
+
+              {(Object.keys(MOOD_LABELS) as ActivityMood[]).map((mKey) => {
+                const info = MOOD_LABELS[mKey];
+                const active = selectedMoodFilter === mKey;
+                return (
+                  <TouchableOpacity
+                    key={mKey}
+                    style={[styles.moodChip, active && styles.moodChipActive]}
+                    onPress={() => {
+                      if (isSpinning) return;
+                      setSelectedMoodFilter(mKey);
+                      setSelectedItem(null);
+                      setSpinningIndex(0);
+                    }}
+                  >
+                    <Text style={[styles.moodChipText, active && styles.moodChipTextActive]}>
+                      {info.emoji} {info.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
 
           {candidates.length === 0 ? (
             <View style={styles.noMatchesBox}>
@@ -340,5 +396,40 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: fontSize.xs,
     textDecorationLine: 'underline',
+  },
+  moodSelectorContainer: {
+    width: '100%',
+    marginBottom: spacing.md,
+    gap: 4,
+  },
+  moodSelectorLabel: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  moodChipsRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingVertical: 4,
+  },
+  moodChip: {
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  moodChipActive: {
+    borderColor: colors.neonPurple,
+    backgroundColor: 'rgba(192, 132, 252, 0.2)',
+  },
+  moodChipText: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+  },
+  moodChipTextActive: {
+    color: colors.neonPurple,
+    fontWeight: '700',
   },
 });

@@ -13,11 +13,44 @@ export type ActivityCategory =
   | 'intimacy'
   | 'aftercare';
 
+export type ActivityMood =
+  | 'sensual_relajante'
+  | 'poder_adrenalina'
+  | 'fantasia_roles'
+  | 'romantico_afectivo';
+
+export const MOOD_LABELS: Record<
+  ActivityMood,
+  { label: string; emoji: string; description: string }
+> = {
+  sensual_relajante: {
+    label: 'Sensual & Relajante',
+    emoji: '🪷',
+    description: 'Sensaciones suaves, tacto lento, confort y clima de relajación',
+  },
+  poder_adrenalina: {
+    label: 'Poder & Adrenalina',
+    emoji: '⚡',
+    description: 'Dinámicas de control, impacto, moderación e intensidad física',
+  },
+  fantasia_roles: {
+    label: 'Fantasía & Roles',
+    emoji: '🎭',
+    description: 'Juegos de rol, sumisión psicológica, trance y servicio',
+  },
+  romantico_afectivo: {
+    label: 'Romántico & Afectivo',
+    emoji: '💖',
+    description: 'Conexión emocional, vulnerabilidad, mirada y cuidado posterior',
+  },
+};
+
 export interface Activity {
   id: string;
   category: ActivityCategory;
   name: string;
   description: string;
+  moods?: ActivityMood[];
 }
 
 export interface ActivityResponse {

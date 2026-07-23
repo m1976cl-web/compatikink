@@ -9,18 +9,22 @@ import { SocialShareModal } from '@/components/SocialShareModal';
 import { ScenePlannerModal } from '@/components/ScenePlannerModal';
 import { SceneRouletteModal } from '@/components/SceneRouletteModal';
 import { colors, fontSize, spacing } from '@/constants/theme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { generateReport } from '@/lib/compatibility';
 import { getSessionByToken, refreshSession } from '@/lib/sessions';
 import { getInitiatorToken, getGuestProfile, getSceneAgreements } from '@/lib/storage';
 import {
+  ActivityMood,
   CompatibilityReport,
   GuestProfile,
+  MOOD_LABELS,
   ReportItem,
   ReportSectionType,
   SceneAgreement,
   SECTION_DESCRIPTIONS,
   SECTION_LABELS,
 } from '@/types';
+import { getActivityById } from '@/data/activities';
 
 const SECTION_ORDER: ReportSectionType[] = [
   'mutual_match',
@@ -32,12 +36,16 @@ const SECTION_ORDER: ReportSectionType[] = [
 ];
 
 export default function ReportScreen() {
+  const { isDesktop } = useResponsive();
   const params = useLocalSearchParams<{ token?: string }>();
   const router = useRouter();
   const [report, setReport] = useState<CompatibilityReport | null>(null);
   const [guestProfile, setGuestProfile] = useState<GuestProfile | null>(null);
   const [guestName, setGuestName] = useState<string>('Invitado');
   const [loading, setLoading] = useState(true);
+
+  // Mood filter state
+  const [selectedMood, setSelectedMood] = useState<'all' | ActivityMood>('all');
 
   // New Modals State
   const [showShareModal, setShowShareModal] = useState(false);
@@ -92,13 +100,21 @@ export default function ReportScreen() {
     })();
   }, [params.token, router, loadAgreements]);
 
-  const grouped = useMemo(() => {
+  const filteredItems = useMemo(() => {
     if (!report) return [];
+    if (selectedMood === 'all') return report.items;
+    return report.items.filter((item) => {
+      const act = getActivityById(item.activityId);
+      return act?.moods?.includes(selectedMood);
+    });
+  }, [report, selectedMood]);
+
+  const grouped = useMemo(() => {
     return SECTION_ORDER.map((section) => ({
       section,
-      items: report.items.filter((i) => i.section === section),
+      items: filteredItems.filter((i) => i.section === section),
     })).filter((g) => g.items.length > 0);
-  }, [report]);
+  }, [filteredItems]);
 
   if (loading) {
     return (
@@ -125,53 +141,115 @@ export default function ReportScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.summary}>
-          <Text style={styles.score}>{report.compatibilityScore}%</Text>
-          <Text style={styles.scoreLabel}>Compatibilidad general</Text>
-          <View style={styles.stats}>
-            <Stat value={report.mutualMatchCount} label="Matches" color={colors.success} />
-            <Stat value={report.exploreCount} label="Explorar" color={colors.info} />
-            <Stat value={report.conflictCount} label="Atención" color={colors.warning} />
+        {isDesktop ? (
+          <View style={styles.desktopSummaryContainer}>
+            {/* Left Column: Overall Match % & Stats */}
+            <View style={styles.desktopSummaryLeft}>
+              <Text style={styles.score}>{report.compatibilityScore}%</Text>
+              <Text style={styles.scoreLabel}>Compatibilidad general</Text>
+              <View style={styles.stats}>
+                <Stat value={report.mutualMatchCount} label="Matches" color={colors.success} />
+                <Stat value={report.exploreCount} label="Explorar" color={colors.info} />
+                <Stat value={report.conflictCount} label="Atención" color={colors.warning} />
+              </View>
+            </View>
+
+            {/* Right Column: Guest Private Profile & Action Triggers */}
+            <View style={styles.desktopSummaryRight}>
+              {guestProfile ? (
+                <View style={styles.profileCardDesktop}>
+                  <Text style={styles.profileHeader}>Ficha del Invitado (Privada)</Text>
+                  <Text style={styles.profileTitle}>Apodo: {guestProfile.nickname}</Text>
+                  {guestProfile.notes ? (
+                    <Text style={styles.profileNotes}>Notas: {guestProfile.notes}</Text>
+                  ) : null}
+                </View>
+              ) : (
+                <View style={styles.profileCardDesktop}>
+                  <Text style={styles.profileHeader}>Reporte con {guestName}</Text>
+                  <Text style={styles.profileNotes}>Resultados generados basados en respuestas compartidas.</Text>
+                </View>
+              )}
+
+              <View style={styles.actionsRowDesktop}>
+                <TouchableOpacity
+                  style={[styles.shareCardTrigger, { borderColor: colors.neonPurple, backgroundColor: 'rgba(192, 132, 252, 0.15)' }]}
+                  onPress={() => setShowRouletteModal(true)}
+                >
+                  <Text style={[styles.shareCardTriggerText, { color: colors.neonPurple }]}>🎲 Ruleta de Citas</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.shareCardTrigger}
+                  onPress={() => setShowShareModal(true)}
+                >
+                  <Text style={styles.shareCardTriggerText}>📸 Tarjeta Infografía</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.shareCardTrigger, { borderColor: colors.info, backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}
+                  onPress={() => {
+                    import('@/lib/exportPDF').then(({ exportReportAsPDF }) => {
+                      exportReportAsPDF(report, 'Tú', guestName);
+                    });
+                  }}
+                >
+                  <Text style={[styles.shareCardTriggerText, { color: '#60a5fa' }]}>📄 Exportar PDF</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
+        ) : (
+          <>
+            <View style={styles.summary}>
+              <Text style={styles.score}>{report.compatibilityScore}%</Text>
+              <Text style={styles.scoreLabel}>Compatibilidad general</Text>
+              <View style={styles.stats}>
+                <Stat value={report.mutualMatchCount} label="Matches" color={colors.success} />
+                <Stat value={report.exploreCount} label="Explorar" color={colors.info} />
+                <Stat value={report.conflictCount} label="Atención" color={colors.warning} />
+              </View>
 
-          {/* Export PDF, Social Share and Scene Roulette Triggers */}
-          <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <TouchableOpacity
-              style={[styles.shareCardTrigger, { borderColor: colors.neonPurple, backgroundColor: 'rgba(192, 132, 252, 0.15)' }]}
-              onPress={() => setShowRouletteModal(true)}
-            >
-              <Text style={[styles.shareCardTriggerText, { color: colors.neonPurple }]}>🎲 Ruleta de Citas</Text>
-            </TouchableOpacity>
+              {/* Export PDF, Social Share and Scene Roulette Triggers */}
+              <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <TouchableOpacity
+                  style={[styles.shareCardTrigger, { borderColor: colors.neonPurple, backgroundColor: 'rgba(192, 132, 252, 0.15)' }]}
+                  onPress={() => setShowRouletteModal(true)}
+                >
+                  <Text style={[styles.shareCardTriggerText, { color: colors.neonPurple }]}>🎲 Ruleta de Citas</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.shareCardTrigger}
-              onPress={() => setShowShareModal(true)}
-            >
-              <Text style={styles.shareCardTriggerText}>📸 Tarjeta Infografía</Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.shareCardTrigger}
+                  onPress={() => setShowShareModal(true)}
+                >
+                  <Text style={styles.shareCardTriggerText}>📸 Tarjeta Infografía</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.shareCardTrigger, { borderColor: colors.secondary, backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}
-              onPress={() => {
-                import('@/lib/exportPDF').then(({ exportReportAsPDF }) => {
-                  exportReportAsPDF(report, 'Tú', guestName);
-                });
-              }}
-            >
-              <Text style={[styles.shareCardTriggerText, { color: '#60a5fa' }]}>📄 Exportar PDF</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+                <TouchableOpacity
+                  style={[styles.shareCardTrigger, { borderColor: colors.info, backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}
+                  onPress={() => {
+                    import('@/lib/exportPDF').then(({ exportReportAsPDF }) => {
+                      exportReportAsPDF(report, 'Tú', guestName);
+                    });
+                  }}
+                >
+                  <Text style={[styles.shareCardTriggerText, { color: '#60a5fa' }]}>📄 Exportar PDF</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
-        {guestProfile ? (
-          <View style={styles.profileCard}>
-            <Text style={styles.profileHeader}>Ficha del Invitado (Privada)</Text>
-            <Text style={styles.profileTitle}>Apodo: {guestProfile.nickname}</Text>
-            {guestProfile.notes ? (
-              <Text style={styles.profileNotes}>Notas: {guestProfile.notes}</Text>
+            {guestProfile ? (
+              <View style={styles.profileCard}>
+                <Text style={styles.profileHeader}>Ficha del Invitado (Privada)</Text>
+                <Text style={styles.profileTitle}>Apodo: {guestProfile.nickname}</Text>
+                {guestProfile.notes ? (
+                  <Text style={styles.profileNotes}>Notas: {guestProfile.notes}</Text>
+                ) : null}
+              </View>
             ) : null}
-          </View>
-        ) : null}
+          </>
+        )}
 
         <CompatibilityInfographic
           report={report}
@@ -183,21 +261,67 @@ export default function ReportScreen() {
           Reporte privado vs. {guestName}. Solo tú ves las secciones marcadas como privadas.
         </Text>
 
-        {grouped.map(({ section, items }) => (
-          <View key={section} style={styles.section}>
-            <Text style={styles.sectionTitle}>{SECTION_LABELS[section]}</Text>
-            <Text style={styles.sectionDesc}>{SECTION_DESCRIPTIONS[section]}</Text>
-            {items.map((item) => (
-              <ReportCard
-                key={item.activityId}
-                item={item}
-                showInitiatorOnly
-                onPlanScene={(selectedItem) => setPlanningItem(selectedItem)}
-                hasAgreement={agreedActivityIds.has(item.activityId)}
-              />
-            ))}
+        {/* Mood Filter Chip Bar */}
+        <View style={styles.moodFilterBar}>
+          <Text style={styles.moodFilterTitle}>Filtrar por Ambiente / Mood:</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.moodFilterChips}
+          >
+            <TouchableOpacity
+              style={[styles.moodChip, selectedMood === 'all' && styles.moodChipActive]}
+              onPress={() => setSelectedMood('all')}
+            >
+              <Text style={[styles.moodChipText, selectedMood === 'all' && styles.moodChipTextActive]}>
+                Todas
+              </Text>
+            </TouchableOpacity>
+
+            {(Object.keys(MOOD_LABELS) as ActivityMood[]).map((mKey) => {
+              const info = MOOD_LABELS[mKey];
+              const active = selectedMood === mKey;
+              return (
+                <TouchableOpacity
+                  key={mKey}
+                  style={[styles.moodChip, active && styles.moodChipActive]}
+                  onPress={() => setSelectedMood(mKey)}
+                >
+                  <Text style={[styles.moodChipText, active && styles.moodChipTextActive]}>
+                    {info.emoji} {info.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {grouped.length === 0 ? (
+          <View style={styles.emptyMoodBox}>
+            <Text style={styles.emptyMoodText}>
+              No hay actividades registradas para este ambiente ({MOOD_LABELS[selectedMood as ActivityMood]?.label ?? 'seleccionado'}).
+            </Text>
           </View>
-        ))}
+        ) : (
+          grouped.map(({ section, items }) => (
+            <View key={section} style={styles.section}>
+              <Text style={styles.sectionTitle}>{SECTION_LABELS[section]}</Text>
+              <Text style={styles.sectionDesc}>{SECTION_DESCRIPTIONS[section]}</Text>
+              <View style={isDesktop ? styles.cardGridDesktop : undefined}>
+                {items.map((item) => (
+                  <View key={item.activityId} style={isDesktop ? styles.cardGridItemDesktop : undefined}>
+                    <ReportCard
+                      item={item}
+                      showInitiatorOnly
+                      onPlanScene={(selectedItem) => setPlanningItem(selectedItem)}
+                      hasAgreement={agreedActivityIds.has(item.activityId)}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+          ))
+        )}
 
         <Button
           title="Compartir resultados con ellos"
@@ -245,13 +369,62 @@ function Stat({ value, label, color }: { value: number; label: string; color: st
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: spacing.lg, paddingBottom: spacing.xl },
+  scroll: {
+    padding: spacing.lg,
+    paddingBottom: spacing.xl,
+    maxWidth: 1140,
+    alignSelf: 'center',
+    width: '100%',
+  },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
     backgroundColor: colors.background,
+  },
+  desktopSummaryContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 24,
+    alignItems: 'center',
+  },
+  desktopSummaryLeft: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    paddingRight: spacing.lg,
+  },
+  desktopSummaryRight: {
+    flex: 1,
+    gap: spacing.md,
+  },
+  profileCardDesktop: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 12,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  actionsRowDesktop: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    flexWrap: 'wrap',
+  },
+  cardGridDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  cardGridItemDesktop: {
+    width: '48.5%',
   },
   summary: {
     backgroundColor: colors.surface,
@@ -346,5 +519,61 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: fontSize.sm,
     lineHeight: 18,
+  },
+  moodFilterBar: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.xs,
+  },
+  moodFilterTitle: {
+    color: colors.primaryLight,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  moodFilterChips: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingVertical: 4,
+  },
+  moodChip: {
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  moodChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(147, 51, 234, 0.2)',
+  },
+  moodChipText: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  moodChipTextActive: {
+    color: colors.neonPurple,
+    fontWeight: '700',
+  },
+  emptyMoodBox: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  emptyMoodText: {
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
+    textAlign: 'center',
   },
 });

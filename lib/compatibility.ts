@@ -7,6 +7,7 @@ import {
   ReportItem,
   ReportSectionType,
   RATING_VALUES,
+  UserProfile,
 } from '@/types';
 
 const POSITIVE: Rating[] = ['curious', 'like', 'love'];
@@ -272,6 +273,8 @@ export function calculateUserCompass(responses: ActivityResponse[]): { x: number
 
   return { x, y };
 }
+
+export const calculateCompassPoint = calculateUserCompass;
 
 export function determineArchetype(responses: ActivityResponse[], compassY: number): string {
   const roleScore = (compassY - 50) * 2;

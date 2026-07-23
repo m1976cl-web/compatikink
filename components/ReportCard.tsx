@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import {
   CATEGORY_LABELS,
@@ -6,8 +6,10 @@ import {
   ReportItem,
   ROLE_LABELS,
   SECTION_LABELS,
+  MOOD_LABELS,
 } from '@/types';
 import { ratingEmoji } from '@/lib/compatibility';
+import { getActivityById } from '@/data/activities';
 
 interface Props {
   item: ReportItem;
@@ -23,6 +25,7 @@ export function ReportCard({ item, showInitiatorOnly = true, onPlanScene, hasAgr
 
   const isPlannable = item.section === 'mutual_match' || item.section === 'explore_together';
   const isHotMatch = item.section === 'mutual_match';
+  const activity = getActivityById(item.activityId);
 
   return (
     <View style={[styles.card, isHotMatch && styles.cardMatch]}>
@@ -34,7 +37,24 @@ export function ReportCard({ item, showInitiatorOnly = true, onPlanScene, hasAgr
           </Text>
         </View>
       </View>
-      <Text style={styles.category}>{CATEGORY_LABELS[item.category]}</Text>
+      <View style={styles.categoryRow}>
+        <Text style={styles.category}>{CATEGORY_LABELS[item.category]}</Text>
+        {activity?.moods && activity.moods.length > 0 ? (
+          <View style={styles.moodsRow}>
+            {activity.moods.map((m) => {
+              const info = MOOD_LABELS[m];
+              if (!info) return null;
+              return (
+                <View key={m} style={styles.moodBadge}>
+                  <Text style={styles.moodBadgeText}>
+                    {info.emoji} {info.label}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
+      </View>
       <View style={styles.row}>
         <Text style={styles.rating}>
           Tú: {ratingEmoji(item.initiatorRating)} {RATING_LABELS[item.initiatorRating]}
@@ -116,18 +136,44 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: colors.primary,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   badgeTextMatch: {
     color: colors.neonPurple,
     fontWeight: '700',
   },
-  category: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
+  categoryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
     marginTop: 4,
     marginBottom: spacing.sm,
+  },
+  category: {
+    color: colors.neonCyan,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  moodsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  moodBadge: {
+    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.3)',
+  },
+  moodBadgeText: {
+    color: colors.neonPurple,
+    fontSize: 10,
+    fontWeight: '600',
   },
   row: {
     gap: 4,
@@ -167,7 +213,7 @@ const styles = StyleSheet.create({
   },
   agreedBadgeText: {
     color: colors.success,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
   },
   planBtn: {
@@ -178,6 +224,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     marginLeft: 'auto',
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
   },
   planBtnText: {
     color: colors.text,

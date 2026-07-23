@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { colors, fontSize, spacing } from '@/constants/theme';
+import { useResponsive } from '@/hooks/useResponsive';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import {
   getCurrentProfile,
@@ -25,6 +26,7 @@ import { exportSceneAgreementPDF } from '@/lib/exportPDF';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { isDesktop } = useResponsive();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profilesList, setProfilesList] = useState<UserProfile[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -320,6 +322,289 @@ export default function HomeScreen() {
     </ScrollView>
   );
 
+  const renderProfileSummaryCard = () => (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>👤 Mi Perfil</Text>
+      <Text style={styles.cardDesc}>
+        Nick: <Text style={{ color: colors.text, fontWeight: '700' }}>{profile?.nickname}</Text>
+        {profile?.pronouns ? ` (${profile.pronouns})` : ''}
+      </Text>
+      {profile?.experienceLevel ? (
+        <Text style={styles.cardDesc}>
+          Nivel: {EXPERIENCE_LABELS[profile.experienceLevel]}
+        </Text>
+      ) : null}
+      {profile?.notes ? <Text style={[styles.cardDesc, { fontStyle: 'italic' }]}>"{profile.notes}"</Text> : null}
+    </View>
+  );
+
+  const renderQuickInviteBox = () => (
+    <View style={styles.card}>
+      {!showQuickInvite ? (
+        <Button
+          title="⚡ Crear Invitación Rápida"
+          onPress={() => setShowQuickInvite(true)}
+        />
+      ) : (
+        <View style={styles.quickInviteForm}>
+          <Text style={styles.cardTitle}>⚡ Invitación Rápida</Text>
+          <Text style={styles.cardDesc}>
+            Se generará un enlace usando tus respuestas base guardadas. No necesitas repetir las 70 preguntas.
+          </Text>
+
+          <Text style={styles.label}>Apodo de la otra persona *</Text>
+          <TextInput
+            style={[styles.input, { textAlign: 'left' }]}
+            placeholder="Ej: Sam"
+            placeholderTextColor={colors.textMuted}
+            value={quickGuestNick}
+            onChangeText={setQuickGuestNick}
+          />
+
+          <Text style={styles.label}>Notas confidenciales sobre ella (opcional)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Ej: Nos conocimos en FetLife. Spanking..."
+            placeholderTextColor={colors.textMuted}
+            value={quickGuestNotes}
+            onChangeText={setQuickGuestNotes}
+            multiline
+            numberOfLines={3}
+          />
+
+          <Text style={styles.label}>⏳ Expiración del código</Text>
+          <View style={styles.expiryRow}>
+            {([
+              { label: '24 horas', value: '24h' as const },
+              { label: '7 días', value: '7d' as const },
+              { label: 'Sin límite', value: 'none' as const },
+            ] as const).map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
+                style={[styles.expiryChip, expiryOption === opt.value && styles.expiryChipActive]}
+                onPress={() => setExpiryOption(opt.value)}
+              >
+                <Text style={[styles.expiryChipText, expiryOption === opt.value && styles.expiryChipTextActive]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.formRow}>
+            <Button
+              title={creatingInvite ? 'Creando...' : 'Crear Código'}
+              onPress={handleQuickInvite}
+              disabled={creatingInvite}
+              style={{ flex: 1 }}
+            />
+            <Button
+              title="Cancelar"
+              variant="secondary"
+              onPress={() => setShowQuickInvite(false)}
+              style={{ flex: 1 }}
+            />
+          </View>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderEditResponsesCard = () => (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>Tus Respuestas Base</Text>
+      <Text style={styles.cardDesc}>
+        ¿Quieres actualizar tus límites eróticos, roles o intensidades?
+      </Text>
+      <Button
+        title="Editar mis respuestas"
+        variant="secondary"
+        onPress={() => router.push('/questionnaire')}
+      />
+    </View>
+  );
+
+  const renderSceneAgreementsCard = () => (
+    sceneAgreements.length > 0 ? (
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>📋 Mis Acuerdos de Escena</Text>
+        <Text style={styles.cardDesc}>Acuerdos de safewords y límites guardados por pareja.</Text>
+        {sceneAgreements.map(({ sessionId, agreements }) => {
+          const session = sessions.find((s) => s.id === sessionId);
+          const partner = session
+            ? (session.guestNickname || session.initiatorNickname || 'Invitado')
+            : sessionId.slice(0, 8);
+          return (
+            <View key={sessionId} style={styles.sceneAgreementGroup}>
+              <Text style={styles.sceneAgreementPartner}>Con {partner}</Text>
+              {agreements.map((ag) => (
+                <TouchableOpacity
+                  key={ag.id}
+                  style={styles.sceneAgreementRow}
+                  onPress={() => router.push({ pathname: '/report', params: { token: session?.initiatorToken ?? '' } })}
+                >
+                  <View style={styles.sceneAgreementInfo}>
+                    <Text style={styles.sceneAgreementActivity}>{ag.activityName}</Text>
+                    <Text style={styles.sceneAgreementSafewords}>
+                      🟢 {ag.safewordGreen} · 🟡 {ag.safewordYellow} · 🔴 {ag.safewordRed}
+                    </Text>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                    <TouchableOpacity
+                      style={[styles.sessionActionBtn, { backgroundColor: 'rgba(192, 132, 252, 0.15)', borderRadius: 8 }]}
+                      onPress={() => setDebriefTarget({ sessionId: ag.sessionId, activityId: ag.activityId, activityName: ag.activityName })}
+                    >
+                      <Text style={{ color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '700' }}>📝 Debrief</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.sessionActionBtn, { backgroundColor: 'rgba(96, 165, 250, 0.15)', borderRadius: 8 }]}
+                      onPress={() => exportSceneAgreementPDF(ag, partner)}
+                    >
+                      <Text style={{ color: colors.info, fontSize: fontSize.xs, fontWeight: '700' }}>📄 PDF</Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          );
+        })}
+      </View>
+    ) : null
+  );
+
+  const renderHistoryCard = () => (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>Historial de Compatividades</Text>
+      {sessions.length === 0 ? (
+        <Text style={styles.cardDesc}>Aún no has creado ni respondido ninguna invitación.</Text>
+      ) : (
+        <View style={styles.sessionsList}>
+          {sessions.map((s) => {
+            const isInitiator = s.initiatorNickname === profile?.nickname;
+            const partner = isInitiator ? (s.guestNickname || 'Invitado') : (s.initiatorNickname || 'Iniciador');
+            const isComplete = s.status === 'complete';
+            const isWaiting = s.status === 'waiting';
+            const isExpired = !isComplete && s.expiresAt ? new Date(s.expiresAt) < new Date() : false;
+
+            const timeAgo = (iso?: string) => {
+              if (!iso) return '';
+              const diff = Date.now() - new Date(iso).getTime();
+              const mins = Math.floor(diff / 60000);
+              const hours = Math.floor(diff / 3600000);
+              const days = Math.floor(diff / 86400000);
+              if (mins < 2) return 'hace un momento';
+              if (mins < 60) return `hace ${mins} min`;
+              if (hours < 24) return `hace ${hours}h`;
+              return `hace ${days}d`;
+            };
+
+            const timeUntil = (iso?: string) => {
+              if (!iso) return null;
+              const diff = new Date(iso).getTime() - Date.now();
+              if (diff <= 0) return null;
+              const hours = Math.floor(diff / 3600000);
+              const days = Math.floor(diff / 86400000);
+              if (hours < 24) return `Expira en ${hours}h`;
+              return `Expira en ${days}d`;
+            };
+
+            const statusLabel = isExpired
+              ? '🚫 Expirada'
+              : isComplete
+              ? `✅ Completado ${timeAgo(s.completedAt)}`
+              : isWaiting
+              ? `⏳ Esperando respuesta`
+              : '📝 Borrador';
+            const statusColor = isExpired
+              ? colors.danger
+              : isComplete
+              ? colors.success
+              : isWaiting
+              ? colors.warning
+              : colors.textMuted;
+
+            const expiryLabel = !isComplete && !isExpired ? timeUntil(s.expiresAt) : null;
+
+            return (
+              <View key={s.id} style={styles.sessionCard}>
+                <View style={styles.sessionCardHeader}>
+                  <View style={[styles.sessionStatusBadge, { borderColor: statusColor }]}>
+                    <Text style={[styles.sessionStatusText, { color: statusColor }]}>{statusLabel}</Text>
+                  </View>
+                  <Text style={styles.sessionTime}>{timeAgo(s.createdAt)}</Text>
+                </View>
+
+                <View style={styles.sessionCardBody}>
+                  <View style={styles.sessionInfo}>
+                    <Text style={styles.sessionPartner}>
+                      {isInitiator ? '↗ Tú → ' : '↙ '}
+                      <Text style={{ color: isComplete ? colors.neonPurple : colors.text }}>{partner}</Text>
+                    </Text>
+                    <Text style={styles.sessionDetails}>
+                      Código: <Text style={{ fontWeight: '700', letterSpacing: 1 }}>{s.inviteCode}</Text>
+                      {!isComplete && isWaiting ? ' · Compartir para recibir respuestas' : ''}
+                      {expiryLabel ? <Text style={{ color: colors.warning }}>{`\n${expiryLabel}`}</Text> : null}
+                      {isExpired ? <Text style={{ color: colors.danger }}>{'\nCódigo ya no válido'}</Text> : null}
+                    </Text>
+                  </View>
+                  <View style={styles.sessionActions}>
+                    {isComplete ? (
+                      <Button
+                        title="📊 Reporte"
+                        style={styles.sessionActionBtn}
+                        onPress={() => router.push({ pathname: '/report', params: { token: s.initiatorToken } })}
+                      />
+                    ) : (
+                      <Button
+                        title="📨 Invitar"
+                        variant="secondary"
+                        style={styles.sessionActionBtn}
+                        onPress={() => router.push({ pathname: '/invite', params: { token: s.initiatorToken } })}
+                      />
+                    )}
+                  </View>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+
+  const renderAccountActionsCard = () => (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>⚙️ Cuenta y Seguridad</Text>
+      <Button title="Cerrar Sesión" variant="ghost" onPress={handleLogout} />
+      <Button
+        title="🛡️ Borrado de Emergencia / Pánico"
+        variant="ghost"
+        onPress={handlePanicWipe}
+        style={{ marginTop: spacing.xs }}
+      />
+    </View>
+  );
+
+  const renderCommunityToolsCard = () => (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>🛠️ Herramientas y Comunidad</Text>
+      {sessions.filter((s) => s.status === 'complete').length >= 2 ? (
+        <Button
+          title="👥 Comparar Parejas (Poli / Multi-Vínculo)"
+          variant="secondary"
+          onPress={() => setShowPolyComparator(true)}
+        />
+      ) : null}
+      <Button
+        title="📊 Radar de Tendencias de la Comunidad"
+        variant="secondary"
+        onPress={() => setShowTrendsModal(true)}
+      />
+    </View>
+  );
+
   const renderDashboard = () => (
     <ScrollView contentContainerStyle={styles.scroll}>
       <View style={styles.dashboardHeader}>
@@ -332,263 +617,50 @@ export default function HomeScreen() {
         ) : null}
       </View>
 
-      {/* Quick Invite Tool */}
-      <View style={styles.card}>
-        {!showQuickInvite ? (
-          <Button
-            title="⚡ Crear Invitación Rápida"
-            onPress={() => setShowQuickInvite(true)}
-          />
-        ) : (
-          <View style={styles.quickInviteForm}>
-            <Text style={styles.cardTitle}>⚡ Invitación Rápida</Text>
-            <Text style={styles.cardDesc}>
-              Se generará un enlace usando tus respuestas base guardadas. No necesitas repetir las 70 preguntas.
-            </Text>
-
-            <Text style={styles.label}>Apodo de la otra persona *</Text>
-            <TextInput
-              style={[styles.input, { textAlign: 'left' }]}
-              placeholder="Ej: Sam"
-              placeholderTextColor={colors.textMuted}
-              value={quickGuestNick}
-              onChangeText={setQuickGuestNick}
-            />
-
-            <Text style={styles.label}>Notas confidenciales sobre ella (opcional)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Ej: Nos conocimos en FetLife. Spanking..."
-              placeholderTextColor={colors.textMuted}
-              value={quickGuestNotes}
-              onChangeText={setQuickGuestNotes}
-              multiline
-              numberOfLines={3}
-            />
-
-            <Text style={styles.label}>⏳ Expiración del código</Text>
-            <View style={styles.expiryRow}>
-              {([
-                { label: '24 horas', value: '24h' as const },
-                { label: '7 días', value: '7d' as const },
-                { label: 'Sin límite', value: 'none' as const },
-              ] as const).map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[styles.expiryChip, expiryOption === opt.value && styles.expiryChipActive]}
-                  onPress={() => setExpiryOption(opt.value)}
-                >
-                  <Text style={[styles.expiryChipText, expiryOption === opt.value && styles.expiryChipTextActive]}>
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={styles.formRow}>
-              <Button
-                title={creatingInvite ? 'Creando...' : 'Crear Código'}
-                onPress={handleQuickInvite}
-                disabled={creatingInvite}
-                style={{ flex: 1 }}
-              />
-              <Button
-                title="Cancelar"
-                variant="secondary"
-                onPress={() => setShowQuickInvite(false)}
-                style={{ flex: 1 }}
-              />
-            </View>
+      {isDesktop ? (
+        <View style={styles.desktopGrid}>
+          {/* Left Column (~48% width) */}
+          <View style={styles.desktopColLeft}>
+            {renderProfileSummaryCard()}
+            {renderQuickInviteBox()}
+            {renderEditResponsesCard()}
+            {renderAccountActionsCard()}
           </View>
-        )}
-      </View>
 
-
-      {/* Edit Responses */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Tus Respuestas Base</Text>
-        <Text style={styles.cardDesc}>
-          ¿Quieres actualizar tus límites eróticos, roles o intensidades?
-        </Text>
-        <Button
-          title="Editar mis respuestas"
-          variant="secondary"
-          onPress={() => router.push('/questionnaire')}
-        />
-      </View>
-      {/* Scene Agreements Access — Item 5 */}
-      {sceneAgreements.length > 0 ? (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>📋 Mis Acuerdos de Escena</Text>
-          <Text style={styles.cardDesc}>Acuerdos de safewords y límites guardados por pareja.</Text>
-          {sceneAgreements.map(({ sessionId, agreements }) => {
-            const session = sessions.find((s) => s.id === sessionId);
-            const partner = session
-              ? (session.guestNickname || session.initiatorNickname || 'Invitado')
-              : sessionId.slice(0, 8);
-            return (
-              <View key={sessionId} style={styles.sceneAgreementGroup}>
-                <Text style={styles.sceneAgreementPartner}>Con {partner}</Text>
-                {agreements.map((ag) => (
-                  <TouchableOpacity
-                    key={ag.id}
-                    style={styles.sceneAgreementRow}
-                    onPress={() => router.push({ pathname: '/report', params: { token: session?.initiatorToken ?? '' } })}
-                  >
-                    <View style={styles.sceneAgreementInfo}>
-                      <Text style={styles.sceneAgreementActivity}>{ag.activityName}</Text>
-                      <Text style={styles.sceneAgreementSafewords}>
-                        🟢 {ag.safewordGreen} · 🟡 {ag.safewordYellow} · 🔴 {ag.safewordRed}
-                      </Text>
-                    </View>
-
-                    <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                      <TouchableOpacity
-                        style={[styles.sessionActionBtn, { backgroundColor: 'rgba(192, 132, 252, 0.15)', borderRadius: 8 }]}
-                        onPress={() => setDebriefTarget({ sessionId: ag.sessionId, activityId: ag.activityId, activityName: ag.activityName })}
-                      >
-                        <Text style={{ color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '700' }}>📝 Debrief</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.sessionActionBtn, { backgroundColor: 'rgba(96, 165, 250, 0.15)', borderRadius: 8 }]}
-                        onPress={() => exportSceneAgreementPDF(ag, partner)}
-                      >
-                        <Text style={{ color: colors.info, fontSize: fontSize.xs, fontWeight: '700' }}>📄 PDF</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableOpacity>
-
-                ))}
-              </View>
-            );
-          })}
+          {/* Right Column (~52% width) */}
+          <View style={styles.desktopColRight}>
+            {renderHistoryCard()}
+            {renderSceneAgreementsCard()}
+            {renderCommunityToolsCard()}
+          </View>
         </View>
-      ) : null}
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Historial de Compatibilidades</Text>
-        {sessions.length === 0 ? (
-          <Text style={styles.cardDesc}>Aún no has creado ni respondido ninguna invitación.</Text>
-        ) : (
-          <View style={styles.sessionsList}>
-            {sessions.map((s) => {
-              const isInitiator = s.initiatorNickname === profile?.nickname;
-              const partner = isInitiator ? (s.guestNickname || 'Invitado') : (s.initiatorNickname || 'Iniciador');
-              const isComplete = s.status === 'complete';
-              const isWaiting = s.status === 'waiting';
-              const isExpired = !isComplete && s.expiresAt ? new Date(s.expiresAt) < new Date() : false;
-
-              // Time-ago helper
-              const timeAgo = (iso?: string) => {
-                if (!iso) return '';
-                const diff = Date.now() - new Date(iso).getTime();
-                const mins = Math.floor(diff / 60000);
-                const hours = Math.floor(diff / 3600000);
-                const days = Math.floor(diff / 86400000);
-                if (mins < 2) return 'hace un momento';
-                if (mins < 60) return `hace ${mins} min`;
-                if (hours < 24) return `hace ${hours}h`;
-                return `hace ${days}d`;
-              };
-
-              // Time-until helper (for future dates)
-              const timeUntil = (iso?: string) => {
-                if (!iso) return null;
-                const diff = new Date(iso).getTime() - Date.now();
-                if (diff <= 0) return null;
-                const hours = Math.floor(diff / 3600000);
-                const days = Math.floor(diff / 86400000);
-                if (hours < 24) return `Expira en ${hours}h`;
-                return `Expira en ${days}d`;
-              };
-
-              const statusLabel = isExpired
-                ? '🚫 Expirada'
-                : isComplete
-                ? `✅ Completado ${timeAgo(s.completedAt)}`
-                : isWaiting
-                ? `⏳ Esperando respuesta`
-                : '📝 Borrador';
-              const statusColor = isExpired
-                ? colors.danger
-                : isComplete
-                ? colors.success
-                : isWaiting
-                ? colors.warning
-                : colors.textMuted;
-
-              const expiryLabel = !isComplete && !isExpired ? timeUntil(s.expiresAt) : null;
-
-              return (
-                <View key={s.id} style={styles.sessionCard}>
-                  <View style={styles.sessionCardHeader}>
-                    <View style={[styles.sessionStatusBadge, { borderColor: statusColor }]}>
-                      <Text style={[styles.sessionStatusText, { color: statusColor }]}>{statusLabel}</Text>
-                    </View>
-                    <Text style={styles.sessionTime}>{timeAgo(s.createdAt)}</Text>
-                  </View>
-
-                  <View style={styles.sessionCardBody}>
-                    <View style={styles.sessionInfo}>
-                      <Text style={styles.sessionPartner}>
-                        {isInitiator ? '↗ Tú → ' : '↙ '}
-                        <Text style={{ color: isComplete ? colors.neonPurple : colors.text }}>{partner}</Text>
-                      </Text>
-                      <Text style={styles.sessionDetails}>
-                        Código: <Text style={{ fontWeight: '700', letterSpacing: 1 }}>{s.inviteCode}</Text>
-                        {!isComplete && isWaiting ? ' · Compartir para recibir respuestas' : ''}
-                        {expiryLabel ? <Text style={{ color: colors.warning }}>{`\n${expiryLabel}`}</Text> : null}
-                        {isExpired ? <Text style={{ color: colors.danger }}>{'\nCódigo ya no válido'}</Text> : null}
-                      </Text>
-                    </View>
-                    <View style={styles.sessionActions}>
-                      {isComplete ? (
-                        <Button
-                          title="📊 Reporte"
-                          style={styles.sessionActionBtn}
-                          onPress={() => router.push({ pathname: '/report', params: { token: s.initiatorToken } })}
-                        />
-                      ) : (
-                        <Button
-                          title="📨 Invitar"
-                          variant="secondary"
-                          style={styles.sessionActionBtn}
-                          onPress={() => router.push({ pathname: '/invite', params: { token: s.initiatorToken } })}
-                        />
-                      )}
-                    </View>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
-      </View>
-
-
-      <Button title="Cerrar Sesión" variant="ghost" onPress={handleLogout} />
-
-      {sessions.filter((s) => s.status === 'complete').length >= 2 ? (
-        <Button
-          title="👥 Comparar Parejas (Poli / Multi-Vínculo)"
-          variant="secondary"
-          onPress={() => setShowPolyComparator(true)}
-        />
-      ) : null}
-
-      <Button
-        title="📊 Radar de Tendencias de la Comunidad"
-        variant="secondary"
-        onPress={() => setShowTrendsModal(true)}
-      />
-
-      <Button
-        title="🛡️ Borrado de Emergencia / Pánico"
-        variant="ghost"
-        onPress={handlePanicWipe}
-        style={{ marginTop: spacing.sm }}
-      />
+      ) : (
+        <>
+          {renderQuickInviteBox()}
+          {renderEditResponsesCard()}
+          {renderSceneAgreementsCard()}
+          {renderHistoryCard()}
+          <Button title="Cerrar Sesión" variant="ghost" onPress={handleLogout} />
+          {sessions.filter((s) => s.status === 'complete').length >= 2 ? (
+            <Button
+              title="👥 Comparar Parejas (Poli / Multi-Vínculo)"
+              variant="secondary"
+              onPress={() => setShowPolyComparator(true)}
+            />
+          ) : null}
+          <Button
+            title="📊 Radar de Tendencias de la Comunidad"
+            variant="secondary"
+            onPress={() => setShowTrendsModal(true)}
+          />
+          <Button
+            title="🛡️ Borrado de Emergencia / Pánico"
+            variant="ghost"
+            onPress={handlePanicWipe}
+            style={{ marginTop: spacing.sm }}
+          />
+        </>
+      )}
 
       <PolyComparatorModal
         visible={showPolyComparator}
@@ -611,7 +683,6 @@ export default function HomeScreen() {
           activityName={debriefTarget.activityName}
         />
       ) : null}
-
     </ScrollView>
   );
 
@@ -637,6 +708,23 @@ const styles = StyleSheet.create({
   scroll: {
     padding: spacing.lg,
     paddingBottom: spacing.xl,
+    maxWidth: 1140,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  desktopGrid: {
+    flexDirection: 'row',
+    gap: 24,
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  desktopColLeft: {
+    flex: 48,
+    gap: spacing.lg,
+  },
+  desktopColRight: {
+    flex: 52,
+    gap: spacing.lg,
   },
   hero: {
     alignItems: 'center',

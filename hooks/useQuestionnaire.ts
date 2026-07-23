@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { ActivityResponse, Rating, RolePreference, ActivityCategory, Activity } from '@/types';
 import { ACTIVITIES, getAllActivities } from '@/data/activities';
 
@@ -41,17 +41,35 @@ export function useQuestionnaire(
   });
 
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    setCurrentIndex((prev) => Math.min(prev, Math.max(0, filteredActivities.length - 1)));
+  }, [enabledCategories, filteredActivities.length]);
   const currentActivity = filteredActivities[currentIndex] || allActs[0];
   const currentResponse = responses[currentActivity.id];
 
   const updateCurrent = useCallback(
     (patch: Partial<ActivityResponse>) => {
+      if (!currentActivity) return;
       setResponses((prev) => ({
         ...prev,
         [currentActivity.id]: { ...prev[currentActivity.id], ...patch },
       }));
     },
-    [currentActivity.id]
+    [currentActivity]
+  );
+
+  const setResponseForActivity = useCallback(
+    (activityId: string, patch: Partial<ActivityResponse>) => {
+      setResponses((prev) => ({
+        ...prev,
+        [activityId]: {
+          ...(prev[activityId] || defaultResponse(activityId)),
+          ...patch,
+        },
+      }));
+    },
+    []
   );
 
   const setRating = (rating: Rating) => updateCurrent({ rating });
@@ -81,6 +99,9 @@ export function useQuestionnaire(
   const progress = filteredActivities.length > 0 ? (currentIndex + 1) / filteredActivities.length : 1;
 
   return {
+    activities: filteredActivities,
+    responses,
+    finalResponses: Object.values(responses),
     currentActivity,
     currentResponse,
     currentIndex,
@@ -89,6 +110,7 @@ export function useQuestionnaire(
     setRating,
     setRole,
     setIntensity,
+    setResponseForActivity,
     goNext,
     goPrev,
     goTo,

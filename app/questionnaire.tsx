@@ -22,7 +22,16 @@ import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import { CATEGORY_LABELS, ExperienceLevel, UserProfile, ActivityCategory, Rating, Activity } from '@/types';
+import {
+  CATEGORY_LABELS,
+  ExperienceLevel,
+  UserProfile,
+  ActivityCategory,
+  Rating,
+  Activity,
+  ActivityMood,
+  MOOD_LABELS,
+} from '@/types';
 import { createSession } from '@/lib/sessions';
 import { CATEGORY_ORDER, ACTIVITIES, getAllActivities } from '@/data/activities';
 import { CustomActivityModal } from '@/components/CustomActivityModal';
@@ -40,6 +49,7 @@ export default function QuestionnaireScreen() {
   const [guestNickname, setGuestNickname] = useState('');
   const [guestNotes, setGuestNotes] = useState('');
   const [step, setStep] = useState<'intro' | 'categories' | 'questions'>('intro');
+  const [filterMode, setFilterMode] = useState<'categories' | 'moods'>('categories');
   const [enabledCategories, setEnabledCategories] = useState<ActivityCategory[]>([...CATEGORY_ORDER]);
   const [customActivities, setCustomActivities] = useState<Activity[]>([]);
   const [showCustomModal, setShowCustomModal] = useState(false);
@@ -69,6 +79,26 @@ export default function QuestionnaireScreen() {
         return [...prev, cat];
       }
     });
+  };
+
+  const toggleCategoriesByMood = (mood: ActivityMood) => {
+    const matchingCats = Array.from(
+      new Set(
+        getAllActivities(customActivities)
+          .filter((a) => a.moods?.includes(mood))
+          .map((a) => a.category)
+      )
+    );
+
+    const allSelected = matchingCats.every((c) => enabledCategories.includes(c));
+    if (allSelected) {
+      setEnabledCategories((prev) => {
+        const next = prev.filter((c) => !matchingCats.includes(c));
+        return next.length > 0 ? next : prev;
+      });
+    } else {
+      setEnabledCategories((prev) => Array.from(new Set([...prev, ...matchingCats])));
+    }
   };
 
   const selectedQuestionsCount = useMemo(() => {
@@ -189,31 +219,88 @@ export default function QuestionnaireScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.intro}>
-          <Text style={styles.introTitle}>Filtro de Categorías</Text>
+          <Text style={styles.introTitle}>Filtro de Categorías y Ambientes</Text>
           <Text style={styles.introText}>
-            Desmarca las categorías que no te interesen. Las actividades correspondientes se guardarán automáticamente como "No me interesa" para hacer el test más corto.
+            Selecciona las categorías o los ambientes (moods) que quieres explorar. Las actividades de categorías no seleccionadas se omitirán.
           </Text>
 
-          <View style={styles.categoryGrid}>
-            {CATEGORY_ORDER.map((cat) => {
-              const active = enabledCategories.includes(cat);
-              return (
-                <TouchableOpacity
-                  key={cat}
-                  activeOpacity={0.8}
-                  style={[styles.categoryCard, active && styles.categoryCardActive]}
-                  onPress={() => toggleCategory(cat)}
-                >
-                  <Text style={[styles.categoryCardText, active && styles.categoryCardTextActive]}>
-                    {CATEGORY_LABELS[cat]}
-                  </Text>
-                  <Text style={styles.categoryCardSub}>
-                    {active ? '✓ Activa' : '✕ Omitida'}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+          {/* Filter Mode Selector Tabs */}
+          <View style={styles.filterTabContainer}>
+            <TouchableOpacity
+              style={[styles.filterTab, filterMode === 'categories' && styles.filterTabActive]}
+              onPress={() => setFilterMode('categories')}
+            >
+              <Text style={[styles.filterTabText, filterMode === 'categories' && styles.filterTabTextActive]}>
+                📁 Categorías ({enabledCategories.length}/{CATEGORY_ORDER.length})
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.filterTab, filterMode === 'moods' && styles.filterTabActive]}
+              onPress={() => setFilterMode('moods')}
+            >
+              <Text style={[styles.filterTabText, filterMode === 'moods' && styles.filterTabTextActive]}>
+                🎛️ Ambientes / Moods
+              </Text>
+            </TouchableOpacity>
           </View>
+
+          {filterMode === 'categories' ? (
+            <View style={styles.categoryGrid}>
+              {CATEGORY_ORDER.map((cat) => {
+                const active = enabledCategories.includes(cat);
+                return (
+                  <TouchableOpacity
+                    key={cat}
+                    activeOpacity={0.8}
+                    style={[styles.categoryCard, active && styles.categoryCardActive]}
+                    onPress={() => toggleCategory(cat)}
+                  >
+                    <Text style={[styles.categoryCardText, active && styles.categoryCardTextActive]}>
+                      {CATEGORY_LABELS[cat]}
+                    </Text>
+                    <Text style={styles.categoryCardSub}>
+                      {active ? '✓ Activa' : '✕ Omitida'}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={styles.moodsGrid}>
+              {(Object.keys(MOOD_LABELS) as ActivityMood[]).map((mKey) => {
+                const info = MOOD_LABELS[mKey];
+                const matchingCats = Array.from(
+                  new Set(
+                    getAllActivities(customActivities)
+                      .filter((a) => a.moods?.includes(mKey))
+                      .map((a) => a.category)
+                  )
+                );
+                const activeCount = matchingCats.filter((c) => enabledCategories.includes(c)).length;
+                const isFullyActive = matchingCats.length > 0 && activeCount === matchingCats.length;
+
+                return (
+                  <TouchableOpacity
+                    key={mKey}
+                    activeOpacity={0.85}
+                    style={[styles.moodCard, isFullyActive && styles.moodCardActive]}
+                    onPress={() => toggleCategoriesByMood(mKey)}
+                  >
+                    <View style={styles.moodCardHeader}>
+                      <Text style={styles.moodCardTitle}>
+                        {info.emoji} {info.label}
+                      </Text>
+                      <Text style={[styles.moodCardBadge, isFullyActive && styles.moodCardBadgeActive]}>
+                        {isFullyActive ? '✓ Activo' : `${activeCount}/${matchingCats.length} cats`}
+                      </Text>
+                    </View>
+                    <Text style={styles.moodCardDesc}>{info.description}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
 
           <View style={styles.divider} />
 
@@ -282,9 +369,10 @@ function QuestionnaireActiveFlow({
         <SwipeDeckView
           activities={q.activities}
           responses={q.responses}
+          currentIndex={q.currentIndex}
+          onIndexChange={(idx) => q.goTo(idx)}
           onResponseChange={(actId, resp) => {
-            q.setRating(resp.rating);
-            if (resp.role) q.setRole(resp.role);
+            q.setResponseForActivity(actId, resp);
           }}
           onFinish={() => onFinish(q.finalResponses)}
           onSwitchToForm={() => setViewMode('list')}
@@ -596,5 +684,81 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: fontSize.xs,
     textDecorationLine: 'underline',
+  },
+  filterTabContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.sm,
+  },
+  filterTab: {
+    flex: 1,
+    paddingVertical: spacing.xs + 2,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  filterTabActive: {
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  filterTabText: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  filterTabTextActive: {
+    color: colors.text,
+    fontWeight: '700',
+  },
+  moodsGrid: {
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  moodCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 4,
+  },
+  moodCardActive: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+  },
+  moodCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  moodCardTitle: {
+    color: colors.text,
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  moodCardBadge: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: '600',
+    backgroundColor: colors.surfaceLight,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  moodCardBadgeActive: {
+    color: colors.neonPurple,
+    borderColor: colors.primary,
+    fontWeight: '700',
+  },
+  moodCardDesc: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    lineHeight: 16,
   },
 });

@@ -19,6 +19,8 @@ interface Props {
   onResponseChange: (activityId: string, response: ActivityResponse) => void;
   onFinish: () => void;
   onSwitchToForm?: () => void;
+  currentIndex?: number;
+  onIndexChange?: (index: number) => void;
 }
 
 const RATING_ACTIONS: { rating: Rating; emoji: string; label: string; color: string }[] = [
@@ -42,10 +44,13 @@ export function SwipeDeckView({
   onResponseChange,
   onFinish,
   onSwitchToForm,
+  currentIndex: externalIndex,
+  onIndexChange,
 }: Props) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [internalIndex, setInternalIndex] = useState(0);
   const position = useRef(new Animated.ValueXY()).current;
 
+  const currentIndex = externalIndex ?? internalIndex;
   const currentActivity = activities[currentIndex];
   const isLast = currentIndex === activities.length - 1;
   const progress = (currentIndex + 1) / Math.max(1, activities.length);
@@ -55,6 +60,22 @@ export function SwipeDeckView({
     rating: 'not_interested',
     role: 'flexible',
     intensity: 3,
+  };
+
+  const setNextIndex = () => {
+    if (onIndexChange) {
+      onIndexChange(currentIndex + 1);
+    } else {
+      setInternalIndex((i) => i + 1);
+    }
+  };
+
+  const setPrevIndex = () => {
+    if (onIndexChange) {
+      onIndexChange(currentIndex - 1);
+    } else {
+      setInternalIndex((i) => i - 1);
+    }
   };
 
   const handleRatingSelect = (rating: Rating) => {
@@ -77,7 +98,7 @@ export function SwipeDeckView({
       if (isLast) {
         onFinish();
       } else {
-        setCurrentIndex((i) => i + 1);
+        setNextIndex();
       }
     });
   };
@@ -92,7 +113,7 @@ export function SwipeDeckView({
 
   const handleUndo = () => {
     if (currentIndex > 0) {
-      setCurrentIndex((i) => i - 1);
+      setPrevIndex();
       position.setValue({ x: 0, y: 0 });
     }
   };
@@ -211,7 +232,7 @@ export function SwipeDeckView({
         ) : (
           <TouchableOpacity
             style={styles.skipBtn}
-            onPress={() => setCurrentIndex((i) => i + 1)}
+            onPress={setNextIndex}
           >
             <Text style={styles.skipBtnText}>Saltar →</Text>
           </TouchableOpacity>
