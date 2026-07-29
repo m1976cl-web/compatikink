@@ -452,6 +452,21 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* ⚡ Hardware & QIUI Direct Control CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
+        onPress={() => router.push('/hardware')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>⚡</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Control Hardware & QIUI Direct</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Conexión Bluetooth (WebBLE) para QIUI Cellmate y Lovense</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
