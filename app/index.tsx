@@ -467,6 +467,21 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 🛍️ Kink Store & Sexshop Marketplace CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
+        onPress={() => router.push('/store')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🛍️</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Mercado & Tienda Kink (Sexshop Partners)</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Accesorios, cuerdas y juguetes recomendados por tus gustos</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
