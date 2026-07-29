@@ -59,6 +59,7 @@ export default function QuestionnaireScreen() {
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyLevel | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [tooltipActivity, setTooltipActivity] = useState<Activity | null>(null);
 
   useEffect(() => {
@@ -231,8 +232,25 @@ export default function QuestionnaireScreen() {
         <ScrollView contentContainerStyle={styles.intro}>
           <Text style={styles.introTitle}>Filtro de Categorías y Ambientes</Text>
           <Text style={styles.introText}>
-            Selecciona las categorías o los ambientes (moods) que quieres explorar. Las actividades de categorías no seleccionadas se omitirán.
+            Selecciona las categorías, ambientes o busca por palabra clave para personalizar las actividades que responderás.
           </Text>
+
+          {/* Search Bar */}
+          <View style={styles.searchBox}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar por palabra clave (ej: cuerdas, masaje, cera)..."
+              placeholderTextColor={colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery ? (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
+                <Text style={styles.clearSearchText}>✕</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
 
           {/* Difficulty Level Filter */}
           <View style={styles.difficultyRow}>
@@ -385,6 +403,7 @@ export default function QuestionnaireScreen() {
       enabledCategories={enabledCategories}
       customActivities={customActivities}
       difficultyFilter={difficultyFilter}
+      searchQuery={searchQuery}
       onFinish={handleFinish}
       loading={loading}
       onBack={() => setStep('categories')}
@@ -398,6 +417,7 @@ function QuestionnaireActiveFlow({
   enabledCategories,
   customActivities,
   difficultyFilter,
+  searchQuery,
   onFinish,
   loading,
   onBack,
@@ -406,11 +426,12 @@ function QuestionnaireActiveFlow({
   enabledCategories: ActivityCategory[];
   customActivities: Activity[];
   difficultyFilter: DifficultyLevel | 'all';
+  searchQuery: string;
   onFinish: (responses: any[]) => void;
   loading: boolean;
   onBack: () => void;
 }) {
-  const q = useQuestionnaire(undefined, enabledCategories, customActivities, difficultyFilter);
+  const q = useQuestionnaire(undefined, enabledCategories, customActivities, difficultyFilter, searchQuery);
   const [fastMode, setFastMode] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
   const [viewMode, setViewMode] = useState<'swipe' | 'list'>('swipe');
@@ -850,5 +871,35 @@ const styles = StyleSheet.create({
   },
   diffChipTextActive: {
     color: colors.primary,
+  },
+
+  // Search Box
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.xs,
+  },
+  searchIcon: {
+    fontSize: 16,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 10,
+    color: colors.text,
+    fontSize: fontSize.sm,
+  },
+  clearSearchBtn: {
+    padding: 4,
+  },
+  clearSearchText: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

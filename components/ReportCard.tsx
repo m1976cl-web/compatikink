@@ -16,6 +16,8 @@ interface Props {
   showInitiatorOnly?: boolean;
   onPlanScene?: (item: ReportItem) => void;
   hasAgreement?: boolean;
+  onToggleWishlist?: (item: ReportItem) => void;
+  isWishlisted?: boolean;
 }
 
 export function ReportCard({ item, showInitiatorOnly = true, onPlanScene, hasAgreement }: Props) {
@@ -74,7 +76,7 @@ export function ReportCard({ item, showInitiatorOnly = true, onPlanScene, hasAgr
         <Text style={styles.prompt}>💬 {item.conversationPrompt}</Text>
       ) : null}
 
-      {isPlannable && onPlanScene ? (
+      {isPlannable || onToggleWishlist ? (
         <View style={styles.planFooter}>
           {hasAgreement ? (
             <View style={styles.agreedBadge}>
@@ -82,11 +84,24 @@ export function ReportCard({ item, showInitiatorOnly = true, onPlanScene, hasAgr
             </View>
           ) : null}
 
-          <TouchableOpacity style={styles.planBtn} onPress={() => onPlanScene(item)}>
-            <Text style={styles.planBtnText}>
-              {hasAgreement ? '📜 Ver / Editar Acuerdo' : '🤝 Planificar Escena'}
-            </Text>
-          </TouchableOpacity>
+          {onToggleWishlist ? (
+            <TouchableOpacity
+              style={[styles.wishlistBtn, isWishlisted && styles.wishlistBtnActive]}
+              onPress={() => onToggleWishlist(item)}
+            >
+              <Text style={[styles.wishlistBtnText, isWishlisted && styles.wishlistBtnTextActive]}>
+                {isWishlisted ? '💌 En Wishlist' : '🤍 Deseo'}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {isPlannable && onPlanScene ? (
+            <TouchableOpacity style={styles.planBtn} onPress={() => onPlanScene(item)}>
+              <Text style={styles.planBtnText}>
+                {hasAgreement ? '📜 Ver / Editar' : '🤝 Planificar'}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       ) : null}
     </View>
@@ -218,17 +233,36 @@ const styles = StyleSheet.create({
   },
   planBtn: {
     backgroundColor: colors.surfaceLight,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  planBtnText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  wishlistBtn: {
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
-    marginLeft: 'auto',
-    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
+    marginRight: 6,
   },
-  planBtnText: {
-    color: colors.text,
-    fontSize: fontSize.xs,
+  wishlistBtnActive: {
+    borderColor: colors.accent,
+    backgroundColor: 'rgba(244, 114, 182, 0.15)',
+  },
+  wishlistBtnText: {
+    color: colors.textMuted,
+    fontSize: 12,
     fontWeight: '700',
+  },
+  wishlistBtnTextActive: {
+    color: colors.accent,
   },
 });

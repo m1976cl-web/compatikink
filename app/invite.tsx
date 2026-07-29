@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View, Alert, Share } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Alert, Share, Image, TouchableOpacity, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ export default function InviteScreen() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [guestProfile, setGuestProfile] = useState<GuestProfile | null>(null);
+  const [showQrModal, setShowQrModal] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -114,6 +115,51 @@ export default function InviteScreen() {
           <Button title="📋 Copiar código" onPress={copyCode} style={{ flex: 1 }} />
           <Button title="📤 Compartir" onPress={shareInvite} variant="secondary" style={{ flex: 1 }} />
         </View>
+
+        {/* 📲 QR Code Trigger Card */}
+        <TouchableOpacity
+          style={styles.qrCard}
+          onPress={() => setShowQrModal(true)}
+        >
+          <View style={styles.qrCardInner}>
+            <Text style={{ fontSize: 28 }}>📲</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.qrCardTitle}>Código QR de Escaneo Rápido</Text>
+              <Text style={styles.qrCardSub}>Toca para mostrar el código QR cara a cara</Text>
+            </View>
+            <Text style={{ color: colors.primary, fontSize: 20, fontWeight: '700' }}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* 📲 QR Code Modal */}
+        <Modal visible={showQrModal} transparent animationType="fade" onRequestClose={() => setShowQrModal(false)}>
+          <View style={styles.qrOverlay}>
+            <View style={styles.qrModalCard}>
+              <TouchableOpacity style={styles.qrCloseBtn} onPress={() => setShowQrModal(false)}>
+                <Text style={styles.qrCloseText}>✕</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.qrModalTitle}>Escanea para Responder 📲</Text>
+              <Text style={styles.qrModalSub}>Apunta la cámara de tu pareja a este código:</Text>
+
+              <View style={styles.qrImageContainer}>
+                <Image
+                  source={{
+                    uri: `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+                      `https://m1976cl-web.github.io/compatikink/guest/${session.inviteCode}`
+                    )}`,
+                  }}
+                  style={{ width: 220, height: 220, borderRadius: 12 }}
+                  resizeMode="contain"
+                />
+              </View>
+
+              <Text style={styles.qrModalCodeText}>Código: {session.inviteCode}</Text>
+
+              <Button title="Cerrar QR" variant="ghost" onPress={() => setShowQrModal(false)} />
+            </View>
+          </View>
+        </Modal>
 
         {guestProfile ? (
           <View style={styles.profileCard}>
@@ -268,6 +314,88 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: fontSize.sm,
     lineHeight: 18,
+  },
+
+  // QR Code Styles
+  qrCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.3)',
+    marginTop: spacing.xs,
+  },
+  qrCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  qrCardTitle: {
+    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+  },
+  qrCardSub: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+  },
+  qrOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.88)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  qrModalCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: spacing.xl,
+    width: '100%',
+    maxWidth: 380,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    gap: spacing.md,
+  },
+  qrCloseBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qrCloseText: {
+    color: colors.textMuted,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  qrModalTitle: {
+    color: colors.neonPurple,
+    fontSize: fontSize.lg,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginTop: spacing.sm,
+  },
+  qrModalSub: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    textAlign: 'center',
+  },
+  qrImageContainer: {
+    backgroundColor: '#fff',
+    padding: spacing.md,
+    borderRadius: 20,
+    elevation: 8,
+  },
+  qrModalCodeText: {
+    color: colors.text,
+    fontSize: fontSize.md,
+    fontWeight: '800',
+    letterSpacing: 2,
   },
 });
 

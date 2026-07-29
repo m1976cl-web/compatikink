@@ -381,3 +381,37 @@ export async function getSceneDebriefs(sessionId: string): Promise<SceneDebrief[
   if (!raw) return [];
   return JSON.parse(raw) as SceneDebrief[];
 }
+
+// 💌 Wishlist ("Quiero Probar") Storage
+export interface WishlistItem {
+  activityId: string;
+  activityName: string;
+  category: string;
+  addedAt: string;
+  note?: string;
+}
+
+const WISHLIST_KEY = 'user_wishlist_items';
+
+export async function getWishlist(): Promise<WishlistItem[]> {
+  const raw = await AsyncStorage.getItem(WISHLIST_KEY);
+  if (!raw) return [];
+  return JSON.parse(raw) as WishlistItem[];
+}
+
+export async function toggleWishlist(item: { activityId: string; activityName: string; category: string }): Promise<boolean> {
+  const existing = await getWishlist();
+  const index = existing.findIndex((w) => w.activityId === item.activityId);
+  if (index >= 0) {
+    existing.splice(index, 1);
+    await AsyncStorage.setItem(WISHLIST_KEY, JSON.stringify(existing));
+    return false; // Removed
+  } else {
+    existing.push({
+      ...item,
+      addedAt: new Date().toISOString(),
+    });
+    await AsyncStorage.setItem(WISHLIST_KEY, JSON.stringify(existing));
+    return true; // Added
+  }
+}

@@ -13,7 +13,8 @@ export function useQuestionnaire(
   initial?: ActivityResponse[],
   enabledCategories?: ActivityCategory[],
   customs?: Activity[],
-  difficultyFilter?: DifficultyLevel | 'all'
+  difficultyFilter?: DifficultyLevel | 'all',
+  searchQuery?: string
 ) {
   const allActs = useMemo(() => getAllActivities(customs), [customs]);
 
@@ -25,8 +26,14 @@ export function useQuestionnaire(
     if (difficultyFilter && difficultyFilter !== 'all') {
       result = result.filter((a) => !a.difficultyLevel || a.difficultyLevel === difficultyFilter);
     }
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (a) => a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q)
+      );
+    }
     return result;
-  }, [enabledCategories, allActs, difficultyFilter]);
+  }, [enabledCategories, allActs, difficultyFilter, searchQuery]);
 
   const [responses, setResponses] = useState<Record<string, ActivityResponse>>(() => {
     const map: Record<string, ActivityResponse> = {};

@@ -12,7 +12,7 @@ import { colors, fontSize, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { generateReport } from '@/lib/compatibility';
 import { getSessionByToken, refreshSession } from '@/lib/sessions';
-import { getInitiatorToken, getGuestProfile, getSceneAgreements } from '@/lib/storage';
+import { getInitiatorToken, getGuestProfile, getSceneAgreements, getWishlist, toggleWishlist, WishlistItem } from '@/lib/storage';
 import {
   ActivityMood,
   CompatibilityReport,
@@ -52,6 +52,12 @@ export default function ReportScreen() {
   const [showRouletteModal, setShowRouletteModal] = useState(false);
   const [planningItem, setPlanningItem] = useState<ReportItem | null>(null);
   const [agreements, setAgreements] = useState<SceneAgreement[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+
+  const loadWishlist = useCallback(async () => {
+    const list = await getWishlist();
+    setWishlist(list);
+  }, []);
 
   // Animated score
   const scoreAnim = useRef(new Animated.Value(0)).current;
@@ -101,6 +107,7 @@ export default function ReportScreen() {
       setGuestProfile(gp);
 
       await loadAgreements(session.id);
+      await loadWishlist();
 
       // Animate score
       const finalScore = rep.compatibilityScore;
@@ -361,6 +368,15 @@ export default function ReportScreen() {
                       showInitiatorOnly
                       onPlanScene={(selectedItem) => setPlanningItem(selectedItem)}
                       hasAgreement={agreedActivityIds.has(item.activityId)}
+                      isWishlisted={wishlist.some((w) => w.activityId === item.activityId)}
+                      onToggleWishlist={async (targetItem) => {
+                        await toggleWishlist({
+                          activityId: targetItem.activityId,
+                          activityName: targetItem.activityName,
+                          category: targetItem.category,
+                        });
+                        await loadWishlist();
+                      }}
                     />
                   </View>
                 ))}
