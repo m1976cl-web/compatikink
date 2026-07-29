@@ -362,6 +362,8 @@ export interface SceneDebrief {
   safewordsRespected: boolean;
   aftercareRating: number; // 1-5
   notes?: string;
+  emotions?: string[]; // e.g. ['Empoderado/a', 'Conectado/a']
+  wouldRepeat?: 'yes' | 'maybe' | 'no';
   createdAt: string;
 }
 

@@ -209,7 +209,21 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
-      {/* Login Card */}
+      {/* 📚 Glossary CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
+        onPress={() => router.push('/glossary')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>📚</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Glosario Kink</Text>
+            <Text style={[styles.quickProfileDesc, { color: '#38bdf8' }]}>Términos esenciales · Educación y consentimiento</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: '#38bdf8' }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {profilesList.length > 0 ? (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Inicia Sesión con tu Perfil</Text>

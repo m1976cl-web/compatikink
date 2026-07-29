@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { ActivityResponse, Rating, RolePreference, ActivityCategory, Activity } from '@/types';
+import { ActivityResponse, Rating, RolePreference, ActivityCategory, Activity, DifficultyLevel } from '@/types';
 import { ACTIVITIES, getAllActivities } from '@/data/activities';
 
 const defaultResponse = (activityId: string): ActivityResponse => ({
@@ -12,14 +12,21 @@ const defaultResponse = (activityId: string): ActivityResponse => ({
 export function useQuestionnaire(
   initial?: ActivityResponse[],
   enabledCategories?: ActivityCategory[],
-  customs?: Activity[]
+  customs?: Activity[],
+  difficultyFilter?: DifficultyLevel | 'all'
 ) {
   const allActs = useMemo(() => getAllActivities(customs), [customs]);
 
   const filteredActivities = useMemo(() => {
-    if (!enabledCategories || enabledCategories.length === 0) return allActs;
-    return allActs.filter((a) => enabledCategories.includes(a.category));
-  }, [enabledCategories, allActs]);
+    let result = allActs;
+    if (enabledCategories && enabledCategories.length > 0) {
+      result = result.filter((a) => enabledCategories.includes(a.category));
+    }
+    if (difficultyFilter && difficultyFilter !== 'all') {
+      result = result.filter((a) => !a.difficultyLevel || a.difficultyLevel === difficultyFilter);
+    }
+    return result;
+  }, [enabledCategories, allActs, difficultyFilter]);
 
   const [responses, setResponses] = useState<Record<string, ActivityResponse>>(() => {
     const map: Record<string, ActivityResponse> = {};

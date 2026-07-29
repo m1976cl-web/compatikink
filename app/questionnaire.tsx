@@ -24,14 +24,18 @@ import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import {
   CATEGORY_LABELS,
+  CATEGORY_EMOJIS,
+  DIFFICULTY_LABELS,
   ExperienceLevel,
   UserProfile,
   ActivityCategory,
+  DifficultyLevel,
   Rating,
   Activity,
   ActivityMood,
   MOOD_LABELS,
 } from '@/types';
+import { ActivityTooltipModal } from '@/components/ActivityTooltipModal';
 import { createSession } from '@/lib/sessions';
 import { CATEGORY_ORDER, ACTIVITIES, getAllActivities } from '@/data/activities';
 import { CustomActivityModal } from '@/components/CustomActivityModal';
@@ -54,6 +58,8 @@ export default function QuestionnaireScreen() {
   const [customActivities, setCustomActivities] = useState<Activity[]>([]);
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [difficultyFilter, setDifficultyFilter] = useState<DifficultyLevel | 'all'>('all');
+  const [tooltipActivity, setTooltipActivity] = useState<Activity | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -102,8 +108,12 @@ export default function QuestionnaireScreen() {
   };
 
   const selectedQuestionsCount = useMemo(() => {
-    return getAllActivities(customActivities).filter((a) => enabledCategories.includes(a.category)).length;
-  }, [enabledCategories, customActivities]);
+    return getAllActivities(customActivities).filter((a) => {
+      if (!enabledCategories.includes(a.category)) return false;
+      if (difficultyFilter !== 'all' && a.difficultyLevel && a.difficultyLevel !== difficultyFilter) return false;
+      return true;
+    }).length;
+  }, [enabledCategories, customActivities, difficultyFilter]);
 
   const handleFinish = async (finalResponses: any[]) => {
     const name = nickname.trim() || 'Anónimo';
@@ -224,6 +234,39 @@ export default function QuestionnaireScreen() {
             Selecciona las categorías o los ambientes (moods) que quieres explorar. Las actividades de categorías no seleccionadas se omitirán.
           </Text>
 
+          {/* Difficulty Level Filter */}
+          <View style={styles.difficultyRow}>
+            <Text style={styles.difficultyLabel}>🎯 Nivel de contenido:</Text>
+            <View style={styles.difficultyChips}>
+              <TouchableOpacity
+                style={[styles.diffChip, difficultyFilter === 'all' && styles.diffChipActive]}
+                onPress={() => setDifficultyFilter('all')}
+              >
+                <Text style={[styles.diffChipText, difficultyFilter === 'all' && styles.diffChipTextActive]}>
+                  Todos ({getAllActivities(customActivities).filter(a => enabledCategories.includes(a.category)).length})
+                </Text>
+              </TouchableOpacity>
+              {(['beginner', 'intermediate', 'advanced'] as DifficultyLevel[]).map((lvl) => {
+                const info = DIFFICULTY_LABELS[lvl];
+                const count = getAllActivities(customActivities).filter(
+                  (a) => enabledCategories.includes(a.category) && a.difficultyLevel === lvl
+                ).length;
+                const isActive = difficultyFilter === lvl;
+                return (
+                  <TouchableOpacity
+                    key={lvl}
+                    style={[styles.diffChip, isActive && { borderColor: info.color, backgroundColor: `${info.color}20` }]}
+                    onPress={() => setDifficultyFilter(isActive ? 'all' : lvl)}
+                  >
+                    <Text style={[styles.diffChipText, isActive && { color: info.color }]}>
+                      {info.emoji} {info.label} ({count})
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
           {/* Filter Mode Selector Tabs */}
           <View style={styles.filterTabContainer}>
             <TouchableOpacity
@@ -257,10 +300,10 @@ export default function QuestionnaireScreen() {
                     onPress={() => toggleCategory(cat)}
                   >
                     <Text style={[styles.categoryCardText, active && styles.categoryCardTextActive]}>
-                      {CATEGORY_LABELS[cat]}
+                      {CATEGORY_EMOJIS[cat]} {CATEGORY_LABELS[cat]}
                     </Text>
                     <Text style={styles.categoryCardSub}>
-                      {active ? '✓ Activa' : '✕ Omitida'}
+                      {active ? '✓ Activa' : '✕ Omitida'} · {getAllActivities(customActivities).filter((a) => a.category === cat).length} actividades
                     </Text>
                   </TouchableOpacity>
                 );
@@ -320,6 +363,12 @@ export default function QuestionnaireScreen() {
             onPress={() => setStep('intro')}
           />
 
+          <ActivityTooltipModal
+            visible={!!tooltipActivity}
+            activity={tooltipActivity}
+            onClose={() => setTooltipActivity(null)}
+          />
+
           <CustomActivityModal
             visible={showCustomModal}
             onClose={() => setShowCustomModal(false)}
@@ -335,6 +384,7 @@ export default function QuestionnaireScreen() {
       nickname={nickname}
       enabledCategories={enabledCategories}
       customActivities={customActivities}
+      difficultyFilter={difficultyFilter}
       onFinish={handleFinish}
       loading={loading}
       onBack={() => setStep('categories')}
@@ -347,6 +397,7 @@ function QuestionnaireActiveFlow({
   nickname,
   enabledCategories,
   customActivities,
+  difficultyFilter,
   onFinish,
   loading,
   onBack,
@@ -354,11 +405,12 @@ function QuestionnaireActiveFlow({
   nickname: string;
   enabledCategories: ActivityCategory[];
   customActivities: Activity[];
+  difficultyFilter: DifficultyLevel | 'all';
   onFinish: (responses: any[]) => void;
   loading: boolean;
   onBack: () => void;
 }) {
-  const q = useQuestionnaire(undefined, enabledCategories, customActivities);
+  const q = useQuestionnaire(undefined, enabledCategories, customActivities, difficultyFilter);
   const [fastMode, setFastMode] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
   const [viewMode, setViewMode] = useState<'swipe' | 'list'>('swipe');
@@ -760,5 +812,43 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: fontSize.xs,
     lineHeight: 16,
+  },
+
+  // Difficulty Filter
+  difficultyRow: {
+    width: '100%',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  difficultyLabel: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  difficultyChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  diffChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  diffChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+  },
+  diffChipText: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  diffChipTextActive: {
+    color: colors.primary,
   },
 });

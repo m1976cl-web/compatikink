@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View, Alert, TouchableOpacity } from 'react-native';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { ScrollView, StyleSheet, Text, View, Alert, TouchableOpacity, Animated, Easing } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
@@ -53,6 +53,12 @@ export default function ReportScreen() {
   const [planningItem, setPlanningItem] = useState<ReportItem | null>(null);
   const [agreements, setAgreements] = useState<SceneAgreement[]>([]);
 
+  // Animated score
+  const scoreAnim = useRef(new Animated.Value(0)).current;
+  const [displayScore, setDisplayScore] = useState(0);
+  const confettiOpacity = useRef(new Animated.Value(0)).current;
+  const cardFadeAnims = useRef<Animated.Value[]>([]).current;
+
   const loadAgreements = useCallback(async (sessionId: string) => {
     const list = await getSceneAgreements(sessionId);
     setAgreements(list);
@@ -96,7 +102,41 @@ export default function ReportScreen() {
 
       await loadAgreements(session.id);
 
+      // Animate score
+      const finalScore = rep.compatibilityScore;
+      scoreAnim.setValue(0);
+      Animated.timing(scoreAnim, {
+        toValue: finalScore,
+        duration: 1400,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+
+      const listenerId = scoreAnim.addListener(({ value }) => {
+        setDisplayScore(Math.round(value));
+      });
+
+      // Confetti for high scores
+      if (finalScore > 80) {
+        Animated.sequence([
+          Animated.delay(800),
+          Animated.timing(confettiOpacity, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: false,
+          }),
+          Animated.delay(2500),
+          Animated.timing(confettiOpacity, {
+            toValue: 0,
+            duration: 800,
+            useNativeDriver: false,
+          }),
+        ]).start();
+      }
+
       setLoading(false);
+
+      return () => scoreAnim.removeListener(listenerId);
     })();
   }, [params.token, router, loadAgreements]);
 
@@ -145,7 +185,7 @@ export default function ReportScreen() {
           <View style={styles.desktopSummaryContainer}>
             {/* Left Column: Overall Match % & Stats */}
             <View style={styles.desktopSummaryLeft}>
-              <Text style={styles.score}>{report.compatibilityScore}%</Text>
+              <Text style={styles.score}>{displayScore}%</Text>
               <Text style={styles.scoreLabel}>Compatibilidad general</Text>
               <View style={styles.stats}>
                 <Stat value={report.mutualMatchCount} label="Matches" color={colors.success} />
@@ -202,7 +242,13 @@ export default function ReportScreen() {
         ) : (
           <>
             <View style={styles.summary}>
-              <Text style={styles.score}>{report.compatibilityScore}%</Text>
+              <Text style={styles.score}>{displayScore}%</Text>
+              {/* Confetti overlay for high scores */}
+              {report.compatibilityScore > 80 && (
+                <Animated.View style={[styles.confettiOverlay, { opacity: confettiOpacity }]}>
+                  <Text style={styles.confettiText}>🎉✨🔥💜✨🎉</Text>
+                </Animated.View>
+              )}
               <Text style={styles.scoreLabel}>Compatibilidad general</Text>
               <View style={styles.stats}>
                 <Stat value={report.mutualMatchCount} label="Matches" color={colors.success} />
@@ -575,5 +621,20 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: fontSize.sm,
     textAlign: 'center',
+  },
+  confettiOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    pointerEvents: 'none',
+  },
+  confettiText: {
+    fontSize: 36,
+    textAlign: 'center',
+    letterSpacing: 8,
   },
 });

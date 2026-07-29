@@ -11,7 +11,12 @@ export type ActivityCategory =
   | 'service'
   | 'exhibition'
   | 'intimacy'
-  | 'aftercare';
+  | 'aftercare'
+  | 'roleplay'
+  | 'toys_gear'
+  | 'lifestyle';
+
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export type ActivityMood =
   | 'sensual_relajante'
@@ -51,6 +56,10 @@ export interface Activity {
   name: string;
   description: string;
   moods?: ActivityMood[];
+  difficultyLevel?: DifficultyLevel;
+  safetyTip?: string;
+  riskLevel?: 'low' | 'medium' | 'high';
+  suggestedGear?: string[];
 }
 
 export interface ActivityResponse {
@@ -181,6 +190,30 @@ export const CATEGORY_LABELS: Record<ActivityCategory, string> = {
   exhibition: 'Exhibición',
   intimacy: 'Intimidad',
   aftercare: 'Aftercare',
+  roleplay: 'Juegos de rol',
+  toys_gear: 'Juguetes y equipo',
+  lifestyle: 'Estilo de vida',
+};
+
+export const CATEGORY_EMOJIS: Record<ActivityCategory, string> = {
+  power_exchange: '⚡',
+  bondage: '🪢',
+  impact: '🖐️',
+  sensation: '🪷',
+  psychological: '🧠',
+  service: '🫡',
+  exhibition: '👁️',
+  intimacy: '💖',
+  aftercare: '🫂',
+  roleplay: '🎭',
+  toys_gear: '🧸',
+  lifestyle: '🌙',
+};
+
+export const DIFFICULTY_LABELS: Record<DifficultyLevel, { label: string; emoji: string; color: string }> = {
+  beginner: { label: 'Principiante', emoji: '🌱', color: '#4ade80' },
+  intermediate: { label: 'Intermedio', emoji: '🔥', color: '#fbbf24' },
+  advanced: { label: 'Avanzado', emoji: '⚡', color: '#f87171' },
 };
 
 export const SECTION_LABELS: Record<ReportSectionType, string> = {

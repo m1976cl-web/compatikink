@@ -8,6 +8,7 @@ import {
   View,
   Alert,
   Switch,
+  ScrollView,
 } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { saveSceneDebrief, SceneDebrief } from '@/lib/storage';
@@ -21,6 +22,27 @@ interface Props {
   onSaved?: () => void;
 }
 
+const EMOTION_TAGS = [
+  { label: 'Empoderado/a', emoji: '💪' },
+  { label: 'Vulnerable', emoji: '🫧' },
+  { label: 'Conectado/a', emoji: '💜' },
+  { label: 'Eufórico/a', emoji: '✨' },
+  { label: 'Relajado/a', emoji: '🪷' },
+  { label: 'Ansioso/a', emoji: '😰' },
+  { label: 'Libre', emoji: '🦋' },
+  { label: 'Sumiso/a', emoji: '🫡' },
+  { label: 'Dominante', emoji: '⚡' },
+  { label: 'Agradecido/a', emoji: '🙏' },
+  { label: 'Confundido/a', emoji: '🤔' },
+  { label: 'En subspace', emoji: '🌌' },
+];
+
+const REPEAT_OPTIONS: { value: 'yes' | 'maybe' | 'no'; label: string; emoji: string; color: string }[] = [
+  { value: 'yes', label: 'Sí', emoji: '💚', color: '#4ade80' },
+  { value: 'maybe', label: 'Quizás', emoji: '💛', color: '#fbbf24' },
+  { value: 'no', label: 'No por ahora', emoji: '🧡', color: '#fb923c' },
+];
+
 export function SceneDebriefModal({
   visible,
   onClose,
@@ -33,7 +55,15 @@ export function SceneDebriefModal({
   const [safewordsRespected, setSafewordsRespected] = useState(true);
   const [aftercareRating, setAftercareRating] = useState(5);
   const [notes, setNotes] = useState('');
+  const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
+  const [wouldRepeat, setWouldRepeat] = useState<'yes' | 'maybe' | 'no'>('yes');
   const [saving, setSaving] = useState(false);
+
+  const toggleEmotion = (label: string) => {
+    setSelectedEmotions((prev) =>
+      prev.includes(label) ? prev.filter((e) => e !== label) : [...prev, label]
+    );
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -47,6 +77,8 @@ export function SceneDebriefModal({
         safewordsRespected,
         aftercareRating,
         notes: notes.trim() || undefined,
+        emotions: selectedEmotions.length > 0 ? selectedEmotions : undefined,
+        wouldRepeat,
         createdAt: new Date().toISOString(),
       };
 
@@ -67,72 +99,116 @@ export function SceneDebriefModal({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Text style={styles.headerEmoji}>📝</Text>
-          <Text style={styles.title}>Diario Post-Escena (Debrief)</Text>
-          <Text style={styles.subtitle}>
-            Actividad: <Text style={{ color: colors.neonPurple, fontWeight: '700' }}>{activityName}</Text>
-          </Text>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+            <Text style={styles.headerEmoji}>📝</Text>
+            <Text style={styles.title}>Diario Post-Escena (Debrief)</Text>
+            <Text style={styles.subtitle}>
+              Actividad: <Text style={{ color: colors.neonPurple, fontWeight: '700' }}>{activityName}</Text>
+            </Text>
 
-          {/* Rating Stars */}
-          <View style={styles.fieldBlock}>
-            <Text style={styles.fieldLabel}>¿Cómo se sintió la experiencia?</Text>
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => setRatingStars(star)}>
-                  <Text style={[styles.starEmoji, ratingStars >= star && styles.starActive]}>★</Text>
-                </TouchableOpacity>
-              ))}
+            {/* Rating Stars */}
+            <View style={styles.fieldBlock}>
+              <Text style={styles.fieldLabel}>¿Cómo se sintió la experiencia?</Text>
+              <View style={styles.starsRow}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity key={star} onPress={() => setRatingStars(star)}>
+                    <Text style={[styles.starEmoji, ratingStars >= star && styles.starActive]}>★</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
 
-          {/* Safewords Respected Switch */}
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>¿Se respetaron las palabras clave?</Text>
-            <Switch
-              value={safewordsRespected}
-              onValueChange={setSafewordsRespected}
-              trackColor={{ false: colors.danger, true: colors.success }}
-              thumbColor="#fff"
-            />
-          </View>
-
-          {/* Aftercare Rating */}
-          <View style={styles.fieldBlock}>
-            <Text style={styles.fieldLabel}>Calidad del Aftercare / Reconexión</Text>
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => setAftercareRating(star)}>
-                  <Text style={[styles.starEmoji, aftercareRating >= star && styles.starActive]}>💛</Text>
-                </TouchableOpacity>
-              ))}
+            {/* Emotion Tags */}
+            <View style={styles.fieldBlock}>
+              <Text style={styles.fieldLabel}>¿Qué emociones sentiste? (selecciona varias)</Text>
+              <View style={styles.emotionGrid}>
+                {EMOTION_TAGS.map((tag) => {
+                  const isSelected = selectedEmotions.includes(tag.label);
+                  return (
+                    <TouchableOpacity
+                      key={tag.label}
+                      style={[styles.emotionChip, isSelected && styles.emotionChipActive]}
+                      onPress={() => toggleEmotion(tag.label)}
+                    >
+                      <Text style={styles.emotionChipText}>
+                        {tag.emoji} {tag.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
-          </View>
 
-          {/* Private Notes */}
-          <View style={styles.fieldBlock}>
-            <Text style={styles.fieldLabel}>Notas privadas / Aprendizajes para la próxima</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Ej: La cera estaba perfecta. Aumentar tiempo de cuerdas..."
-              placeholderTextColor={colors.textMuted}
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={3}
-            />
-          </View>
+            {/* Would Repeat */}
+            <View style={styles.fieldBlock}>
+              <Text style={styles.fieldLabel}>¿Repetirías esta actividad?</Text>
+              <View style={styles.repeatRow}>
+                {REPEAT_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[
+                      styles.repeatChip,
+                      wouldRepeat === opt.value && { borderColor: opt.color, backgroundColor: `${opt.color}20` },
+                    ]}
+                    onPress={() => setWouldRepeat(opt.value)}
+                  >
+                    <Text style={[styles.repeatChipText, wouldRepeat === opt.value && { color: opt.color }]}>
+                      {opt.emoji} {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
 
-          <TouchableOpacity
-            style={[styles.saveBtn, saving && styles.btnDisabled]}
-            onPress={handleSave}
-            disabled={saving}
-          >
-            <Text style={styles.saveBtnText}>{saving ? 'Guardando...' : 'Guardar Diario 📝'}</Text>
-          </TouchableOpacity>
+            {/* Safewords Respected Switch */}
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>¿Se respetaron las palabras clave?</Text>
+              <Switch
+                value={safewordsRespected}
+                onValueChange={setSafewordsRespected}
+                trackColor={{ false: colors.danger, true: colors.success }}
+                thumbColor="#fff"
+              />
+            </View>
 
-          <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-            <Text style={styles.closeBtnText}>Cancelar</Text>
-          </TouchableOpacity>
+            {/* Aftercare Rating */}
+            <View style={styles.fieldBlock}>
+              <Text style={styles.fieldLabel}>Calidad del Aftercare / Reconexión</Text>
+              <View style={styles.starsRow}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity key={star} onPress={() => setAftercareRating(star)}>
+                    <Text style={[styles.starEmoji, aftercareRating >= star && styles.starActive]}>💛</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Private Notes */}
+            <View style={styles.fieldBlock}>
+              <Text style={styles.fieldLabel}>Notas privadas / Aprendizajes para la próxima</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Ej: La cera estaba perfecta. Aumentar tiempo de cuerdas..."
+                placeholderTextColor={colors.textMuted}
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.saveBtn, saving && styles.btnDisabled]}
+              onPress={handleSave}
+              disabled={saving}
+            >
+              <Text style={styles.saveBtnText}>{saving ? 'Guardando...' : 'Guardar Diario 📝'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+              <Text style={styles.closeBtnText}>Cancelar</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -152,10 +228,13 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: spacing.xl,
     width: '100%',
-    maxWidth: 420,
-    alignItems: 'center',
+    maxWidth: 440,
+    maxHeight: '90%',
     borderWidth: 1.5,
     borderColor: 'rgba(192, 132, 252, 0.3)',
+  },
+  scrollContent: {
+    alignItems: 'center',
     gap: spacing.md,
   },
   headerEmoji: { fontSize: 44 },
@@ -192,6 +271,45 @@ const styles = StyleSheet.create({
   },
   starActive: {
     color: colors.warning,
+  },
+  emotionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  emotionChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  emotionChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+  },
+  emotionChipText: {
+    color: colors.text,
+    fontSize: fontSize.xs,
+  },
+  repeatRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    justifyContent: 'center',
+  },
+  repeatChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  repeatChipText: {
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
+    fontWeight: '700',
   },
   switchRow: {
     flexDirection: 'row',
