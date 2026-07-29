@@ -717,6 +717,36 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 📋 Ritual Builder D/s CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
+        onPress={() => router.push('/rituals')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>📋</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Ritual Builder & Protocolos D/s</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Diseñador de secuencias guiadas de saludos, prevención y aftercare</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 📜 Digital D/s Contracts CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
+        onPress={() => router.push('/contracts')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>📜</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Contratos D/s Digitales & Acuerdos</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Firma digital de acuerdos con límites duros, safewords y renovación</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
