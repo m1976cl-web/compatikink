@@ -406,6 +406,36 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 💎 Compatikink PRO Premium CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.5)', backgroundColor: 'rgba(244, 114, 182, 0.12)' }]}
+        onPress={() => router.push('/premium')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>💎</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Compatikink PRO (Suscripción & Beneficios)</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Herramientas ilimitadas, recomendador IA y matriz poliamor</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🏅 Achievements & Badges CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
+        onPress={() => router.push('/achievements')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🏅</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Logros & Insignias Kink</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Recompensas por explorar actividades y cuidar la seguridad</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
