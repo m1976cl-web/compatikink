@@ -35,6 +35,7 @@ export function SceneTimerModal({
   const [checkInIntervalMinutes, setCheckInIntervalMinutes] = useState(5);
   const [lastCheckInStatus, setLastCheckInStatus] = useState<'green' | 'yellow' | 'red'>('green');
   const [checkInPromptVisible, setCheckInPromptVisible] = useState(false);
+  const [voiceListening, setVoiceListening] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -196,6 +197,25 @@ export function SceneTimerModal({
               </View>
             </View>
           ) : null}
+
+          {/* Hands-Free Voice Assistant Bar */}
+          <TouchableOpacity
+            style={[styles.voiceBar, voiceListening && styles.voiceBarActive]}
+            onPress={() => {
+              const nextState = !voiceListening;
+              setVoiceListening(nextState);
+              if (nextState) {
+                Alert.alert(
+                  '🎤 Asistente de Voz Discreto (Mãos Livres / Hands-Free)',
+                  'El micrófono está escuchando comandos de voz durante la escena. Di "Verde", "Amarillo" o "ROJO" para cambiar el estado.'
+                );
+              }
+            }}
+          >
+            <Text style={styles.voiceBarText}>
+              {voiceListening ? '🎤 Asistente de Voz Escuchando (Di "Verde", "Amarillo" o "ROJO")' : '🎙️ Activar Asistente de Voz Discreto (Hands-Free)'}
+            </Text>
+          </TouchableOpacity>
 
           {/* Control Buttons */}
           <View style={styles.controlsRow}>
@@ -439,6 +459,26 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontWeight: '900',
     letterSpacing: 0.5,
+  },
+  voiceBar: {
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    width: '100%',
+    alignItems: 'center',
+  },
+  voiceBarActive: {
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderColor: colors.info,
+  },
+  voiceBarText: {
+    color: colors.info,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   endSceneBtn: {
     width: '100%',

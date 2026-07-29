@@ -331,6 +331,51 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 🎴 Truth or Dare Game CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
+        onPress={() => router.push('/truth-or-dare')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🎴</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Juego de Cartas: Verdad o Reto Kink</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Cartas interactivas para citas basadas en sus matches mutuos</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 👥 Poly Group Matrix CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.08)' }]}
+        onPress={() => router.push('/poly-group')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>👥</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Matriz Grupal & Poliamor (3+ personas)</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Cruzar respuestas entre 3 o más personas simultáneamente</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 📈 Analytics Tracker CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
+        onPress={() => router.push('/analytics')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>📈</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Analítica Emocional & Subspace Tracker</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Gráfico histórico de emociones post-escena y aftercare</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
