@@ -8,6 +8,8 @@ import { CompatibilityInfographic } from '@/components/CompatibilityInfographic'
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { ScenePlannerModal } from '@/components/ScenePlannerModal';
 import { SceneRouletteModal } from '@/components/SceneRouletteModal';
+import { SceneTimerModal } from '@/components/SceneTimerModal';
+import { SceneDebriefModal } from '@/components/SceneDebriefModal';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { generateReport } from '@/lib/compatibility';
@@ -50,6 +52,8 @@ export default function ReportScreen() {
   // New Modals State
   const [showShareModal, setShowShareModal] = useState(false);
   const [showRouletteModal, setShowRouletteModal] = useState(false);
+  const [showTimerModal, setShowTimerModal] = useState(false);
+  const [debriefItem, setDebriefItem] = useState<{ activityId: string; activityName: string } | null>(null);
   const [planningItem, setPlanningItem] = useState<ReportItem | null>(null);
   const [agreements, setAgreements] = useState<SceneAgreement[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -243,6 +247,13 @@ export default function ReportScreen() {
                 >
                   <Text style={[styles.shareCardTriggerText, { color: '#60a5fa' }]}>📄 Exportar PDF</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.shareCardTrigger, { borderColor: colors.warning, backgroundColor: 'rgba(251, 191, 36, 0.15)' }]}
+                  onPress={() => setShowTimerModal(true)}
+                >
+                  <Text style={[styles.shareCardTriggerText, { color: colors.warning }]}>⏱️ Temporizador</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -288,6 +299,13 @@ export default function ReportScreen() {
                   }}
                 >
                   <Text style={[styles.shareCardTriggerText, { color: '#60a5fa' }]}>📄 Exportar PDF</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.shareCardTrigger, { borderColor: colors.warning, backgroundColor: 'rgba(251, 191, 36, 0.15)' }]}
+                  onPress={() => setShowTimerModal(true)}
+                >
+                  <Text style={[styles.shareCardTriggerText, { color: colors.warning }]}>⏱️ Temporizador</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -412,9 +430,35 @@ export default function ReportScreen() {
         <SceneRouletteModal
           visible={showRouletteModal}
           onClose={() => setShowRouletteModal(false)}
-          report={report}
-          onSelectForPlanning={(selectedItem) => setPlanningItem(selectedItem)}
+          items={report.items}
+          onPlanScene={(selectedItem) => {
+            setShowRouletteModal(false);
+            setPlanningItem(selectedItem);
+          }}
         />
+
+        <SceneTimerModal
+          visible={showTimerModal}
+          onClose={() => setShowTimerModal(false)}
+          activityName={planningItem?.activityName ?? 'Escena en Curso'}
+          onSceneEnded={() => {
+            setShowTimerModal(false);
+            if (planningItem && report) {
+              setDebriefItem({ activityId: planningItem.activityId, activityName: planningItem.activityName });
+            }
+          }}
+        />
+
+        {debriefItem && report ? (
+          <SceneDebriefModal
+            visible={!!debriefItem}
+            onClose={() => setDebriefItem(null)}
+            sessionId={report.sessionId}
+            activityId={debriefItem.activityId}
+            activityName={debriefItem.activityName}
+            onSaved={() => setDebriefItem(null)}
+          />
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );

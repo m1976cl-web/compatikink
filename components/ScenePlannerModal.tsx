@@ -49,6 +49,10 @@ export function ScenePlannerModal({ visible, onClose, sessionId, item, onSaved }
     '🛋️ Manta y calor corporal (Cuddling)',
   ]);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
+  const [consentChecklist, setConsentChecklist] = useState<string[]>([
+    '✅ Consentimiento entusiasta y revocable confirmado por ambos',
+    '✅ Safeword y señal no verbal probadas en voz alta',
+  ]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -146,6 +150,41 @@ export function ScenePlannerModal({ visible, onClose, sessionId, item, onSaved }
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
+            {/* Pre-Scene Consent Checklist */}
+            <View style={[styles.section, { backgroundColor: 'rgba(74, 222, 128, 0.08)', borderColor: colors.success }]}>
+              <Text style={[styles.sectionHeader, { color: colors.success }]}>🛡️ Checklist de Consentimiento Pre-Escena</Text>
+              <Text style={{ color: colors.textMuted, fontSize: fontSize.xs, marginBottom: spacing.xs }}>
+                Verifica estos puntos de seguridad antes de iniciar:
+              </Text>
+              {[
+                '✅ Consentimiento entusiasta y revocable confirmado por ambos',
+                '✅ Safeword y señal no verbal probadas en voz alta',
+                '✂️ Herramientas de rescate / tijeras a la mano',
+                '🍵 Plan de Aftercare preparado (bebida, mantas)',
+                '🧠 Estado emocional y sobriedad adecuados',
+              ].map((itemText) => {
+                const checked = consentChecklist.includes(itemText);
+                return (
+                  <TouchableOpacity
+                    key={itemText}
+                    style={[
+                      styles.optionChip,
+                      checked && { backgroundColor: 'rgba(74, 222, 128, 0.2)', borderColor: colors.success },
+                    ]}
+                    onPress={() => {
+                      setConsentChecklist((prev) =>
+                        prev.includes(itemText) ? prev.filter((i) => i !== itemText) : [...prev, itemText]
+                      );
+                    }}
+                  >
+                    <Text style={[styles.optionText, checked && { color: colors.success, fontWeight: '700' }]}>
+                      {checked ? '☑ ' : '☐ '}{itemText}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
             {/* Safewords Section */}
             <View style={styles.section}>
               <Text style={styles.sectionHeader}>🛑 Palabras de Seguridad (Safewords)</Text>
