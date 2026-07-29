@@ -15,6 +15,8 @@ import {
   createLocalSession,
   getAllSceneAgreements,
   panicWipeData,
+  exportUserDataJSON,
+  importUserDataJSON,
 } from '@/lib/storage';
 import { UserProfile, Session, EXPERIENCE_LABELS, SceneAgreement } from '@/types';
 import { PolyComparatorModal } from '@/components/PolyComparatorModal';
@@ -236,6 +238,79 @@ export default function HomeScreen() {
             <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Descubre personas compatibles con tus gustos real-time</Text>
           </View>
           <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 📋 Live Negotiation Room CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
+        onPress={() => router.push('/negotiation')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>📋</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Sala de Negociación en Vivo</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Revisión sincrónica de escenas y firma de acuerdos</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🛡️ Safety & Health Guide CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
+        onPress={() => router.push('/safety-guide')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🛡️</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Guía de Seguridad & Salud Kink</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Protocolos de riesgos, SSC/RACK y primeros auxilios</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🔐 Backup & Restore CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
+        onPress={async () => {
+          Alert.alert(
+            '🔐 Copia de Seguridad Local (Backup)',
+            '¿Qué acción deseas realizar con tus datos guardados?',
+            [
+              {
+                text: '📥 Exportar JSON',
+                onPress: async () => {
+                  const json = await exportUserDataJSON();
+                  await Clipboard.setStringAsync(json);
+                  Alert.alert('Copia Exportada 📋', 'Se ha copiado el JSON de respaldo al portapapeles.');
+                },
+              },
+              {
+                text: '📤 Importar Backup',
+                onPress: async () => {
+                  const str = await Clipboard.getStringAsync();
+                  try {
+                    const count = await importUserDataJSON(str);
+                    Alert.alert('Backup Restaurado ✅', `Se han restaurado ${count} registros locales.`);
+                  } catch {
+                    Alert.alert('Error', 'El portapapeles no contiene un JSON de backup válido.');
+                  }
+                },
+              },
+              { text: 'Cancelar', style: 'cancel' },
+            ]
+          );
+        }}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🔐</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Copia de Seguridad (Backup JSON)</Text>
+            <Text style={styles.quickProfileDesc}>Exportar / Importar perfiles y respuestas encriptadas</Text>
+          </View>
+          <Text style={styles.quickProfileArrow}>›</Text>
         </View>
       </TouchableOpacity>
 

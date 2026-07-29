@@ -415,3 +415,66 @@ export async function toggleWishlist(item: { activityId: string; activityName: s
     return true; // Added
   }
 }
+
+// 💬 Dating Direct Messages Storage
+export interface DatingMessage {
+  id: string;
+  targetProfileId: string;
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
+
+const DATING_MESSAGES_KEY = 'dating_direct_messages';
+
+export async function getDatingMessages(targetProfileId?: string): Promise<DatingMessage[]> {
+  const raw = await AsyncStorage.getItem(DATING_MESSAGES_KEY);
+  if (!raw) return [];
+  const list = JSON.parse(raw) as DatingMessage[];
+  if (!targetProfileId) return list;
+  return list.filter((m) => m.targetProfileId === targetProfileId);
+}
+
+export async function sendDatingMessage(msg: { targetProfileId: string; senderName: string; text: string }): Promise<DatingMessage> {
+  const list = await getDatingMessages();
+  const newMsg: DatingMessage = {
+    id: `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    targetProfileId: msg.targetProfileId,
+    senderName: msg.senderName,
+    text: msg.text.trim(),
+    timestamp: new Date().toISOString(),
+  };
+  list.push(newMsg);
+  await AsyncStorage.setItem(DATING_MESSAGES_KEY, JSON.stringify(list));
+  return newMsg;
+}
+
+// 🔐 Backup & Restore JSON Data
+export async function exportUserDataJSON(): Promise<string> {
+  const keys = await AsyncStorage.getAllKeys();
+  const data: Record<string, string | null> = {};
+  for (const key of keys) {
+    data[key] = await AsyncStorage.getItem(key);
+  }
+  return JSON.stringify({
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    storageData: data,
+  }, null, 2);
+}
+
+export async function importUserDataJSON(jsonString: string): Promise<number> {
+  const parsed = JSON.parse(jsonString);
+  if (!parsed || !parsed.storageData) {
+    throw new Error('Formato de backup no válido.');
+  }
+  const entries = Object.entries(parsed.storageData as Record<string, string | null>);
+  let count = 0;
+  for (const [key, val] of entries) {
+    if (val !== null) {
+      await AsyncStorage.setItem(key, val);
+      count++;
+    }
+  }
+  return count;
+}

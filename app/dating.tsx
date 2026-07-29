@@ -12,10 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
-import { getCurrentProfile, createLocalSession, saveGuestProfile } from '@/lib/storage';
+import { getCurrentProfile, createLocalSession, saveGuestProfile, getDatingMessages, sendDatingMessage, DatingMessage } from '@/lib/storage';
 import { generateReport } from '@/lib/compatibility';
 import { UserProfile, EXPERIENCE_LABELS } from '@/types';
 import { COMMUNITY_PROFILES, CommunityProfile } from '@/data/communityProfiles';
+import { Modal } from 'react-native';
 
 export default function DatingScreen() {
   const router = useRouter();
@@ -24,6 +25,9 @@ export default function DatingScreen() {
   const [minScoreFilter, setMinScoreFilter] = useState<number>(0);
   const [roleFilter, setRoleFilter] = useState<'all' | 'give' | 'receive' | 'both'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [messagingTarget, setMessagingTarget] = useState<CommunityProfile | null>(null);
+  const [chatMessages, setChatMessages] = useState<DatingMessage[]>([]);
+  const [messageInput, setMessageInput] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -233,6 +237,17 @@ export default function DatingScreen() {
                 >
                   <Text style={styles.connectBtnText}>🔥 Comparar Compatibilidad Completa 📊</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.chatBtn}
+                  onPress={async () => {
+                    setMessagingTarget(item);
+                    const msgs = await getDatingMessages(item.id);
+                    setChatMessages(msgs);
+                  }}
+                >
+                  <Text style={styles.chatBtnText}>💬 Enviar Mensaje</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ))}
@@ -246,6 +261,84 @@ export default function DatingScreen() {
 
           <View style={{ height: 60 }} />
         </ScrollView>
+
+        {/* 💬 Direct Messaging Modal */}
+        {messagingTarget ? (
+          <Modal
+            visible={!!messagingTarget}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setMessagingTarget(null)}
+          >
+            <View style={styles.chatOverlay}>
+              <View style={styles.chatModalCard}>
+                <View style={styles.chatModalHeader}>
+                  <Text style={{ fontSize: 24 }}>{messagingTarget.avatarEmoji}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.chatModalTitle}>{messagingTarget.nickname}</Text>
+                    <Text style={styles.chatModalSub}>Mensajería directa segura</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setMessagingTarget(null)} style={styles.closeX}>
+                    <Text style={styles.closeXText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Messages List */}
+                <ScrollView contentContainerStyle={styles.chatList} showsVerticalScrollIndicator={false}>
+                  {chatMessages.length === 0 ? (
+                    <View style={styles.chatEmptyState}>
+                      <Text style={{ fontSize: 32 }}>💬</Text>
+                      <Text style={styles.chatEmptyText}>
+                        Inicia la conversación con {messagingTarget.nickname}. Propon una escena o consulta sus safewords.
+                      </Text>
+                    </View>
+                  ) : (
+                    chatMessages.map((msg) => {
+                      const isMe = msg.senderName === (profile?.nickname || 'Tú');
+                      return (
+                        <View
+                          key={msg.id}
+                          style={[styles.chatBubble, isMe ? styles.chatBubbleMe : styles.chatBubbleOther]}
+                        >
+                          <Text style={styles.chatSender}>{msg.senderName}</Text>
+                          <Text style={styles.chatText}>{msg.text}</Text>
+                        </View>
+                      );
+                    })
+                  )}
+                </ScrollView>
+
+                {/* Input Bar */}
+                <View style={styles.chatInputRow}>
+                  <TextInput
+                    style={styles.chatInput}
+                    placeholder="Escribe tu propuesta de escena o mensaje..."
+                    placeholderTextColor={colors.textMuted}
+                    value={messageInput}
+                    onChangeText={setMessageInput}
+                  />
+                  <TouchableOpacity
+                    style={styles.sendBtn}
+                    onPress={async () => {
+                      if (!messageInput.trim() || !messagingTarget) return;
+                      const sender = profile?.nickname || 'Tú';
+                      await sendDatingMessage({
+                        targetProfileId: messagingTarget.id,
+                        senderName: sender,
+                        text: messageInput,
+                      });
+                      setMessageInput('');
+                      const updated = await getDatingMessages(messagingTarget.id);
+                      setChatMessages(updated);
+                    }}
+                  >
+                    <Text style={styles.sendBtnText}>Enviar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -383,7 +476,7 @@ const styles = StyleSheet.create({
   },
   kinkChipText: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '600' },
 
-  actionsRow: { marginTop: 4 },
+  actionsRow: { marginTop: 4, gap: spacing.xs },
   connectBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
@@ -391,7 +484,99 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   connectBtnText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '800' },
+  chatBtn: {
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: spacing.sm,
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chatBtnText: { color: colors.text, fontSize: fontSize.xs, fontWeight: '700' },
 
   emptyState: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.sm },
   emptyText: { color: colors.textMuted, fontSize: fontSize.md },
+
+  // Direct Messaging Modal Styles
+  chatOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.88)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  chatModalCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 480,
+    height: '75%',
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    gap: spacing.sm,
+  },
+  chatModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  chatModalTitle: { color: colors.neonPurple, fontSize: fontSize.md, fontWeight: '800' },
+  chatModalSub: { color: colors.textMuted, fontSize: fontSize.xs },
+  closeX: {
+    padding: 6,
+  },
+  closeXText: { color: colors.textMuted, fontSize: 16, fontWeight: '700' },
+  chatList: { gap: spacing.sm, paddingVertical: spacing.xs },
+  chatEmptyState: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.xs },
+  chatEmptyText: { color: colors.textMuted, fontSize: fontSize.xs, textAlign: 'center', lineHeight: 18 },
+  chatBubble: {
+    maxWidth: '85%',
+    padding: spacing.md,
+    borderRadius: 16,
+    gap: 2,
+  },
+  chatBubbleMe: {
+    alignSelf: 'flex-end',
+    backgroundColor: colors.primaryDark,
+    borderBottomRightRadius: 4,
+  },
+  chatBubbleOther: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.surfaceLight,
+    borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chatSender: { color: colors.primaryLight, fontSize: 10, fontWeight: '700' },
+  chatText: { color: colors.text, fontSize: fontSize.sm, lineHeight: 18 },
+  chatInputRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    alignItems: 'center',
+    paddingTop: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  chatInput: {
+    flex: 1,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    color: colors.text,
+    fontSize: fontSize.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  sendBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  sendBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 });
