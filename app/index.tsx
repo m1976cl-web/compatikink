@@ -224,6 +224,21 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 💘 Dating & Match Discovery CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.5)', backgroundColor: 'rgba(244, 114, 182, 0.12)' }]}
+        onPress={() => router.push('/dating')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>💘</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Conexiones & Dating Kink</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Descubre personas compatibles con tus gustos real-time</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {profilesList.length > 0 ? (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Inicia Sesión con tu Perfil</Text>
