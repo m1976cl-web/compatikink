@@ -26,6 +26,8 @@ import { RegisterProfileModal } from '@/components/RegisterProfileModal';
 import { CommunityTrendsModal } from '@/components/CommunityTrendsModal';
 import { SceneDebriefModal } from '@/components/SceneDebriefModal';
 import { AgeVerificationModal } from '@/components/AgeVerificationModal';
+import { PWAInstallPromptModal } from '@/components/PWAInstallPromptModal';
+import { AccessibilityModal } from '@/components/AccessibilityModal';
 import { exportSceneAgreementPDF } from '@/lib/exportPDF';
 
 export default function HomeScreen() {
@@ -56,6 +58,8 @@ export default function HomeScreen() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showTrendsModal, setShowTrendsModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
+  const [showPWAInstallModal, setShowPWAInstallModal] = useState(false);
+  const [showA11yModal, setShowA11yModal] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<'purple' | 'red' | 'cyan' | 'emerald'>('purple');
   const [debriefTarget, setDebriefTarget] = useState<{ sessionId: string; activityId: string; activityName: string } | null>(null);
 
@@ -635,6 +639,36 @@ export default function HomeScreen() {
             <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Desafíos personalizados guiados con recompensas de XP</Text>
           </View>
           <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 📲 PWA Direct Browser Installer CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.5)', backgroundColor: 'rgba(74, 222, 128, 0.12)' }]}
+        onPress={() => setShowPWAInstallModal(true)}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>📲</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Instalar App en el Teléfono (PWA 1-Tap)</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Acceso directo sin tienda, notificaciones y funcionamiento offline</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* ♿ Accessibility & High Contrast CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
+        onPress={() => setShowA11yModal(true)}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>♿</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Ajustes de Accesibilidad (A11y)</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Modo Alto Contraste, tamaño de fuente y lectores de pantalla</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
         </View>
       </TouchableOpacity>
 
@@ -1220,6 +1254,18 @@ export default function HomeScreen() {
 
       {/* 🔞 Age Verification Modal */}
       <AgeVerificationModal />
+
+      {/* 📲 PWA Direct Installer Modal */}
+      <PWAInstallPromptModal
+        visible={showPWAInstallModal}
+        onClose={() => setShowPWAInstallModal(false)}
+      />
+
+      {/* ♿ Accessibility Settings Modal */}
+      <AccessibilityModal
+        visible={showA11yModal}
+        onClose={() => setShowA11yModal(false)}
+      />
     </ScrollView>
   );
 
