@@ -608,6 +608,36 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 📊 Compatikink Wrapped CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
+        onPress={() => router.push('/wrapped')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>📊</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Compatikink Wrapped 2026</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Tu resumen anual animado de exploración y estadísticas</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🎲 Weekly Kink Challenge CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
+        onPress={() => router.push('/weekly-challenge')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🎲</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Retos Semanales Kink</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Desafíos personalizados guiados con recompensas de XP</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
