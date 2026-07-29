@@ -777,6 +777,36 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 🎵 Music Vibration Teledildonics Sync CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
+        onPress={() => router.push('/music-sync')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🎵</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Sync de Vibraciones & Ambientes</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Sincronización háptica de dispositivos Bluetooth con audio y BPM (Lovense/QIUI)</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🤖 AI Scene Builder & Dialogue Script CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
+        onPress={() => router.push('/ai-script')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🤖</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>AI Scene Builder & Guiones Teatrales</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Generador de guiones completos con diálogos e instrucciones en vivo</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
