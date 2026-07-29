@@ -747,6 +747,36 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 🔐 Encrypted Private Photo Album CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
+        onPress={() => router.push('/private-album')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🔐</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Bóveda de Fotos Privadas (AES-256)</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Álbum cifrado con links de acceso temporal y botón de revocación total</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* ✍️ Personal Blog & Kink Writings CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
+        onPress={() => router.push('/writings')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>✍️</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Blog Personal & Escritos Kink</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Espacio personal estilo FetLife Writings para diarios, reflexiones y poesía</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
