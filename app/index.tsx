@@ -24,6 +24,7 @@ import { OnboardingOverlay } from '@/components/OnboardingOverlay';
 import { RegisterProfileModal } from '@/components/RegisterProfileModal';
 import { CommunityTrendsModal } from '@/components/CommunityTrendsModal';
 import { SceneDebriefModal } from '@/components/SceneDebriefModal';
+import { AgeVerificationModal } from '@/components/AgeVerificationModal';
 import { exportSceneAgreementPDF } from '@/lib/exportPDF';
 
 export default function HomeScreen() {
@@ -433,6 +434,21 @@ export default function HomeScreen() {
             <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Recompensas por explorar actividades y cuidar la seguridad</Text>
           </View>
           <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🔒 Chastity & Keyholding CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
+        onPress={() => router.push('/chastity')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🔒</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Módulo de Castidad & Keyholding</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Encuentro seguro entre Keyholders y Sumis en Castidad</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
         </View>
       </TouchableOpacity>
 
@@ -1002,13 +1018,15 @@ export default function HomeScreen() {
 
       {debriefTarget ? (
         <SceneDebriefModal
-          visible={Boolean(debriefTarget)}
-          onClose={() => setDebriefTarget(null)}
-          sessionId={debriefTarget.sessionId}
-          activityId={debriefTarget.activityId}
-          activityName={debriefTarget.activityName}
-        />
+        visible={Boolean(debriefTarget)}
+        onClose={() => setDebriefTarget(null)}
+        activityName={debriefTarget?.activityName}
+        onSaveDebrief={(debrief) => handleSaveDebrief(debriefTarget?.sessionId || '', debriefTarget?.activityId || '', debrief)}
+      />
       ) : null}
+
+      {/* 🔞 Age Verification Modal */}
+      <AgeVerificationModal />
     </ScrollView>
   );
 
