@@ -271,6 +271,66 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 🧑‍🤝‍🧑 Pass & Play CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
+        onPress={() => router.push('/pass-and-play')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🧑‍🤝‍🧑</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Modo Presencial (Mismo Teléfono)</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Responder en el mismo dispositivo con cortina de privacidad</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🧰 Gear Closet CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
+        onPress={() => router.push('/gear-closet')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🧰</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Inventario de Equipamiento (Gear Closet)</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Administra accesorios, cuerdas y herramientas de seguridad</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🎶 Playlists CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
+        onPress={() => router.push('/playlists')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🎶</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Ambientes Sonoros & Playlists</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Música y ritmos corporales diseñados para acompañar escenas</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 📅 Calendar CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
+        onPress={() => router.push('/calendar')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>📅</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Calendario de Escenas & Aftercare</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Agendar citas y alertas de seguimiento emocional a las 24h</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}

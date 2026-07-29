@@ -1,0 +1,277 @@
+import React, { useState } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  TextInput,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { colors, fontSize, spacing } from '@/constants/theme';
+import { useResponsive } from '@/hooks/useResponsive';
+import { getAllActivities } from '@/data/activities';
+import { ActivityResponse, Rating, RolePreference } from '@/types';
+import { createLocalSession, saveGuestProfile, saveLocalSessions, loadLocalSessions } from '@/lib/storage';
+
+export default function PassAndPlayScreen() {
+  const router = useRouter();
+  const { isDesktop } = useResponsive();
+  const activities = getAllActivities();
+
+  const [step, setStep] = useState<'p1_setup' | 'p1_questions' | 'curtain' | 'p2_setup' | 'p2_questions'>('p1_setup');
+  
+  // Person 1
+  const [p1Name, setP1Name] = useState('Persona 1');
+  const [p1Index, setP1Index] = useState(0);
+  const [p1Responses, setP1Responses] = useState<Record<string, ActivityResponse>>({});
+
+  // Person 2
+  const [p2Name, setP2Name] = useState('Persona 2');
+  const [p2Index, setP2Index] = useState(0);
+  const [p2Responses, setP2Responses] = useState<Record<string, ActivityResponse>>({});
+
+  const handleP1Response = (rating: Rating) => {
+    const act = activities[p1Index];
+    setP1Responses((prev) => ({
+      ...prev,
+      [act.id]: { activityId: act.id, rating, role: 'flexible', intensity: 3 },
+    }));
+
+    if (p1Index < activities.length - 1) {
+      setP1Index((i) => i + 1);
+    } else {
+      setStep('curtain');
+    }
+  };
+
+  const handleP2Response = async (rating: Rating) => {
+    const act = activities[p2Index];
+    const newP2 = {
+      ...p2Responses,
+      [act.id]: { activityId: act.id, rating, role: 'flexible' as RolePreference, intensity: 3 as const },
+    };
+    setP2Responses(newP2);
+
+    if (p2Index < activities.length - 1) {
+      setP2Index((i) => i + 1);
+    } else {
+      // Both finished! Create session and jump to report
+      try {
+        const finalP1 = Object.values(p1Responses);
+        const finalP2 = Object.values(newP2);
+        const session = await createLocalSession(p1Name, finalP1);
+
+        const allSessions = await loadLocalSessions();
+        if (allSessions[session.id]) {
+          allSessions[session.id].guestNickname = p2Name;
+          allSessions[session.id].guestResponses = finalP2;
+          allSessions[session.id].status = 'complete';
+          allSessions[session.id].completedAt = new Date().toISOString();
+          await saveLocalSessions(allSessions);
+        }
+
+        await saveGuestProfile(session.id, { nickname: p2Name });
+
+        Alert.alert('¡Cuestionario Presencial Completado! 🎉', 'Generando reporte de compatibilidad en pantalla...');
+        router.replace({ pathname: '/report', params: { token: session.initiatorToken } });
+      } catch {
+        Alert.alert('Error', 'No se pudo generar la sesión presencial.');
+      }
+    }
+  };
+
+  const currentP1Act = activities[p1Index];
+  const currentP2Act = activities[p2Index];
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <View style={[styles.container, isDesktop && styles.containerDesktop]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>← Volver</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>🧑‍🤝‍🧑 Modo Presencial (Mismo Teléfono)</Text>
+          <Text style={styles.subtitle}>
+            Respondan en el mismo dispositivo de forma privada, turnándose secuencialmente.
+          </Text>
+        </View>
+
+        {/* Step 1: P1 Setup */}
+        {step === 'p1_setup' && (
+          <View style={styles.card}>
+            <Text style={styles.stepBadge}>PASO 1 DE 2 — INICIADOR</Text>
+            <Text style={styles.cardTitle}>Nombre de Persona 1</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej: Alex"
+              placeholderTextColor={colors.textMuted}
+              value={p1Name}
+              onChangeText={setP1Name}
+            />
+            <TouchableOpacity style={styles.btnPrimary} onPress={() => setStep('p1_questions')}>
+              <Text style={styles.btnPrimaryText}>Iniciar mis Respuestas 🚀</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Step 2: P1 Questions */}
+        {step === 'p1_questions' && currentP1Act && (
+          <View style={styles.card}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressText}>
+                {p1Name} · Pregunta {p1Index + 1} de {activities.length}
+              </Text>
+            </View>
+
+            <Text style={styles.actName}>{currentP1Act.name}</Text>
+            <Text style={styles.actDesc}>{currentP1Act.description}</Text>
+
+            <View style={styles.ratingButtons}>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: '#4ade80' }]} onPress={() => handleP1Response('love')}>
+                <Text style={styles.rBtnText}>🔥 Me Encanta</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: '#c084fc' }]} onPress={() => handleP1Response('like')}>
+                <Text style={styles.rBtnText}>💜 Me Interesa</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: '#38bdf8' }]} onPress={() => handleP1Response('curious')}>
+                <Text style={styles.rBtnText}>🤔 Curioso/a</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.border }]} onPress={() => handleP1Response('not_interested')}>
+                <Text style={styles.rBtnText}>⚪ No me llama</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.danger }]} onPress={() => handleP1Response('hard_limit')}>
+                <Text style={styles.rBtnText}>🛑 Límite Duro</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Step 3: Privacy Curtain between P1 and P2 */}
+        {step === 'curtain' && (
+          <View style={[styles.card, { alignItems: 'center', textAlign: 'center', paddingVertical: spacing.xl }]}>
+            <Text style={{ fontSize: 56 }}>🙈📱</Text>
+            <Text style={styles.cardTitle}>¡Turno de Persona 1 Finalizado!</Text>
+            <Text style={styles.curtainDesc}>
+              Entrega el teléfono a <Text style={{ color: colors.neonPink, fontWeight: '800' }}>Persona 2</Text> sin mirar la pantalla para mantener la privacidad absoluta.
+            </Text>
+            <TouchableOpacity style={styles.btnPrimary} onPress={() => setStep('p2_setup')}>
+              <Text style={styles.btnPrimaryText}>Soy Persona 2, Comienzo Mi Turno 🚀</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Step 4: P2 Setup */}
+        {step === 'p2_setup' && (
+          <View style={styles.card}>
+            <Text style={[styles.stepBadge, { color: colors.neonPink }]}>PASO 2 DE 2 — PAREJA / INVITADO</Text>
+            <Text style={styles.cardTitle}>Nombre de Persona 2</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej: Sam"
+              placeholderTextColor={colors.textMuted}
+              value={p2Name}
+              onChangeText={setP2Name}
+            />
+            <TouchableOpacity style={[styles.btnPrimary, { backgroundColor: colors.accent }]} onPress={() => setStep('p2_questions')}>
+              <Text style={styles.btnPrimaryText}>Iniciar Respuestas de {p2Name} 🚀</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Step 5: P2 Questions */}
+        {step === 'p2_questions' && currentP2Act && (
+          <View style={styles.card}>
+            <View style={styles.progressHeader}>
+              <Text style={[styles.progressText, { color: colors.neonPink }]}>
+                {p2Name} · Pregunta {p2Index + 1} de {activities.length}
+              </Text>
+            </View>
+
+            <Text style={styles.actName}>{currentP2Act.name}</Text>
+            <Text style={styles.actDesc}>{currentP2Act.description}</Text>
+
+            <View style={styles.ratingButtons}>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: '#4ade80' }]} onPress={() => handleP2Response('love')}>
+                <Text style={styles.rBtnText}>🔥 Me Encanta</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: '#c084fc' }]} onPress={() => handleP2Response('like')}>
+                <Text style={styles.rBtnText}>💜 Me Interesa</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: '#38bdf8' }]} onPress={() => handleP2Response('curious')}>
+                <Text style={styles.rBtnText}>🤔 Curioso/a</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.border }]} onPress={() => handleP2Response('not_interested')}>
+                <Text style={styles.rBtnText}>⚪ No me llama</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.danger }]} onPress={() => handleP2Response('hard_limit')}>
+                <Text style={styles.rBtnText}>🛑 Límite Duro</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, paddingHorizontal: spacing.md },
+  containerDesktop: { maxWidth: 640, alignSelf: 'center', width: '100%' },
+
+  header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
+  backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
+  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
+  title: { color: colors.text, fontSize: fontSize.xl, fontWeight: '900' },
+  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    padding: spacing.lg,
+    borderWidth: 1.5,
+    borderColor: 'rgba(192, 132, 252, 0.3)',
+    marginVertical: spacing.md,
+    gap: spacing.md,
+  },
+  stepBadge: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  cardTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800' },
+  input: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    color: colors.text,
+    fontSize: fontSize.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  btnPrimary: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  btnPrimaryText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '800' },
+
+  progressHeader: { alignItems: 'center', marginBottom: spacing.xs },
+  progressText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
+  actName: { color: colors.neonPurple, fontSize: fontSize.xl, fontWeight: '900', textAlign: 'center' },
+  actDesc: { color: colors.text, fontSize: fontSize.sm, textAlign: 'center', lineHeight: 20 },
+
+  ratingButtons: { gap: spacing.xs, width: '100%' },
+  rBtn: {
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+  },
+  rBtnText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '700' },
+
+  curtainDesc: { color: colors.text, fontSize: fontSize.sm, textAlign: 'center', lineHeight: 22 },
+});
