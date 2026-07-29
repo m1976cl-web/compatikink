@@ -672,6 +672,51 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 🎮 Task Economy D/s CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
+        onPress={() => router.push('/task-economy')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🎮</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Economía D/s & Tareas Gamificadas</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Completa tareas y protocolos para ganar Kink Coins y canjear recompensas</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🤝 Double-Blind Fantasy Match CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
+        onPress={() => router.push('/fantasy-match')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🤝</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Match Secreto de Fantasías (Double-Blind)</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Revela solo coincidencias mutuas sin riesgo de juicio o vergüenza</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 📊 BDSM Archetypes Quiz CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
+        onPress={() => router.push('/archetypes')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>📊</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Quiz de Arquetipos BDSM</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Diagnóstico porcentual de roles (Dom, Sub, Rigger, Sadist, etc.)</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
