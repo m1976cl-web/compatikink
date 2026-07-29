@@ -391,6 +391,21 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 👑 Admin Dashboard CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(234, 179, 8, 0.4)', backgroundColor: 'rgba(234, 179, 8, 0.08)' }]}
+        onPress={() => router.push('/admin')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>👑</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Panel de Administración & Analítica Global</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Inspección de inscritos, respuestas y métricas globales (PIN 9999)</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
