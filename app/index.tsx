@@ -186,6 +186,21 @@ export default function HomeScreen() {
         </Text>
       </View>
 
+      {/* 🔐 Account & Zero-Knowledge Vault CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.5)', backgroundColor: 'rgba(74, 222, 128, 0.12)' }]}
+        onPress={() => router.push('/auth')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🔐</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Cuenta de Usuario & Bóveda Cifrada</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Acceso con cifrado Zero-Knowledge End-to-End</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 👤 Register Personal Profile Button */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(59, 130, 246, 0.4)', backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}
