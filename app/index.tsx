@@ -548,6 +548,36 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 🤖 Scene AI Generator CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
+        onPress={() => router.push('/scene-ai')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🤖</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Recomendador IA de Escenas</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Rutinas paso a paso personalizadas según tu historial y wishlist</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🎓 Kink Academy & Courses CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
+        onPress={() => router.push('/courses')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🎓</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Kink Academy & Cursos Interactivos</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Lecciones guiadas, prevención de riesgos y quizzes de certificación</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
