@@ -53,6 +53,8 @@ export default function HomeScreen() {
   const [showPolyComparator, setShowPolyComparator] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showTrendsModal, setShowTrendsModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState<'purple' | 'red' | 'cyan' | 'emerald'>('purple');
   const [debriefTarget, setDebriefTarget] = useState<{ sessionId: string; activityId: string; activityName: string } | null>(null);
 
   const handlePanicWipe = () => {
@@ -315,8 +317,6 @@ export default function HomeScreen() {
           <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
         </View>
       </TouchableOpacity>
-
-      {/* 📅 Calendar CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
         onPress={() => router.push('/calendar')}
@@ -416,6 +416,21 @@ export default function HomeScreen() {
             <Text style={styles.quickProfileDesc}>Exportar / Importar perfiles y respuestas encriptadas</Text>
           </View>
           <Text style={styles.quickProfileArrow}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🎨 Theme Switcher CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
+        onPress={() => setShowThemeModal(true)}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🎨</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Personalizar Tema Visual</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Morado Neón, Rojo Pasional, Azul Eléctrico o Verde Esmeralda</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
         </View>
       </TouchableOpacity>
 
@@ -883,6 +898,48 @@ export default function HomeScreen() {
         onClose={() => setShowTrendsModal(false)}
       />
 
+      {/* 🎨 Theme Switcher Modal */}
+      <Modal visible={showThemeModal} transparent animationType="fade" onRequestClose={() => setShowThemeModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowThemeModal(false)}>
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>🎨 Apariencia & Temas Visuales</Text>
+            <Text style={styles.modalSub}>Selecciona la atmósfera visual de la aplicación:</Text>
+
+            <View style={{ gap: spacing.sm, width: '100%', marginVertical: spacing.md }}>
+              {[
+                { id: 'purple', name: '🟣 Morado Neón (Predeterminado Cyberpunk)', color: '#c084fc' },
+                { id: 'red', name: '🔴 Rojo Pasión (Elegante & Pasional)', color: '#ef4444' },
+                { id: 'cyan', name: '🔵 Azul Eléctrico (Sleek High-Tech)', color: '#38bdf8' },
+                { id: 'emerald', name: '🟢 Verde Esmeralda (Velvet Dark)', color: '#34d399' },
+              ].map((t) => (
+                <TouchableOpacity
+                  key={t.id}
+                  style={[
+                    styles.themeOptionRow,
+                    selectedTheme === t.id && { borderColor: t.color, backgroundColor: `${t.color}15` },
+                  ]}
+                  onPress={() => {
+                    setSelectedTheme(t.id as any);
+                    Alert.alert('Tema Actualizado 🎨', `Se ha aplicado el tema ${t.name}.`);
+                    setShowThemeModal(false);
+                  }}
+                >
+                  <View style={[styles.themeColorDot, { backgroundColor: t.color }]} />
+                  <Text style={[styles.themeOptionText, selectedTheme === t.id && { color: t.color, fontWeight: '800' }]}>
+                    {t.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Button title="Cerrar" variant="ghost" onPress={() => setShowThemeModal(false)} />
+          </View>
+        </View>
+      </Modal>
+
       {debriefTarget ? (
         <SceneDebriefModal
           visible={Boolean(debriefTarget)}
@@ -1232,5 +1289,28 @@ const styles = StyleSheet.create({
     color: colors.neonPurple,
     fontSize: 28,
     fontWeight: '300',
+  },
+
+  // Theme Switcher Styles
+  themeOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceLight,
+    padding: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    gap: spacing.md,
+  },
+  themeColorDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
+  themeOptionText: {
+    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    flex: 1,
   },
 });

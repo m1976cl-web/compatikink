@@ -1,0 +1,22 @@
+{
+  "name": "Compatikink — Test de Compatibilidad Erótica",
+  "short_name": "Compatikink",
+  "description": "Evaluación privada, segura y consensuada de compatibilidad BDSM y Kink para parejas y grupos.",
+  "start_url": "/compatikink/",
+  "display": "standalone",
+  "background_color": "#0a0612",
+  "theme_color": "#c084fc",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./assets/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
