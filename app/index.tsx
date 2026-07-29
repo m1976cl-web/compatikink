@@ -482,6 +482,36 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 🤖 AI BDSM Roleplay Companion CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
+        onPress={() => router.push('/ai-roleplay')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🤖</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Roleplay con Inteligencia Artificial</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Ensayo de dinámicas, negociación y exploración de fantasías</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 📰 Community Feed & Polls CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
+        onPress={() => router.push('/kink-feed')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>📰</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Feed & Encuestas de la Comunidad</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Muro de debate anónimo y encuestas diarias estilo Mazmo</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
