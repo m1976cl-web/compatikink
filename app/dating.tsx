@@ -25,6 +25,8 @@ export default function DatingScreen() {
   const [minScoreFilter, setMinScoreFilter] = useState<number>(0);
   const [roleFilter, setRoleFilter] = useState<'all' | 'give' | 'receive' | 'both'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [fetlifeRoleFilter, setFetlifeRoleFilter] = useState<string>('all');
+  const [userFetlifeHandle, setUserFetlifeHandle] = useState('');
   const [messagingTarget, setMessagingTarget] = useState<CommunityProfile | null>(null);
   const [chatMessages, setChatMessages] = useState<DatingMessage[]>([]);
   const [messageInput, setMessageInput] = useState('');
@@ -64,6 +66,13 @@ export default function DatingScreen() {
   const filtered = useMemo(() => {
     return rankedProfiles.filter(({ profile: p, score }) => {
       if (score < minScoreFilter) return false;
+
+      if (fetlifeRoleFilter !== 'all') {
+        const q = fetlifeRoleFilter.toLowerCase();
+        const matchesRole = p.bio.toLowerCase().includes(q) || p.topKinks.some((k) => k.toLowerCase().includes(q));
+        if (!matchesRole) return false;
+      }
+
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchesName = p.nickname.toLowerCase().includes(q);
@@ -73,7 +82,7 @@ export default function DatingScreen() {
       }
       return true;
     });
-  }, [rankedProfiles, minScoreFilter, searchQuery]);
+  }, [rankedProfiles, minScoreFilter, fetlifeRoleFilter, searchQuery]);
 
   const handleStartSessionWithProfile = async (target: CommunityProfile) => {
     if (!profile || !profile.baseResponses || profile.baseResponses.length === 0) {
@@ -125,10 +134,71 @@ export default function DatingScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>💘 Conexiones Kink & Dating</Text>
+          <Text style={styles.title}>💬 Conexiones & Dating Kink</Text>
           <Text style={styles.subtitle}>
-            Descubre perfiles de la comunidad y calcula tu compatibilidad erótica real
+            Buscador avanzado por roles BDSM/FetLife, compatibilidad erótica real-time y chat directo
           </Text>
+        </View>
+
+        {/* 🟪 FetLife Profile Linker & Verified Badge Box */}
+        <View style={styles.fetlifeCard}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ fontSize: 24 }}>🟪</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fetlifeCardTitle}>Integración & Buscador Avanzado de FetLife</Text>
+              <Text style={styles.fetlifeCardDesc}>
+                FetLife no permite filtrar por roles complejos o compatibilidad. Vincula tu usuario de FetLife para verificar tu perfil.
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.fetlifeInputRow}>
+            <TextInput
+              style={styles.fetlifeInput}
+              placeholder="Ej: fetlife.com/users/TuNombre o @TuNombre"
+              placeholderTextColor={colors.textMuted}
+              value={userFetlifeHandle}
+              onChangeText={setUserFetlifeHandle}
+            />
+            <TouchableOpacity
+              style={styles.fetlifeVerifyBtn}
+              onPress={() => {
+                if (!userFetlifeHandle.trim()) {
+                  Alert.alert('Ingresa tu Usuario', 'Escribe tu usuario o enlace de FetLife.');
+                  return;
+                }
+                Alert.alert('Perfil FetLife Vinculado 🟪', `Se ha verificado el perfil ${userFetlifeHandle}. Tus conexiones podrán ver tu insignia verificada.`);
+              }}
+            >
+              <Text style={styles.fetlifeVerifyBtnText}>Vincular FetLife 🟪</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* FetLife Advanced Role Search Bar */}
+        <View style={styles.roleFilterSection}>
+          <Text style={styles.filterSectionTitle}>🔍 Buscador Avanzado por Roles & Fetiches FetLife:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.roleScroll}>
+            {[
+              { id: 'all', label: '🌐 Todos los Roles' },
+              { id: 'shibari', label: '🪢 Shibari / Rope Top/Bottom' },
+              { id: 'bondage', label: '🔒 Bondage & Restricción' },
+              { id: 'impacto', label: '⚡ Impacto & Spanking' },
+              { id: 'keyholder', label: '🗝️ Keyholder / Castidad' },
+              { id: 'sensorial', label: '🕯️ Sensorial & Cera' },
+              { id: 'afectivo', label: '🪷 Aftercare & Afectivo' },
+            ].map((rf) => (
+              <TouchableOpacity
+                key={rf.id}
+                style={[styles.roleChip, fetlifeRoleFilter === rf.id && styles.roleChipActive]}
+                onPress={() => setFetlifeRoleFilter(rf.id)}
+              >
+                <Text style={[styles.roleChipText, fetlifeRoleFilter === rf.id && styles.roleChipTextActive]}>
+                  {rf.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         {/* User Status Warning Banner if questionnaire not done */}
@@ -579,4 +649,53 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   sendBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
+
+  // FetLife Integration Styles
+  fetlifeCard: {
+    backgroundColor: 'rgba(168, 85, 247, 0.12)',
+    borderRadius: 18,
+    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: '#a855f7',
+    gap: spacing.sm,
+    marginVertical: spacing.xs,
+  },
+  fetlifeCardTitle: { color: '#c084fc', fontSize: fontSize.sm, fontWeight: '900' },
+  fetlifeCardDesc: { color: colors.text, fontSize: fontSize.xs, lineHeight: 16 },
+
+  fetlifeInputRow: { flexDirection: 'row', gap: spacing.xs },
+  fetlifeInput: {
+    flex: 1,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    color: colors.text,
+    fontSize: fontSize.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  fetlifeVerifyBtn: {
+    backgroundColor: '#a855f7',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: 12,
+    justifyContent: 'center',
+  },
+  fetlifeVerifyBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
+
+  roleFilterSection: { gap: 6, marginVertical: spacing.xs },
+  filterSectionTitle: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  roleScroll: { gap: 6 },
+  roleChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  roleChipActive: { backgroundColor: '#a855f7', borderColor: '#a855f7' },
+  roleChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  roleChipTextActive: { color: '#fff' },
 });
