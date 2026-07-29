@@ -28,6 +28,7 @@ import { SceneDebriefModal } from '@/components/SceneDebriefModal';
 import { AgeVerificationModal } from '@/components/AgeVerificationModal';
 import { PWAInstallPromptModal } from '@/components/PWAInstallPromptModal';
 import { AccessibilityModal } from '@/components/AccessibilityModal';
+import { OctopusHost } from '@/components/OctopusHost';
 import { exportSceneAgreementPDF } from '@/lib/exportPDF';
 
 export default function HomeScreen() {
@@ -60,6 +61,7 @@ export default function HomeScreen() {
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showPWAInstallModal, setShowPWAInstallModal] = useState(false);
   const [showA11yModal, setShowA11yModal] = useState(false);
+  const [activeCategoryTab, setActiveCategoryTab] = useState<'all' | 'explore' | 'ds' | 'scenes' | 'community'>('all');
   const [selectedTheme, setSelectedTheme] = useState<'purple' | 'red' | 'cyan' | 'emerald'>('purple');
   const [debriefTarget, setDebriefTarget] = useState<{ sessionId: string; activityId: string; activityName: string } | null>(null);
 
@@ -223,6 +225,30 @@ export default function HomeScreen() {
         <Text style={styles.tagline}>
           Define tus preferencias, invita a alguien y recibe un reporte de compatibilidad privado y consensuado.
         </Text>
+      </View>
+
+      {/* 🐙 Mysterious Host Nox */}
+      <OctopusHost />
+
+      {/* 🔮 Organized Category Filter Bar */}
+      <View style={styles.categoryFilterRow}>
+        {[
+          { id: 'all' as const, label: '✨ Todas' },
+          { id: 'explore' as const, label: '🔮 Exploración' },
+          { id: 'ds' as const, label: '🗝️ D/s & Control' },
+          { id: 'scenes' as const, label: '🎭 Escenas & IA' },
+          { id: 'community' as const, label: '🌐 Comunidad' },
+        ].map((cat) => (
+          <TouchableOpacity
+            key={cat.id}
+            style={[styles.categoryFilterChip, activeCategoryTab === cat.id && styles.categoryFilterChipActive]}
+            onPress={() => setActiveCategoryTab(cat.id)}
+          >
+            <Text style={[styles.categoryFilterChipText, activeCategoryTab === cat.id && { color: '#fff' }]}>
+              {cat.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {renderUserManualCard()}
@@ -1272,6 +1298,30 @@ export default function HomeScreen() {
         ) : null}
       </View>
 
+      {/* 🐙 Mysterious Host Nox */}
+      <OctopusHost />
+
+      {/* 🔮 Organized Category Filter Bar */}
+      <View style={styles.categoryFilterRow}>
+        {[
+          { id: 'all' as const, label: '✨ Todas' },
+          { id: 'explore' as const, label: '🔮 Exploración' },
+          { id: 'ds' as const, label: '🗝️ D/s & Control' },
+          { id: 'scenes' as const, label: '🎭 Escenas & IA' },
+          { id: 'community' as const, label: '🌐 Comunidad' },
+        ].map((cat) => (
+          <TouchableOpacity
+            key={cat.id}
+            style={[styles.categoryFilterChip, activeCategoryTab === cat.id && styles.categoryFilterChipActive]}
+            onPress={() => setActiveCategoryTab(cat.id)}
+          >
+            <Text style={[styles.categoryFilterChipText, activeCategoryTab === cat.id && { color: '#fff' }]}>
+              {cat.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {isDesktop ? (
         <View style={styles.desktopGrid}>
           {/* Left Column (~48% width) */}
@@ -1773,6 +1823,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(192, 132, 252, 0.5)',
     alignSelf: 'center',
+  },
+  categoryFilterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginVertical: spacing.xs,
+    justifyContent: 'center',
+  },
+  categoryFilterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: 'rgba(30, 20, 51, 0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.3)',
+  },
+  categoryFilterChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  categoryFilterChipText: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    fontWeight: '800',
   },
   manualActionButtonText: {
     color: colors.text,
