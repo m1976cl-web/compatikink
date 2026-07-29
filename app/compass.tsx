@@ -5,9 +5,10 @@ import { useRouter } from 'expo-router';
 import { Button } from '@/components/Button';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
-import { getCurrentProfile, listMyLocalSessions } from '@/lib/storage';
+import { getCurrentProfile, listMyLocalSessions, getWishlist, toggleWishlist, WishlistItem } from '@/lib/storage';
 import { calculateCompassPoint, determineArchetype } from '@/lib/compatibility';
-import { UserProfile, Session } from '@/types';
+import { UserProfile, Session, CATEGORY_LABELS, CATEGORY_EMOJIS, ActivityCategory } from '@/types';
+import { getAllActivities } from '@/data/activities';
 
 export default function CompassScreen() {
   const router = useRouter();
@@ -16,16 +17,36 @@ export default function CompassScreen() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedPartnerIndex, setSelectedPartnerIndex] = useState<number>(0);
 
-  const leftColWidth = isDesktop ? (Math.min(width, 1140) - 48) * 0.48 - 51 : width - 32;
+  // Calculate Category Affinity Breakdown for profile baseResponses
+  const categoryBreakdown = useMemo(() => {
+    if (!profile?.baseResponses || profile.baseResponses.length === 0) return [];
+    const activities = getAllActivities();
+    const map: Record<string, { totalScore: number; count: number }> = {};
 
-  useEffect(() => {
-    (async () => {
-      const p = await getCurrentProfile();
-      setProfile(p);
-      const s = await listMyLocalSessions();
-      setSessions(s.filter((item) => item.status === 'complete'));
-    })();
-  }, []);
+    for (const resp of profile.baseResponses) {
+      const act = activities.find((a) => a.id === resp.activityId);
+      if (!act) continue;
+      const cat = act.category;
+      if (!map[cat]) map[cat] = { totalScore: 0, count: 0 };
+      
+      let val = 0;
+      if (resp.rating === 'love') val = 100;
+      else if (resp.rating === 'like') val = 75;
+      else if (resp.rating === 'curious') val = 50;
+      else if (resp.rating === 'not_interested') val = 10;
+      else if (resp.rating === 'hard_limit') val = 0;
+
+      map[cat].totalScore += val;
+      map[cat].count += 1;
+    }
+
+    return Object.entries(map)
+      .map(([category, { totalScore, count }]) => ({
+        category: category as ActivityCategory,
+        avgPct: Math.round(totalScore / Math.max(1, count)),
+      }))
+      .sort((a, b) => b.avgPct - a.avgPct);
+  }, [profile]);
 
   const dynamicPlotSize = Math.min(400, Math.max(280, leftColWidth));
 
@@ -92,6 +113,73 @@ export default function CompassScreen() {
           </Text>
         </View>
       ) : null}
+    </View>
+  );
+
+  const renderWishlistCard = () => (
+    <View style={styles.explainerCard}>
+      <Text style={styles.cardHeader}>💌 Mi Lista de Deseos ("Quiero Probar") ({wishlist.length})</Text>
+      {wishlist.length === 0 ? (
+        <Text style={styles.explainerText}>
+          Aún no has guardado ítems. Presiona el botón "🤍 Deseo" en cualquier tarjeta del reporte para agregarlos aquí.
+        </Text>
+      ) : (
+        <View style={styles.wishlistGrid}>
+          {wishlist.map((item) => (
+            <View key={item.activityId} style={styles.wishlistItemRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.wishlistItemName}>{item.activityName}</Text>
+                <Text style={styles.wishlistItemCat}>
+                  {CATEGORY_EMOJIS[item.category as ActivityCategory] ?? '✨'} {CATEGORY_LABELS[item.category as ActivityCategory] ?? item.category}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.removeWishlistBtn}
+                onPress={async () => {
+                  await toggleWishlist({ activityId: item.activityId, activityName: item.activityName, category: item.category });
+                  loadData();
+                }}
+              >
+                <Text style={styles.removeWishlistText}>✕ Quitar</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
+  const renderCategoryBreakdownCard = () => (
+    <View style={styles.explainerCard}>
+      <Text style={styles.cardHeader}>📊 Tu Mapa de Afinidad por Categoría</Text>
+      {categoryBreakdown.length === 0 ? (
+        <Text style={styles.explainerText}>
+          Responde tu cuestionario base para calcular el desglose de afinidad por categorías.
+        </Text>
+      ) : (
+        <View style={{ gap: spacing.sm }}>
+          {categoryBreakdown.map(({ category, avgPct }) => (
+            <View key={category} style={{ gap: 2 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ color: colors.text, fontSize: fontSize.xs, fontWeight: '700' }}>
+                  {CATEGORY_EMOJIS[category]} {CATEGORY_LABELS[category]}
+                </Text>
+                <Text style={{ color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' }}>{avgPct}%</Text>
+              </View>
+              <View style={{ height: 8, backgroundColor: colors.surfaceLight, borderRadius: 4, overflow: 'hidden' }}>
+                <View
+                  style={{
+                    height: '100%',
+                    width: `${avgPct}%`,
+                    backgroundColor: avgPct > 70 ? colors.primary : avgPct > 40 ? colors.accent : colors.info,
+                    borderRadius: 4,
+                  }}
+                />
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 
@@ -182,11 +270,10 @@ export default function CompassScreen() {
               </View>
             </View>
 
-            {/* Right Column: Explanations, Archetypes & Partner selector */}
-            <View style={styles.desktopRightCol}>
-              {renderPartnerSelector()}
-              {renderQuadrantExplainer()}
-            </View>
+            {renderPartnerSelector()}
+            {renderQuadrantExplainer()}
+            {renderWishlistCard()}
+            {renderCategoryBreakdownCard()}
           </View>
         ) : (
           /* Mobile Single Column */
@@ -196,6 +283,8 @@ export default function CompassScreen() {
             </View>
             {renderPartnerSelector()}
             {renderQuadrantExplainer()}
+            {renderWishlistCard()}
+            {renderCategoryBreakdownCard()}
           </View>
         )}
 
@@ -463,5 +552,41 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     marginTop: spacing.md,
+  },
+  wishlistGrid: {
+    gap: spacing.xs,
+  },
+  wishlistItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surfaceLight,
+    padding: spacing.sm,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  wishlistItemName: {
+    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+  },
+  wishlistItemCat: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    marginTop: 2,
+  },
+  removeWishlistBtn: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: colors.danger,
+  },
+  removeWishlistText: {
+    color: colors.danger,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
   },
 });
