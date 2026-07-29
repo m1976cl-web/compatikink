@@ -578,6 +578,36 @@ export default function HomeScreen() {
         </View>
       </TouchableOpacity>
 
+      {/* 🏘️ Communities & Private Groups CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
+        onPress={() => router.push('/communities')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🏘️</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Comunidades & Grupos Privados</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Foros temáticos de Shibari, Aftercare, D/s y estilo de vida</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* 🗓️ Events & Munches Directory CTA */}
+      <TouchableOpacity
+        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
+        onPress={() => router.push('/events')}
+      >
+        <View style={styles.quickProfileInner}>
+          <Text style={styles.quickProfileEmoji}>🗓️</Text>
+          <View style={styles.quickProfileText}>
+            <Text style={styles.quickProfileTitle}>Directorio de Eventos & Munches</Text>
+            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Reuniones presenciales, talleres y reservas discretas de RSVP</Text>
+          </View>
+          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
+        </View>
+      </TouchableOpacity>
+
       {/* 🔐 Backup & Restore CTA */}
       <TouchableOpacity
         style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
