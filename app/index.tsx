@@ -1,9 +1,10 @@
-import { ScrollView, StyleSheet, Text, TextInput, View, Alert, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View, Alert, TouchableOpacity, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Clipboard from 'expo-clipboard';
 import { Button } from '@/components/Button';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, glowShadowPrimary } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import {
@@ -177,6 +178,39 @@ export default function HomeScreen() {
     }
   };
 
+  const renderUserManualCard = () => (
+    <TouchableOpacity
+      style={[
+        styles.quickProfileCard,
+        {
+          borderColor: 'rgba(192, 132, 252, 0.5)',
+          backgroundColor: 'rgba(192, 132, 252, 0.12)',
+          ...glowShadowPrimary(0.25),
+        },
+      ]}
+      onPress={() => router.push('/manual' as any)}
+      activeOpacity={0.85}
+    >
+      <View style={styles.quickProfileInner}>
+        <Text style={styles.quickProfileEmoji}>📖</Text>
+        <View style={styles.quickProfileText}>
+          <Text style={styles.quickProfileTitle}>Manual de Usuario Interactivo</Text>
+          <Text style={[styles.quickProfileDesc, { color: colors.neonPurple, lineHeight: 18 }]}>
+            Guía completa paso a paso para los 25+ módulos: Seguridad, Castidad, Negociación, Bóveda Zero-Knowledge y más.
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.manualActionButton}
+          onPress={() => router.push('/manual' as any)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.manualActionButtonText}>Explorar Manual ↗</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+
   const renderLanding = () => (
     <ScrollView contentContainerStyle={styles.scroll}>
       <View style={styles.hero}>
@@ -186,6 +220,8 @@ export default function HomeScreen() {
           Define tus preferencias, invita a alguien y recibe un reporte de compatibilidad privado y consensuado.
         </Text>
       </View>
+
+      {renderUserManualCard()}
 
       {/* 🔐 Account & Zero-Knowledge Vault CTA */}
       <TouchableOpacity
@@ -982,6 +1018,7 @@ export default function HomeScreen() {
           {/* Left Column (~48% width) */}
           <View style={styles.desktopColLeft}>
             {renderProfileSummaryCard()}
+            {renderUserManualCard()}
             {renderQuickInviteBox()}
             {renderEditResponsesCard()}
             {renderAccountActionsCard()}
@@ -996,6 +1033,7 @@ export default function HomeScreen() {
         </View>
       ) : (
         <>
+          {renderUserManualCard()}
           {renderQuickInviteBox()}
           {renderEditResponsesCard()}
           {renderSceneAgreementsCard()}
@@ -1078,11 +1116,16 @@ export default function HomeScreen() {
 
       {debriefTarget ? (
         <SceneDebriefModal
-        visible={Boolean(debriefTarget)}
-        onClose={() => setDebriefTarget(null)}
-        activityName={debriefTarget?.activityName}
-        onSaveDebrief={(debrief) => handleSaveDebrief(debriefTarget?.sessionId || '', debriefTarget?.activityId || '', debrief)}
-      />
+          visible={Boolean(debriefTarget)}
+          onClose={() => setDebriefTarget(null)}
+          sessionId={debriefTarget.sessionId}
+          activityId={debriefTarget.activityId}
+          activityName={debriefTarget.activityName}
+          onSaved={() => {
+            setDebriefTarget(null);
+            loadHomeData();
+          }}
+        />
       ) : null}
 
       {/* 🔞 Age Verification Modal */}
@@ -1450,5 +1493,60 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '600',
     flex: 1,
+  },
+  manualActionButton: {
+    backgroundColor: 'rgba(192, 132, 252, 0.2)',
+    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.sm + 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.5)',
+    alignSelf: 'center',
+  },
+  manualActionButtonText: {
+    color: colors.text,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 6, 18, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  modalCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 480,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  modalCloseBtn: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    zIndex: 10,
+    padding: spacing.xs,
+  },
+  modalCloseText: {
+    color: colors.textMuted,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+    color: colors.text,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  modalSub: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });

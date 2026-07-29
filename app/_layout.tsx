@@ -16,6 +16,7 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ title: 'Compatikink' }} />
+        <Stack.Screen name="manual" options={{ title: 'Manual de Usuario', headerShown: false }} />
         <Stack.Screen name="questionnaire" options={{ title: 'Tus preferencias' }} />
         <Stack.Screen name="invite" options={{ title: 'Invitar' }} />
         <Stack.Screen name="report" options={{ title: 'Tu reporte' }} />
