@@ -1,8 +1,29 @@
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { colors } from '@/constants/theme';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
+import { fontAssets } from '@/constants/fonts';
+import { colors, fonts, gradients } from '@/constants/theme';
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts(fontAssets);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.boot}>
+        <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
+  }
+
+  const contentStyle =
+    Platform.OS === 'web'
+      ? ([
+          styles.content,
+          { backgroundImage: gradients.inkRadialHint } as object,
+        ] as object)
+      : styles.content;
+
   return (
     <>
       <StatusBar style="light" />
@@ -10,12 +31,17 @@ export default function RootLayout() {
         screenOptions={{
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
-          headerTitleStyle: { fontWeight: '600' },
-          contentStyle: { backgroundColor: colors.background },
+          headerTitleStyle: {
+            fontFamily: fonts.bodySemi,
+            fontWeight: '600',
+            color: colors.text,
+          },
+          contentStyle: contentStyle as object,
           headerShadowVisible: false,
+          animation: 'fade',
         }}
       >
-        <Stack.Screen name="index" options={{ title: 'Compatikink' }} />
+        <Stack.Screen name="index" options={{ title: 'Compatikink', headerShown: false }} />
         <Stack.Screen name="manual" options={{ title: 'Manual de Usuario', headerShown: false }} />
         <Stack.Screen name="questionnaire" options={{ title: 'Tus preferencias' }} />
         <Stack.Screen name="invite" options={{ title: 'Invitar' }} />
@@ -27,3 +53,16 @@ export default function RootLayout() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  boot: {
+    flex: 1,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: {
+    backgroundColor: colors.background,
+    flex: 1,
+  },
+});

@@ -8,9 +8,9 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface DSContract {
@@ -58,14 +58,14 @@ export default function ContractsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>📜 Contratos D/s Digitales & Acuerdos</Text>
+          <Text style={styles.title}>Contratos D/s Digitales & Acuerdos</Text>
           <Text style={styles.subtitle}>
             Redacción y firma digital de acuerdos de dinámica con cláusulas de límites duros, palaras clave y renovación periódica
           </Text>
@@ -128,7 +128,7 @@ export default function ContractsScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -139,9 +139,9 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
@@ -150,28 +150,28 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: spacing.lg,
     borderWidth: 2,
-    borderColor: 'rgba(192, 132, 252, 0.4)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   contractSigned: { borderColor: colors.success, backgroundColor: 'rgba(74, 222, 128, 0.05)' },
   badgeRow: { flexDirection: 'row' },
-  statusBadge: { color: colors.neonPurple, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  statusBadge: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   contractTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
 
-  partiesBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 14, gap: 4 },
+  partiesBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.lg, gap: 4 },
   partyText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
 
-  clauseBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 14, gap: 4, borderWidth: 1, borderColor: colors.border },
+  clauseBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.lg, gap: 4, borderWidth: 1, borderColor: colors.border },
   clauseTitle: { color: colors.warning, fontSize: fontSize.xs, fontWeight: '800' },
   clauseItem: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
 
-  signatureBox: { backgroundColor: 'rgba(192, 132, 252, 0.1)', padding: spacing.md, borderRadius: 16, gap: spacing.sm, borderWidth: 1, borderColor: 'rgba(192, 132, 252, 0.3)' },
+  signatureBox: { backgroundColor: colors.accentSoft, padding: spacing.md, borderRadius: radii.lg, gap: spacing.sm, borderWidth: 1, borderColor: colors.borderSubtle },
   signLabel: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
-  input: { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: 10, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
+  input: { backgroundColor: colors.surface, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: 10, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
 
-  signBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  signBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   signBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '900' },
 
-  signatureConfirmed: { backgroundColor: 'rgba(74, 222, 128, 0.15)', padding: spacing.md, borderRadius: 14, borderWidth: 1, borderColor: colors.success },
+  signatureConfirmed: { backgroundColor: 'rgba(74, 222, 128, 0.15)', padding: spacing.md, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.success },
   confirmedText: { color: colors.success, fontSize: fontSize.xs, fontWeight: '700', textAlign: 'center' },
 });

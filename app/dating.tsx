@@ -8,15 +8,17 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
+import { VaultLockGate } from '@/components/VaultLockGate';
 import { useResponsive } from '@/hooks/useResponsive';
 import { getCurrentProfile, createLocalSession, saveGuestProfile, getDatingMessages, sendDatingMessage, DatingMessage } from '@/lib/storage';
 import { generateReport } from '@/lib/compatibility';
 import { UserProfile, EXPERIENCE_LABELS } from '@/types';
 import { COMMUNITY_PROFILES, CommunityProfile } from '@/data/communityProfiles';
 import { Modal } from 'react-native';
+import { VaultLockGateAPI } from '@/lib/cryptoVault';
 
 export default function DatingScreen() {
   const router = useRouter();
@@ -127,25 +129,24 @@ export default function DatingScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="Conexiones" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>💬 Conexiones & Dating Kink</Text>
+          <Text style={styles.title}>Conexiones</Text>
           <Text style={styles.subtitle}>
-            Buscador avanzado por roles BDSM/FetLife, compatibilidad erótica real-time y chat directo
+            Buscador por roles, compatibilidad y mensajería directa cifrada en dispositivo
           </Text>
         </View>
 
-        {/* 🟪 FetLife Profile Linker & Verified Badge Box */}
+        {/* FetLife profile linker */}
         <View style={styles.fetlifeCard}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ fontSize: 24 }}>🟪</Text>
             <View style={{ flex: 1 }}>
-              <Text style={styles.fetlifeCardTitle}>Integración & Buscador Avanzado de FetLife</Text>
+              <Text style={styles.fetlifeCardTitle}>Integración FetLife</Text>
               <Text style={styles.fetlifeCardDesc}>
                 FetLife no permite filtrar por roles complejos o compatibilidad. Vincula tu usuario de FetLife para verificar tu perfil.
               </Text>
@@ -167,10 +168,10 @@ export default function DatingScreen() {
                   Alert.alert('Ingresa tu Usuario', 'Escribe tu usuario o enlace de FetLife.');
                   return;
                 }
-                Alert.alert('Perfil FetLife Vinculado 🟪', `Se ha verificado el perfil ${userFetlifeHandle}. Tus conexiones podrán ver tu insignia verificada.`);
+                Alert.alert('Perfil FetLife vinculado', `Se ha verificado el perfil ${userFetlifeHandle}. Tus conexiones podrán ver tu insignia verificada.`);
               }}
             >
-              <Text style={styles.fetlifeVerifyBtnText}>Vincular FetLife 🟪</Text>
+              <Text style={styles.fetlifeVerifyBtnText}>Vincular FetLife</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -312,11 +313,15 @@ export default function DatingScreen() {
                   style={styles.chatBtn}
                   onPress={async () => {
                     setMessagingTarget(item);
-                    const msgs = await getDatingMessages(item.id);
-                    setChatMessages(msgs);
+                    if (VaultLockGateAPI.isUnlocked()) {
+                      const msgs = await getDatingMessages(item.id);
+                      setChatMessages(msgs);
+                    } else {
+                      setChatMessages([]);
+                    }
                   }}
                 >
-                  <Text style={styles.chatBtnText}>💬 Enviar Mensaje</Text>
+                  <Text style={styles.chatBtnText}>Enviar mensaje</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -324,7 +329,6 @@ export default function DatingScreen() {
 
           {filtered.length === 0 && (
             <View style={styles.emptyState}>
-              <Text style={{ fontSize: 44 }}>💔</Text>
               <Text style={styles.emptyText}>No se encontraron perfiles con esos filtros.</Text>
             </View>
           )}
@@ -332,7 +336,7 @@ export default function DatingScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
 
-        {/* 💬 Direct Messaging Modal */}
+        {/* Direct Messaging Modal — gated by vault */}
         {messagingTarget ? (
           <Modal
             visible={!!messagingTarget}
@@ -343,74 +347,80 @@ export default function DatingScreen() {
             <View style={styles.chatOverlay}>
               <View style={styles.chatModalCard}>
                 <View style={styles.chatModalHeader}>
-                  <Text style={{ fontSize: 24 }}>{messagingTarget.avatarEmoji}</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.chatModalTitle}>{messagingTarget.nickname}</Text>
-                    <Text style={styles.chatModalSub}>Mensajería directa segura</Text>
+                    <Text style={styles.chatModalSub}>Mensajería directa (bóveda)</Text>
                   </View>
                   <TouchableOpacity onPress={() => setMessagingTarget(null)} style={styles.closeX}>
                     <Text style={styles.closeXText}>✕</Text>
                   </TouchableOpacity>
                 </View>
 
-                {/* Messages List */}
-                <ScrollView contentContainerStyle={styles.chatList} showsVerticalScrollIndicator={false}>
-                  {chatMessages.length === 0 ? (
-                    <View style={styles.chatEmptyState}>
-                      <Text style={{ fontSize: 32 }}>💬</Text>
-                      <Text style={styles.chatEmptyText}>
-                        Inicia la conversación con {messagingTarget.nickname}. Propon una escena o consulta sus safewords.
-                      </Text>
-                    </View>
-                  ) : (
-                    chatMessages.map((msg) => {
-                      const isMe = msg.senderName === (profile?.nickname || 'Tú');
-                      return (
-                        <View
-                          key={msg.id}
-                          style={[styles.chatBubble, isMe ? styles.chatBubbleMe : styles.chatBubbleOther]}
-                        >
-                          <Text style={styles.chatSender}>{msg.senderName}</Text>
-                          <Text style={styles.chatText}>{msg.text}</Text>
-                        </View>
-                      );
-                    })
-                  )}
-                </ScrollView>
+                <VaultLockGate
+                  title="Mensajes cifrados"
+                  subtitle="Desbloquea la bóveda para leer y enviar DMs almacenados en este dispositivo."
+                  onUnlock={async () => {
+                    if (!messagingTarget) return;
+                    const msgs = await getDatingMessages(messagingTarget.id);
+                    setChatMessages(msgs);
+                  }}
+                >
+                  <ScrollView contentContainerStyle={styles.chatList} showsVerticalScrollIndicator={false}>
+                    {chatMessages.length === 0 ? (
+                      <View style={styles.chatEmptyState}>
+                        <Text style={styles.chatEmptyText}>
+                          Inicia la conversación con {messagingTarget.nickname}. Propón una escena o consulta safewords.
+                        </Text>
+                      </View>
+                    ) : (
+                      chatMessages.map((msg) => {
+                        const isMe = msg.senderName === (profile?.nickname || 'Tú');
+                        return (
+                          <View
+                            key={msg.id}
+                            style={[styles.chatBubble, isMe ? styles.chatBubbleMe : styles.chatBubbleOther]}
+                          >
+                            <Text style={styles.chatSender}>{msg.senderName}</Text>
+                            <Text style={styles.chatText}>{msg.text}</Text>
+                          </View>
+                        );
+                      })
+                    )}
+                  </ScrollView>
 
-                {/* Input Bar */}
-                <View style={styles.chatInputRow}>
-                  <TextInput
-                    style={styles.chatInput}
-                    placeholder="Escribe tu propuesta de escena o mensaje..."
-                    placeholderTextColor={colors.textMuted}
-                    value={messageInput}
-                    onChangeText={setMessageInput}
-                  />
-                  <TouchableOpacity
-                    style={styles.sendBtn}
-                    onPress={async () => {
-                      if (!messageInput.trim() || !messagingTarget) return;
-                      const sender = profile?.nickname || 'Tú';
-                      await sendDatingMessage({
-                        targetProfileId: messagingTarget.id,
-                        senderName: sender,
-                        text: messageInput,
-                      });
-                      setMessageInput('');
-                      const updated = await getDatingMessages(messagingTarget.id);
-                      setChatMessages(updated);
-                    }}
-                  >
-                    <Text style={styles.sendBtnText}>Enviar</Text>
-                  </TouchableOpacity>
-                </View>
+                  <View style={styles.chatInputRow}>
+                    <TextInput
+                      style={styles.chatInput}
+                      placeholder="Escribe tu propuesta de escena o mensaje..."
+                      placeholderTextColor={colors.textMuted}
+                      value={messageInput}
+                      onChangeText={setMessageInput}
+                    />
+                    <TouchableOpacity
+                      style={styles.sendBtn}
+                      onPress={async () => {
+                        if (!messageInput.trim() || !messagingTarget) return;
+                        const sender = profile?.nickname || 'Tú';
+                        await sendDatingMessage({
+                          targetProfileId: messagingTarget.id,
+                          senderName: sender,
+                          text: messageInput,
+                        });
+                        setMessageInput('');
+                        const updated = await getDatingMessages(messagingTarget.id);
+                        setChatMessages(updated);
+                      }}
+                    >
+                      <Text style={styles.sendBtnText}>Enviar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </VaultLockGate>
               </View>
             </View>
           </Modal>
         ) : null}
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -434,15 +444,15 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   warningBanner: {
     backgroundColor: 'rgba(251, 191, 36, 0.1)',
     borderWidth: 1,
     borderColor: colors.warning,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     padding: spacing.md,
     marginVertical: spacing.sm,
     gap: spacing.xs,
@@ -463,7 +473,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
@@ -484,7 +494,7 @@ const styles = StyleSheet.create({
   filterChip: {
     paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.border,
@@ -500,10 +510,10 @@ const styles = StyleSheet.create({
 
   profileCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.25)',
+    borderColor: colors.borderSubtle,
     gap: spacing.sm,
   },
   cardHeaderRow: {
@@ -512,7 +522,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   avatarEmoji: { fontSize: 44 },
-  nickname: { color: colors.neonPurple, fontSize: fontSize.lg, fontWeight: '900' },
+  nickname: { color: colors.primary, fontSize: fontSize.lg, fontWeight: '900' },
   ageText: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '600' },
   metaText: { color: colors.textMuted, fontSize: fontSize.xs },
   expBadge: { color: colors.accent, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', marginTop: 2 },
@@ -522,7 +532,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1.5,
   },
   scoreHigh: { backgroundColor: 'rgba(74, 222, 128, 0.15)', borderColor: colors.success },
@@ -537,27 +547,27 @@ const styles = StyleSheet.create({
   kinksLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
   kinkChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   kinkChip: {
-    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    backgroundColor: colors.accentSoft,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
   },
-  kinkChipText: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '600' },
+  kinkChipText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '600' },
 
   actionsRow: { marginTop: 4, gap: spacing.xs },
   connectBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     alignItems: 'center',
   },
   connectBtnText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '800' },
   chatBtn: {
     backgroundColor: colors.surfaceLight,
     paddingVertical: spacing.sm,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
@@ -594,7 +604,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  chatModalTitle: { color: colors.neonPurple, fontSize: fontSize.md, fontWeight: '800' },
+  chatModalTitle: { color: colors.primary, fontSize: fontSize.md, fontWeight: '800' },
   chatModalSub: { color: colors.textMuted, fontSize: fontSize.xs },
   closeX: {
     padding: 6,
@@ -606,7 +616,7 @@ const styles = StyleSheet.create({
   chatBubble: {
     maxWidth: '85%',
     padding: spacing.md,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     gap: 2,
   },
   chatBubbleMe: {
@@ -634,7 +644,7 @@ const styles = StyleSheet.create({
   chatInput: {
     flex: 1,
     backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     color: colors.text,
@@ -646,28 +656,28 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: radii.md,
   },
   sendBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 
   // FetLife Integration Styles
   fetlifeCard: {
-    backgroundColor: 'rgba(168, 85, 247, 0.12)',
+    backgroundColor: colors.accentSoft,
     borderRadius: 18,
     padding: spacing.md,
     borderWidth: 1.5,
-    borderColor: '#a855f7',
+    borderColor: colors.primary,
     gap: spacing.sm,
     marginVertical: spacing.xs,
   },
-  fetlifeCardTitle: { color: '#c084fc', fontSize: fontSize.sm, fontWeight: '900' },
+  fetlifeCardTitle: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '900' },
   fetlifeCardDesc: { color: colors.text, fontSize: fontSize.xs, lineHeight: 16 },
 
   fetlifeInputRow: { flexDirection: 'row', gap: spacing.xs },
   fetlifeInput: {
     flex: 1,
     backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 8,
     color: colors.text,
@@ -676,10 +686,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   fetlifeVerifyBtn: {
-    backgroundColor: '#a855f7',
+    backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: radii.md,
     justifyContent: 'center',
   },
   fetlifeVerifyBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
@@ -690,12 +700,12 @@ const styles = StyleSheet.create({
   roleChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  roleChipActive: { backgroundColor: '#a855f7', borderColor: '#a855f7' },
+  roleChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   roleChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
   roleChipTextActive: { color: '#fff' },
 });

@@ -21,20 +21,24 @@ import { PronounsPicker } from '@/components/PronounsPicker';
 import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
+import { AppHeader } from '@/components/AppHeader';
 import { CATEGORY_LABELS, ExperienceLevel, UserProfile, ActivityCategory, Rating } from '@/types';
-import { getSessionByInviteCode, submitGuestResponses } from '@/lib/sessions';
+import { getSessionByInviteCode, submitGuestResponses, parseInviteSecretFromUrl } from '@/lib/sessions';
 import { CATEGORY_ORDER, ACTIVITIES } from '@/data/activities';
 import { SwipeDeckView } from '@/components/SwipeDeckView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GuestQuestionnaireScreen() {
-  const { code } = useLocalSearchParams<{ code: string }>();
+  const { code, k } = useLocalSearchParams<{ code: string; k?: string }>();
   const router = useRouter();
   const [nickname, setNickname] = useState('');
   const [pronouns, setPronouns] = useState('');
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | undefined>(undefined);
   const [userNotes, setUserNotes] = useState('');
+  const [inviteSecret, setInviteSecret] = useState<string | undefined>(
+    typeof k === 'string' ? k : Array.isArray(k) ? k[0] : undefined
+  );
 
   const [step, setStep] = useState<'consent' | 'categories' | 'questions'>('consent');
   const [enabledCategories, setEnabledCategories] = useState<ActivityCategory[]>([...CATEGORY_ORDER]);
@@ -46,6 +50,9 @@ export default function GuestQuestionnaireScreen() {
 
   useEffect(() => {
     if (!code) return;
+    const secret = (typeof k === 'string' ? k : undefined) || parseInviteSecretFromUrl();
+    if (secret) setInviteSecret(secret);
+
     // Restore nickname draft
     AsyncStorage.getItem(GUEST_DRAFT_KEY).then((raw) => {
       if (raw) {
@@ -54,11 +61,12 @@ export default function GuestQuestionnaireScreen() {
           if (draft.nickname) setNickname(draft.nickname);
           if (draft.pronouns) setPronouns(draft.pronouns);
           if (draft.userNotes) setUserNotes(draft.userNotes);
+          if (draft.inviteSecret && !secret) setInviteSecret(draft.inviteSecret);
         } catch {}
       }
     });
 
-    getSessionByInviteCode(code).then((session) => {
+    getSessionByInviteCode(code, secret).then((session) => {
       if (!session) {
         setValid(false);
       } else if (session.status === 'complete') {
@@ -76,8 +84,11 @@ export default function GuestQuestionnaireScreen() {
   // Save draft whenever nickname/pronouns/notes change
   useEffect(() => {
     if (!code || !nickname) return;
-    AsyncStorage.setItem(GUEST_DRAFT_KEY, JSON.stringify({ nickname, pronouns, userNotes }));
-  }, [nickname, pronouns, userNotes, code]);
+    AsyncStorage.setItem(
+      GUEST_DRAFT_KEY,
+      JSON.stringify({ nickname, pronouns, userNotes, inviteSecret })
+    );
+  }, [nickname, pronouns, userNotes, code, inviteSecret]);
 
   const toggleCategory = (cat: ActivityCategory) => {
     setEnabledCategories((prev) => {
@@ -106,14 +117,24 @@ export default function GuestQuestionnaireScreen() {
         notes: userNotes.trim() || undefined,
       };
 
-      const session = await submitGuestResponses(code, name, finalResponses, guestProfile);
+      const session = await submitGuestResponses(
+        code,
+        name,
+        finalResponses,
+        guestProfile,
+        inviteSecret
+      );
       // Clear draft on successful submission
       await AsyncStorage.removeItem(GUEST_DRAFT_KEY);
       // Save session token temporarily to local storage to allow converting to profile in done.tsx
       await AsyncStorage.setItem('last_completed_guest_session_token', session.initiatorToken);
       router.replace('/guest/done');
-    } catch {
-      Alert.alert('Error', 'No se pudieron enviar las respuestas. Verifica el código.');
+    } catch (e: any) {
+      Alert.alert(
+        'Error',
+        e?.message ||
+          'No se pudieron enviar las respuestas. Si usas Supabase ZK, abre el enlace con #k=secreto.'
+      );
     } finally {
       setLoading(false);
     }
@@ -140,13 +161,11 @@ export default function GuestQuestionnaireScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.consent}>
-          <Text style={styles.consentTitle}>Antes de responder</Text>
-          <Text style={styles.consentText}>
-            • Solo para mayores de 18 años.{'\n'}
-            • Tus respuestas son privadas y confidenciales.{'\n'}
-            • Quien te invitó verá la compatibilidad de vuestros intereses mutuos.{'\n'}
-            • Puedes marcar límites duros en cualquier actividad.
-          </Text>
+          <AppHeader
+            brand
+            title="Antes de responder"
+            subtitle="Mayores de 18. Respuestas privadas. Quien te invitó verá la compatibilidad mutua."
+          />
 
           <View style={styles.divider} />
 
@@ -154,7 +173,7 @@ export default function GuestQuestionnaireScreen() {
           {nickname ? (
             <View style={styles.restoredBanner}>
               <Text style={styles.restoredBannerText}>
-                ✅ Recuperamos tu nombre de una sesión anterior: <Text style={{ fontWeight: '800' }}>{nickname}</Text>. Puedes cambiarlo si quieres.
+                Recuperamos tu nombre de una sesión anterior: <Text style={{ fontFamily: fonts.bodyBold }}>{nickname}</Text>. Puedes cambiarlo.
               </Text>
             </View>
           ) : null}
@@ -407,49 +426,44 @@ const styles = StyleSheet.create({
   scroll: { padding: spacing.lg, paddingBottom: spacing.xl },
   consent: { padding: spacing.lg, gap: spacing.md },
   consentTitle: {
+    fontFamily: fonts.displaySemi,
     color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '700',
+    fontSize: fontSize.xxl,
   },
   consentText: {
-    color: colors.textMuted,
+    ...typography.bodyMuted,
     lineHeight: 24,
-    fontSize: fontSize.md,
   },
-  label: { color: colors.textMuted, fontSize: fontSize.sm },
+  label: { ...typography.label },
   input: {
     backgroundColor: colors.surface,
-    borderRadius: 10,
+    borderRadius: radii.md,
     padding: spacing.md,
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.md,
+    fontFamily: fonts.body,
   },
   category: {
-    color: colors.accent,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    ...typography.label,
+    color: colors.primary,
   },
   activityName: {
+    fontFamily: fonts.displaySemi,
     color: colors.text,
     fontSize: fontSize.xl,
-    fontWeight: '700',
     marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
   description: {
-    color: colors.textMuted,
-    fontSize: fontSize.md,
-    lineHeight: 22,
+    ...typography.bodyMuted,
     marginBottom: spacing.lg,
   },
   sectionLabel: {
+    fontFamily: fonts.bodySemi,
     color: colors.text,
     fontSize: fontSize.md,
-    fontWeight: '600',
     marginBottom: spacing.sm,
   },
   fieldGap: {

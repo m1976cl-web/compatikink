@@ -7,9 +7,9 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { isPremiumUser, setPremiumStatus, PREMIUM_FEATURES } from '@/lib/premium';
 
@@ -39,14 +39,14 @@ export default function PremiumScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>💎 Compatikink PRO</Text>
+          <Text style={styles.title}>Compatikink PRO</Text>
           <Text style={styles.subtitle}>
             Desbloquea el potencial ilimitado de exploración, matchmaking y análisis avanzado
           </Text>
@@ -114,7 +114,7 @@ export default function PremiumScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -125,9 +125,9 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(74, 222, 128, 0.12)',
     borderWidth: 1.5,
     borderColor: colors.success,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   planCard: {
     flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     gap: 4,
     position: 'relative',
   },
-  planCardActive: { borderColor: colors.primary, backgroundColor: 'rgba(192, 132, 252, 0.1)' },
+  planCardActive: { borderColor: colors.primary, backgroundColor: colors.accentSoft },
   bestValueBadge: {
     position: 'absolute',
     top: -12,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   upgradeBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     alignItems: 'center',
     shadowColor: colors.primary,
     shadowRadius: 12,
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
 
   featuresCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,

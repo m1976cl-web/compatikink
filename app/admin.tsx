@@ -5,27 +5,26 @@ import {
   Text,
   TouchableOpacity,
   View,
-  TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
+import { VaultLockGate } from '@/components/VaultLockGate';
 import { useResponsive } from '@/hooks/useResponsive';
-import { listAllProfiles, listMyLocalSessions } from '@/lib/storage';
+import { listAllProfiles, listMyLocalSessions, canAccessLocalAdmin, getCurrentProfile } from '@/lib/storage';
+import { VaultLockGateAPI } from '@/lib/cryptoVault';
 import { calculateCompassPoint, determineArchetype } from '@/lib/compatibility';
 import { getAllActivities } from '@/data/activities';
 import { UserProfile, Session, CATEGORY_LABELS, CATEGORY_EMOJIS, ActivityCategory, RATING_LABELS } from '@/types';
-
-const ADMIN_PIN = '9999';
 
 export default function AdminScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const activities = getAllActivities();
 
-  const [pinInput, setPinInput] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
@@ -38,12 +37,47 @@ export default function AdminScreen() {
     setSessions(sess);
   };
 
-  const handleAdminLogin = () => {
-    if (pinInput === ADMIN_PIN || pinInput.toLowerCase() === 'admin') {
-      setIsAuthenticated(true);
-      loadData();
+  const verifyAdminAccess = async () => {
+    const ok = await canAccessLocalAdmin();
+    setIsAuthenticated(ok);
+    if (ok) await loadData();
+    return ok;
+  };
+
+  useEffect(() => {
+    (async () => {
+      await verifyAdminAccess();
+      setAuthChecking(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    return VaultLockGateAPI.subscribe(async (snap) => {
+      if (!snap.unlocked) {
+        setIsAuthenticated(false);
+        return;
+      }
+      await verifyAdminAccess();
+    });
+  }, []);
+
+  const handleRetryAccess = async () => {
+    const ok = await verifyAdminAccess();
+    if (ok) return;
+    const unlocked = VaultLockGateAPI.isUnlocked();
+    const current = await getCurrentProfile();
+    if (!unlocked) {
+      Alert.alert(
+        'Bóveda bloqueada',
+        'Desbloquea la bóveda con tu PIN para abrir el panel de administración.'
+      );
+    } else if (!current?.isLocalAdmin) {
+      Alert.alert(
+        'Sin rol admin',
+        'Tu perfil no tiene el flag local isLocalAdmin. No hay PIN maestro hardcodeado (el antiguo 9999 fue eliminado).'
+      );
     } else {
-      Alert.alert('Acceso Denegado 🔒', 'PIN de Administrador incorrecto (Sugerido: 9999).');
+      Alert.alert('Acceso denegado', 'No se pudo verificar el acceso de administración.');
     }
   };
 
@@ -132,47 +166,60 @@ export default function AdminScreen() {
     };
   }, [profiles, sessions, activities]);
 
+  if (authChecking) {
+    return (
+      <ScreenContainer title="" hideHeader>
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+          <Text style={{ color: colors.textMuted }}>Verificando acceso…</Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-          <View style={styles.loginCard}>
-            <Text style={{ fontSize: 44 }}>🔑</Text>
-            <Text style={styles.loginTitle}>Panel de Administración</Text>
-            <Text style={styles.loginSub}>Ingresa el PIN de Administrador para acceder:</Text>
-
-            <TextInput
-              style={styles.pinInput}
-              placeholder="PIN de Admin (ej: 9999)"
-              placeholderTextColor={colors.textMuted}
-              value={pinInput}
-              onChangeText={setPinInput}
-              secureTextEntry
-              keyboardType="numeric"
-            />
-
-            <TouchableOpacity style={styles.loginBtn} onPress={handleAdminLogin}>
-              <Text style={styles.loginBtnText}>Acceder al Panel 🚀</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={{ marginTop: spacing.md }} onPress={() => router.back()}>
-              <Text style={{ color: colors.textMuted, fontSize: fontSize.xs }}>Volver al inicio</Text>
-            </TouchableOpacity>
-          </View>
+      <ScreenContainer title="Administración" hideHeader>
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', gap: spacing.lg }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>← Volver</Text>
+          </TouchableOpacity>
+          <VaultLockGate
+            title="Panel de administración"
+            subtitle="Desbloquea la bóveda. El acceso además requiere rol local isLocalAdmin — no hay PIN maestro."
+            onUnlock={async () => {
+              await handleRetryAccess();
+            }}
+          >
+            <View style={styles.loginCard}>
+              <Text style={styles.loginTitle}>Bóveda abierta</Text>
+              <Text style={styles.loginSub}>
+                Si tu perfil no tiene isLocalAdmin, el acceso seguirá denegado. No existe PIN maestro hardcodeado.
+              </Text>
+              <TouchableOpacity style={styles.loginBtn} onPress={handleRetryAccess}>
+                <Text style={styles.loginBtnText}>Verificar rol admin</Text>
+              </TouchableOpacity>
+            </View>
+          </VaultLockGate>
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="Administración" hideHeader>
+      <VaultLockGate
+        title="Panel de administración"
+        subtitle="La bóveda debe permanecer abierta para inspeccionar datos sensibles."
+        showLockButton
+        onLock={() => setIsAuthenticated(false)}
+      >
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>👑 Panel de Administración & Analítica</Text>
+          <Text style={styles.title}>Administración</Text>
           <Text style={styles.subtitle}>
             Inspección de usuarios inscritos, respuestas globales y tendencias de la comunidad
           </Text>
@@ -214,7 +261,7 @@ export default function AdminScreen() {
                   <Text style={styles.metricLabel}>Usuarios Registrados</Text>
                 </View>
                 <View style={styles.metricCard}>
-                  <Text style={[styles.metricValue, { color: colors.neonPurple }]}>{analytics.totalSessions}</Text>
+                  <Text style={[styles.metricValue, { color: colors.primary }]}>{analytics.totalSessions}</Text>
                   <Text style={styles.metricLabel}>Sesiones de Pareja</Text>
                 </View>
                 <View style={styles.metricCard}>
@@ -295,7 +342,7 @@ export default function AdminScreen() {
                     <TouchableOpacity onPress={() => setSelectedProfile(isSelected ? null : p)}>
                       <View style={styles.profileRowHeader}>
                         <View style={{ flex: 1 }}>
-                          <Text style={styles.profileNick}>{p.nickname} {p.pin ? '🔐' : ''}</Text>
+                          <Text style={styles.profileNick}>{p.nickname} {p.pinSalt || p.pinVerifier ? '🔐' : ''}</Text>
                           <Text style={styles.profileArchetype}>Arquetipo: {archetype}</Text>
                           <Text style={styles.profileMeta}>
                             {p.pronouns ? `${p.pronouns} · ` : ''}Respuestas: {p.baseResponses?.length ?? 0}
@@ -335,7 +382,7 @@ export default function AdminScreen() {
                 <View key={s.id} style={styles.card}>
                   <Text style={styles.sessionTitle}>Sesión: {s.inviteCode}</Text>
                   <Text style={styles.sessionText}>
-                    Iniciador: <Text style={{ color: colors.neonPurple }}>{s.initiatorNickname || 'Anónimo'}</Text> · Invitado: <Text style={{ color: colors.neonPink }}>{s.guestNickname || 'Pendiente'}</Text>
+                    Iniciador: <Text style={{ color: colors.primary }}>{s.initiatorNickname || 'Anónimo'}</Text> · Invitado: <Text style={{ color: colors.accent }}>{s.guestNickname || 'Pendiente'}</Text>
                   </Text>
                   <Text style={styles.sessionStatus}>Estado: {s.status === 'complete' ? '✅ Completada' : '⏳ Esperando'}</Text>
                 </View>
@@ -346,7 +393,8 @@ export default function AdminScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+      </VaultLockGate>
+    </ScreenContainer>
   );
 }
 
@@ -366,11 +414,11 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     gap: spacing.md,
   },
-  loginTitle: { color: colors.neonPurple, fontSize: fontSize.lg, fontWeight: '900' },
+  loginTitle: { color: colors.primary, fontSize: fontSize.lg, fontWeight: '900' },
   loginSub: { color: colors.textMuted, fontSize: fontSize.xs, textAlign: 'center' },
   pinInput: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
     color: colors.text,
@@ -384,7 +432,7 @@ const styles = StyleSheet.create({
   loginBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     width: '100%',
     alignItems: 'center',
   },
@@ -392,15 +440,15 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   tabsRow: { flexDirection: 'row', gap: 4, marginVertical: spacing.sm },
   tab: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: radii.md,
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.border,
@@ -416,21 +464,21 @@ const styles = StyleSheet.create({
   metricCard: {
     flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.md,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
-  metricValue: { color: colors.neonPurple, fontSize: fontSize.xl, fontWeight: '900' },
+  metricValue: { color: colors.primary, fontSize: fontSize.xl, fontWeight: '900' },
   metricLabel: { color: colors.textMuted, fontSize: 10, fontWeight: '700', textAlign: 'center', marginTop: 2 },
 
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.25)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
@@ -440,7 +488,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surfaceLight,
     padding: spacing.sm,
-    borderRadius: 12,
+    borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border,
     gap: spacing.sm,
@@ -451,14 +499,14 @@ const styles = StyleSheet.create({
   rankBadge: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
 
   profileRowHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  profileNick: { color: colors.neonPurple, fontSize: fontSize.md, fontWeight: '800' },
+  profileNick: { color: colors.primary, fontSize: fontSize.md, fontWeight: '800' },
   profileArchetype: { color: colors.text, fontSize: fontSize.xs, marginTop: 2 },
   profileMeta: { color: colors.textMuted, fontSize: fontSize.xs, marginTop: 2 },
 
   detailedResponsesBox: {
     backgroundColor: colors.surfaceLight,
     padding: spacing.md,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
     marginTop: spacing.xs,
@@ -467,9 +515,9 @@ const styles = StyleSheet.create({
   detailTitle: { color: colors.primaryLight, fontSize: fontSize.xs, fontWeight: '800' },
   respRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 },
   respActName: { color: colors.text, fontSize: fontSize.xs },
-  respRatingText: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '700' },
+  respRatingText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
 
-  sessionTitle: { color: colors.neonPurple, fontSize: fontSize.sm, fontWeight: '800' },
+  sessionTitle: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '800' },
   sessionText: { color: colors.text, fontSize: fontSize.xs },
   sessionStatus: { color: colors.textMuted, fontSize: fontSize.xs, marginTop: 2 },
 });

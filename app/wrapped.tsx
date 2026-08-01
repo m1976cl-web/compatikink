@@ -7,9 +7,9 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface WrappedSlide {
@@ -30,7 +30,7 @@ const WRAPPED_SLIDES: WrappedSlide[] = [
     title: '¡Menudo Año de Exploración!',
     statValue: '158 Actividades',
     statSubtitle: 'Evaluadas en tu cuestionario base de compatibilidad.',
-    bgGradientColor: 'rgba(192, 132, 252, 0.15)',
+    bgGradientColor: colors.accentSoft,
   },
   {
     id: 2,
@@ -83,14 +83,14 @@ export default function WrappedScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>📊 Compatikink Wrapped 2026</Text>
+          <Text style={styles.title}>Compatikink Wrapped 2026</Text>
           <Text style={styles.subtitle}>
             Tu resumen anual personalizado de exploración erótica, emociones y compatibilidad
           </Text>
@@ -136,7 +136,7 @@ export default function WrappedScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -147,9 +147,9 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   dotsRow: { flexDirection: 'row', gap: 6, marginVertical: spacing.xs, justifyContent: 'center' },
   dot: { height: 6, flex: 1, backgroundColor: colors.surfaceLight, borderRadius: 3 },
@@ -161,20 +161,20 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: spacing.xl,
     borderWidth: 2,
-    borderColor: 'rgba(192, 132, 252, 0.4)',
+    borderColor: colors.borderSubtle,
     alignItems: 'center',
     gap: spacing.md,
     minHeight: 380,
     justifyContent: 'center',
   },
-  badgeText: { color: colors.neonPink, fontSize: 10, fontWeight: '900', letterSpacing: 2 },
+  badgeText: { color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 2 },
   emojiText: { fontSize: 64 },
   slideTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800', textAlign: 'center' },
   statValue: { color: colors.text, fontSize: 32, fontWeight: '900', textAlign: 'center' },
   statSubtitle: { color: colors.textMuted, fontSize: fontSize.xs, textAlign: 'center', lineHeight: 18 },
 
   navRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md, width: '100%' },
-  navBtn: { flex: 1, paddingVertical: 12, borderRadius: 14, backgroundColor: colors.surfaceLight, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  navBtn: { flex: 1, paddingVertical: 12, borderRadius: radii.lg, backgroundColor: colors.surfaceLight, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   navBtnText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '800' },
   navBtnPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
   navBtnPrimaryText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '900' },

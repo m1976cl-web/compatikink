@@ -10,9 +10,9 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { getCurrentProfile, getWishlist } from '@/lib/storage';
 import { UserProfile, ActivityCategory, CATEGORY_EMOJIS, CATEGORY_LABELS } from '@/types';
@@ -151,14 +151,14 @@ export default function StoreScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🛍️ Mercado & Tienda Kink</Text>
+          <Text style={styles.title}>Mercado & Tienda Kink</Text>
           <Text style={styles.subtitle}>
             Accesorios, cuerdas, ropa y juguetes recomendados según tus gustos eróticos y Wishlist
           </Text>
@@ -299,7 +299,7 @@ export default function StoreScreen() {
           </View>
         </Modal>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -310,9 +310,9 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   partnerBanner: {
     backgroundColor: 'rgba(74, 222, 128, 0.12)',
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
 
   searchInput: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     color: colors.text,
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   },
 
   catScroll: { gap: 6, marginVertical: spacing.xs },
-  catChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
+  catChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.lg, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
   catChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   catChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
   catChipTextActive: { color: '#fff' },
@@ -352,36 +352,36 @@ const styles = StyleSheet.create({
 
   productCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.md,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.25)',
+    borderColor: colors.borderSubtle,
     flexDirection: 'row',
     gap: spacing.md,
   },
-  productImg: { width: 90, height: 110, borderRadius: 14 },
+  productImg: { width: 90, height: 110, borderRadius: radii.lg },
   vendorBadge: { color: colors.success, fontSize: 10, fontWeight: '800' },
   ratingText: { color: colors.warning, fontSize: 10, fontWeight: '800' },
   productName: { color: colors.text, fontSize: fontSize.sm, fontWeight: '900' },
   productDesc: { color: colors.textMuted, fontSize: 10, lineHeight: 14 },
 
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2 },
-  priceText: { color: colors.neonPurple, fontSize: fontSize.md, fontWeight: '900' },
-  couponBadge: { backgroundColor: 'rgba(244, 114, 182, 0.15)', borderWidth: 1, borderColor: colors.neonPink, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  couponText: { color: colors.neonPink, fontSize: 9, fontWeight: '800' },
+  priceText: { color: colors.primary, fontSize: fontSize.md, fontWeight: '900' },
+  couponBadge: { backgroundColor: 'rgba(244, 114, 182, 0.15)', borderWidth: 1, borderColor: colors.accent, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  couponText: { color: colors.accent, fontSize: 9, fontWeight: '800' },
 
-  buyBtn: { backgroundColor: colors.primary, paddingVertical: 8, borderRadius: 12, alignItems: 'center', marginTop: 4 },
+  buyBtn: { backgroundColor: colors.primary, paddingVertical: 8, borderRadius: radii.md, alignItems: 'center', marginTop: 4 },
   buyBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(10, 6, 18, 0.85)', justifyContent: 'center', alignItems: 'center', padding: spacing.md },
   modalCard: { backgroundColor: colors.surface, borderRadius: 24, padding: spacing.xl, maxWidth: 440, width: '100%', borderWidth: 1.5, borderColor: colors.primary, gap: spacing.md },
-  modalCloseBtn: { position: 'absolute', top: 16, right: 16, width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center' },
+  modalCloseBtn: { position: 'absolute', top: 16, right: 16, width: 28, height: 28, borderRadius: radii.lg, backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center' },
   modalCloseText: { color: colors.textMuted, fontSize: 14 },
   modalTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
   modalSub: { color: colors.textMuted, fontSize: fontSize.xs },
   fieldLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
-  input: { backgroundColor: colors.surfaceLight, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: 10, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
-  submitPartnerBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  input: { backgroundColor: colors.surfaceLight, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: 10, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
+  submitPartnerBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   submitPartnerText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '800' },
 });

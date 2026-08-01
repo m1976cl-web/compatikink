@@ -7,9 +7,9 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { PRESET_PATTERNS, VibrationPattern } from '@/lib/musicVibrationSync';
 
@@ -45,14 +45,14 @@ export default function MusicSyncScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🎵 Sync de Vibraciones & Ambientes</Text>
+          <Text style={styles.title}>Sync de Vibraciones & Ambientes</Text>
           <Text style={styles.subtitle}>
             Sincroniza la intensidad de tu dispositivo Bluetooth (QIUI / Lovense) con los ritmos y frecuencias de las playlists de escena
           </Text>
@@ -72,7 +72,7 @@ export default function MusicSyncScreen() {
                   style={[
                     styles.eqBar,
                     { height: isPlaying ? `${(val * currentIntensity) / 100}%` : '15%' },
-                    isPlaying && { backgroundColor: colors.neonPink },
+                    isPlaying && { backgroundColor: colors.accent },
                   ]}
                 />
               </View>
@@ -111,7 +111,7 @@ export default function MusicSyncScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -122,12 +122,12 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   visualizerCard: {
-    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    backgroundColor: colors.accentSoft,
     borderRadius: 24,
     padding: spacing.xl,
     borderWidth: 2,
@@ -144,15 +144,15 @@ const styles = StyleSheet.create({
   eqCol: { flex: 1, height: '100%', backgroundColor: colors.surfaceLight, borderRadius: 4, justifyContent: 'flex-end', overflow: 'hidden' },
   eqBar: { width: '100%', backgroundColor: colors.primary, borderRadius: 4 },
 
-  syncBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: 16, width: '100%', alignItems: 'center' },
+  syncBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.lg, width: '100%', alignItems: 'center' },
   syncBtnActive: { backgroundColor: colors.danger },
   syncBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '900' },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
   sectionTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
 
-  patternCard: { backgroundColor: colors.surface, borderRadius: 16, padding: spacing.md, borderWidth: 1.5, borderColor: colors.border, gap: 4 },
-  patternCardActive: { borderColor: colors.primary, backgroundColor: 'rgba(192, 132, 252, 0.1)' },
+  patternCard: { backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.md, borderWidth: 1.5, borderColor: colors.border, gap: 4 },
+  patternCardActive: { borderColor: colors.primary, backgroundColor: colors.accentSoft },
   patHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   patName: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
   patBpm: { color: colors.warning, fontSize: fontSize.xs, fontWeight: '800' },

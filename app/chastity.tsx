@@ -9,10 +9,10 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface VerificationSchedule {
@@ -99,14 +99,14 @@ export default function ChastityScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🔒 Módulo de Castidad & Verificación</Text>
+          <Text style={styles.title}>Módulo de Castidad & Verificación</Text>
           <Text style={styles.subtitle}>
             Matchmaking de Keyholders y sistema de verificación fotográfica programada con notificaciones Push
           </Text>
@@ -285,7 +285,7 @@ export default function ChastityScreen() {
           </View>
         </Modal>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -296,15 +296,15 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   tabsRow: { flexDirection: 'row', gap: 4, marginVertical: spacing.sm },
   tab: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: radii.md,
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.border,
@@ -318,10 +318,10 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
@@ -331,21 +331,21 @@ const styles = StyleSheet.create({
   pushBtn: {
     backgroundColor: colors.accent,
     paddingVertical: spacing.md,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     alignItems: 'center',
   },
   pushBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '900' },
   scheduleBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     alignItems: 'center',
   },
   scheduleBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 
   verifyItem: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -363,36 +363,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: 'rgba(192, 132, 252, 0.08)',
-    borderRadius: 12,
+    backgroundColor: colors.accentSoft,
+    borderRadius: radii.md,
     padding: spacing.xs,
     marginTop: 4,
   },
   photoPreview: { width: 54, height: 54, borderRadius: 8 },
-  photoTitle: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '800' },
+  photoTitle: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
   photoMeta: { color: colors.text, fontSize: 10 },
   photoTimestamp: { color: colors.textMuted, fontSize: 9 },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(10, 6, 18, 0.85)', justifyContent: 'center', alignItems: 'center', padding: spacing.md },
   modalCard: { backgroundColor: colors.surface, borderRadius: 24, padding: spacing.xl, maxWidth: 440, width: '100%', borderWidth: 1.5, borderColor: colors.primary, gap: spacing.md },
-  modalCloseBtn: { position: 'absolute', top: 16, right: 16, width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center' },
+  modalCloseBtn: { position: 'absolute', top: 16, right: 16, width: 28, height: 28, borderRadius: radii.lg, backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center' },
   modalCloseText: { color: colors.textMuted, fontSize: 14 },
   modalTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
   modalSub: { color: colors.textMuted, fontSize: fontSize.xs },
 
   intervalsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  intervalChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
+  intervalChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radii.md, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
   intervalChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   intervalChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
   intervalChipTextActive: { color: '#fff' },
 
   fieldLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
 
-  attachPhotoBtn: { backgroundColor: colors.surfaceLight, borderWidth: 1.5, borderColor: colors.primary, borderStyle: 'dashed', paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  attachPhotoBtn: { backgroundColor: colors.surfaceLight, borderWidth: 1.5, borderColor: colors.primary, borderStyle: 'dashed', paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   attachPhotoText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
-  modalPhotoPreview: { width: '100%', height: 140, borderRadius: 12 },
+  modalPhotoPreview: { width: '100%', height: 140, borderRadius: radii.md },
 
-  saveVerificationBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  saveVerificationBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   saveVerificationText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '800' },
 });

@@ -7,9 +7,9 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface GlossaryTerm {
@@ -87,14 +87,14 @@ export default function GlossaryScreen() {
   }, [search, selectedLetter]);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>📚 Glosario Kink</Text>
+          <Text style={styles.title}>Glosario Kink</Text>
           <Text style={styles.subtitle}>
             {GLOSSARY.length} términos · Educación y consentimiento
           </Text>
@@ -163,7 +163,7 @@ export default function GlossaryScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   letterChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     backgroundColor: colors.surfaceLight,
     marginRight: 6,
     borderWidth: 1,
@@ -262,14 +262,14 @@ const styles = StyleSheet.create({
   },
   termCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
     gap: spacing.xs,
   },
   termName: {
-    color: colors.neonPurple,
+    color: colors.primary,
     fontSize: fontSize.lg,
     fontWeight: '800',
   },

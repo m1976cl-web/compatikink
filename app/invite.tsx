@@ -4,9 +4,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { AppHeader } from '@/components/AppHeader';
+import {
+  colors,
+  fonts,
+  fontSize,
+  radii,
+  spacing,
+  typography,
+} from '@/constants/theme';
 import { getSessionByToken } from '@/lib/sessions';
-import { buildInviteMessage, getGuestProfile } from '@/lib/storage';
+import { getGuestProfile } from '@/lib/storage';
 import { Session, GuestProfile } from '@/types';
 
 export default function InviteScreen() {
@@ -50,16 +58,23 @@ export default function InviteScreen() {
   const shareInvite = async () => {
     if (!session) return;
     const guestName = guestProfile?.nickname || 'alguien especial';
+    const secret = session.inviteSecret;
+    const guestPath = secret
+      ? `guest/${session.inviteCode}#k=${secret}`
+      : `guest/${session.inviteCode}`;
     const richMessage =
-      `🔥 *Compatikink* — Test de Compatibilidad Erótica Privado\n\n` +
-      `Hola${guestName !== 'alguien especial' ? `, ${guestName}` : ''}! Te invito a hacer un test de compatibilidad conmigo de forma completamente privada. 🔐\n\n` +
-      `Tu código de acceso es:\n\n` +
+      `*Compatikink* — Test de compatibilidad privado\n\n` +
+      `Hola${guestName !== 'alguien especial' ? `, ${guestName}` : ''}! Te invito a un test de compatibilidad privado.\n\n` +
+      `Tu código:\n\n` +
       `  *${session.inviteCode}*\n\n` +
+      (secret
+        ? `Enlace (incluye secreto de cifrado):\nhttps://m1976cl-web.github.io/compatikink/${guestPath}\n\n`
+        : '') +
       `Pasos:\n` +
       `1. Entra a: https://m1976cl-web.github.io/compatikink/\n` +
-      `2. Pulsa "Tengo un Código" e introduce: *${session.inviteCode}*\n` +
-      `3. Responde en privado (nadie verá tus respuestas individuales)\n\n` +
-      `Cuando termines, yo recibiré el análisis de compatibilidad. 💜`;
+      `2. Pulsa "Me invitaron" e introduce: *${session.inviteCode}*\n` +
+      `3. Responde en privado (tus respuestas viajan cifradas)\n\n` +
+      `Cuando termines, recibiré el análisis de compatibilidad.`;
 
     try {
       await Share.share({ message: richMessage });
@@ -72,122 +87,111 @@ export default function InviteScreen() {
   if (!session) {
     return (
       <View style={styles.center}>
-        <Text style={styles.muted}>Cargando...</Text>
+        <Text style={styles.muted}>Cargando…</Text>
       </View>
     );
   }
 
   const isComplete = session.status === 'complete';
 
-  // Expiry countdown
   const expiryText = (() => {
     if (!session.expiresAt) return null;
     const diff = new Date(session.expiresAt).getTime() - Date.now();
-    if (diff <= 0) return '🚫 Código expirado';
+    if (diff <= 0) return 'Código expirado';
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
-    if (hours < 24) return `⏳ Expira en ${hours}h`;
-    return `⏳ Expira en ${days} día${days > 1 ? 's' : ''}`;
+    if (hours < 24) return `Expira en ${hours}h`;
+    return `Expira en ${days} día${days > 1 ? 's' : ''}`;
   })();
+
+  const qrData = `https://m1976cl-web.github.io/compatikink/guest/${session.inviteCode}${
+    session.inviteSecret ? `#k=${session.inviteSecret}` : ''
+  }`;
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>¡Listo! Comparte el Código</Text>
-        <Text style={styles.desc}>
-          Envía este código a la persona que quieres invitar. Cuando complete el test, recibirás el reporte de compatibilidad automáticamente.
-        </Text>
+        <AppHeader
+          brand
+          title="Comparte el código"
+          subtitle="Cuando complete el test, recibirás el reporte automáticamente."
+        />
 
-        {/* Neon Code Card */}
         <View style={styles.codeBox}>
-          <Text style={styles.codeLabel}>CÓDIGO DE INVITACIÓN</Text>
+          <Text style={styles.codeLabel}>Código de invitación</Text>
           <Text style={styles.code}>{session.inviteCode}</Text>
-          <Text style={styles.codeHint}>Solo funciona una vez · Privado</Text>
+          <Text style={styles.codeHint}>Un solo uso · Privado</Text>
           {expiryText ? (
-            <Text style={[styles.codeHint, { color: expiryText.startsWith('🚫') ? colors.danger : colors.warning, marginTop: 4 }]}>
+            <Text
+              style={[
+                styles.codeHint,
+                {
+                  color: expiryText.startsWith('Código expirado') ? colors.danger : colors.warning,
+                  marginTop: 4,
+                },
+              ]}
+            >
               {expiryText}
             </Text>
           ) : null}
         </View>
 
-        {/* Quick Share Buttons */}
         <View style={styles.shareRow}>
-          <Button title="📋 Copiar código" onPress={copyCode} style={{ flex: 1 }} />
-          <Button title="📤 Compartir" onPress={shareInvite} variant="secondary" style={{ flex: 1 }} />
+          <Button title="Copiar código" onPress={copyCode} style={{ flex: 1 }} />
+          <Button title="Compartir" onPress={shareInvite} variant="secondary" style={{ flex: 1 }} />
         </View>
 
-        {/* 📲 QR Code Trigger Card */}
-        <TouchableOpacity
-          style={styles.qrCard}
-          onPress={() => setShowQrModal(true)}
-        >
-          <View style={styles.qrCardInner}>
-            <Text style={{ fontSize: 28 }}>📲</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.qrCardTitle}>Código QR de Escaneo Rápido</Text>
-              <Text style={styles.qrCardSub}>Toca para mostrar el código QR cara a cara</Text>
-            </View>
-            <Text style={{ color: colors.primary, fontSize: 20, fontWeight: '700' }}>›</Text>
-          </View>
+        <TouchableOpacity style={styles.qrCard} onPress={() => setShowQrModal(true)}>
+          <Text style={styles.qrCardTitle}>Código QR</Text>
+          <Text style={styles.qrCardSub}>Mostrar para escanear cara a cara</Text>
         </TouchableOpacity>
 
-        {/* 📲 QR Code Modal */}
         <Modal visible={showQrModal} transparent animationType="fade" onRequestClose={() => setShowQrModal(false)}>
           <View style={styles.qrOverlay}>
             <View style={styles.qrModalCard}>
               <TouchableOpacity style={styles.qrCloseBtn} onPress={() => setShowQrModal(false)}>
                 <Text style={styles.qrCloseText}>✕</Text>
               </TouchableOpacity>
-
-              <Text style={styles.qrModalTitle}>Escanea para Responder 📲</Text>
-              <Text style={styles.qrModalSub}>Apunta la cámara de tu pareja a este código:</Text>
-
+              <Text style={styles.qrModalTitle}>Escanear para responder</Text>
+              <Text style={styles.qrModalSub}>El enlace incluye el secreto de cifrado de la sesión.</Text>
               <View style={styles.qrImageContainer}>
                 <Image
                   source={{
-                    uri: `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
-                      `https://m1976cl-web.github.io/compatikink/guest/${session.inviteCode}`
-                    )}`,
+                    uri: `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrData)}`,
                   }}
                   style={{ width: 220, height: 220, borderRadius: 12 }}
                   resizeMode="contain"
                 />
               </View>
-
-              <Text style={styles.qrModalCodeText}>Código: {session.inviteCode}</Text>
-
-              <Button title="Cerrar QR" variant="ghost" onPress={() => setShowQrModal(false)} />
+              <Text style={styles.qrModalCodeText}>{session.inviteCode}</Text>
+              <Button title="Cerrar" variant="ghost" onPress={() => setShowQrModal(false)} />
             </View>
           </View>
         </Modal>
 
         {guestProfile ? (
           <View style={styles.profileCard}>
-            <Text style={styles.profileTitle}>📝 Ficha de {guestProfile.nickname}</Text>
+            <Text style={styles.profileTitle}>Ficha de {guestProfile.nickname}</Text>
             {guestProfile.notes ? (
-              <Text style={styles.profileNotes} numberOfLines={3}>{guestProfile.notes}</Text>
+              <Text style={styles.profileNotes} numberOfLines={3}>
+                {guestProfile.notes}
+              </Text>
             ) : null}
           </View>
         ) : null}
 
-        {/* Status indicator */}
         <View style={[styles.waiting, isComplete && styles.waitingComplete]}>
-          <View style={styles.waitingHeader}>
-            <Text style={styles.waitingDot}>{isComplete ? '✅' : '⏳'}</Text>
-            <Text style={[styles.waitingTitle, isComplete && styles.waitingTitleComplete]}>
-              {isComplete ? '¡Completado! El reporte está listo' : 'Esperando que respondan...'}
-            </Text>
-          </View>
+          <Text style={[styles.waitingTitle, isComplete && styles.waitingTitleComplete]}>
+            {isComplete ? 'Completado — el reporte está listo' : 'Esperando respuesta…'}
+          </Text>
           {!isComplete ? (
-            <Text style={styles.hint}>
-              La app verifica automáticamente cada 5 segundos.
-            </Text>
+            <Text style={styles.hint}>La app verifica automáticamente cada 5 segundos.</Text>
           ) : null}
         </View>
 
         {isComplete ? (
           <Button
-            title="Ver Reporte de Compatibilidad 📊"
+            title="Ver reporte de compatibilidad"
             onPress={() => router.replace({ pathname: '/report', params: { token } })}
           />
         ) : (
@@ -204,157 +208,128 @@ export default function InviteScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: spacing.lg, paddingBottom: 40, gap: spacing.md },
+  scroll: {
+    padding: spacing.lg,
+    paddingBottom: 40,
+    gap: spacing.md,
+    maxWidth: 560,
+    width: '100%',
+    alignSelf: 'center',
+  },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.background,
   },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '800',
-  },
-  desc: {
-    color: colors.textMuted,
-    lineHeight: 22,
-    fontSize: fontSize.sm,
-  },
   codeBox: {
-    backgroundColor: 'rgba(10, 6, 18, 0.95)',
-    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
     padding: spacing.xl,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(192, 132, 252, 0.6)',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 8,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
   },
   codeLabel: {
-    color: colors.neonPurple,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
+    ...typography.label,
+    color: colors.primary,
     marginBottom: spacing.sm,
   },
   code: {
-    color: colors.neonPurple,
+    fontFamily: fonts.display,
+    color: colors.text,
     fontSize: 42,
-    fontWeight: '900',
     letterSpacing: 8,
-    textShadowColor: 'rgba(192, 132, 252, 0.7)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 12,
   },
   codeHint: {
+    fontFamily: fonts.body,
     color: colors.textMuted,
     fontSize: fontSize.xs,
     marginTop: spacing.sm,
-    letterSpacing: 0.5,
   },
-  shareRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
+  shareRow: { flexDirection: 'row', gap: spacing.md },
   waiting: {
     backgroundColor: colors.surface,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     padding: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
     gap: spacing.xs,
   },
   waitingComplete: {
     borderColor: colors.success,
-    backgroundColor: 'rgba(74, 222, 128, 0.07)',
-  },
-  waitingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  waitingDot: {
-    fontSize: 20,
+    backgroundColor: 'rgba(107, 155, 122, 0.08)',
   },
   waitingTitle: {
+    fontFamily: fonts.bodySemi,
     color: colors.text,
-    fontWeight: '700',
     fontSize: fontSize.sm,
-    flex: 1,
   },
-  waitingTitleComplete: {
-    color: colors.success,
+  waitingTitleComplete: { color: colors.success },
+  muted: {
+    fontFamily: fonts.body,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
   },
-  muted: { color: colors.textMuted, fontSize: fontSize.sm },
   hint: {
+    fontFamily: fonts.body,
     color: colors.textMuted,
     fontSize: fontSize.xs,
     lineHeight: 18,
-    paddingLeft: 28,
   },
   profileCard: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
   },
   profileTitle: {
+    fontFamily: fonts.bodySemi,
     color: colors.text,
     fontSize: fontSize.sm,
-    fontWeight: '700',
     marginBottom: 4,
   },
   profileNotes: {
+    fontFamily: fonts.body,
     color: colors.textMuted,
     fontSize: fontSize.sm,
     lineHeight: 18,
   },
-
-  // QR Code Styles
   qrCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
-    marginTop: spacing.xs,
-  },
-  qrCardInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
+    borderColor: colors.borderSubtle,
   },
   qrCardTitle: {
+    fontFamily: fonts.bodySemi,
     color: colors.text,
     fontSize: fontSize.sm,
-    fontWeight: '700',
   },
   qrCardSub: {
+    fontFamily: fonts.body,
     color: colors.textMuted,
     fontSize: fontSize.xs,
+    marginTop: 2,
   },
   qrOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.88)',
+    backgroundColor: 'rgba(12, 10, 9, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
   qrModalCard: {
     backgroundColor: colors.surface,
-    borderRadius: 24,
+    borderRadius: radii.xl,
     padding: spacing.xl,
     width: '100%',
     maxWidth: 380,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   qrCloseBtn: {
@@ -369,33 +344,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   qrCloseText: {
+    fontFamily: fonts.bodyBold,
     color: colors.textMuted,
     fontSize: 16,
-    fontWeight: '700',
   },
   qrModalTitle: {
-    color: colors.neonPurple,
+    fontFamily: fonts.displaySemi,
+    color: colors.text,
     fontSize: fontSize.lg,
-    fontWeight: '900',
     textAlign: 'center',
     marginTop: spacing.sm,
   },
   qrModalSub: {
-    color: colors.textMuted,
+    ...typography.bodyMuted,
     fontSize: fontSize.xs,
     textAlign: 'center',
   },
   qrImageContainer: {
     backgroundColor: '#fff',
     padding: spacing.md,
-    borderRadius: 20,
-    elevation: 8,
+    borderRadius: radii.lg,
   },
   qrModalCodeText: {
+    fontFamily: fonts.bodyBold,
     color: colors.text,
     fontSize: fontSize.md,
-    fontWeight: '800',
     letterSpacing: 2,
   },
 });
-

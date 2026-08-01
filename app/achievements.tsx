@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { checkAndUnlockAchievements, Achievement } from '@/lib/achievements';
 
@@ -27,14 +27,14 @@ export default function AchievementsScreen() {
   const unlockedCount = list.filter((a) => a.unlocked).length;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🏅 Logros & Insignias Kink</Text>
+          <Text style={styles.title}>Logros & Insignias Kink</Text>
           <Text style={styles.subtitle}>
             Recompensas por explorar actividades, cuidar la seguridad y conectar con parejas
           </Text>
@@ -76,7 +76,7 @@ export default function AchievementsScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -87,9 +87,9 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
@@ -98,22 +98,22 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     marginVertical: spacing.xs,
   },
   progressTitle: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
-  progressNum: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '900' },
+  progressNum: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '900' },
   track: { height: 10, backgroundColor: colors.surfaceLight, borderRadius: 5, overflow: 'hidden' },
   fill: { height: '100%', backgroundColor: colors.primary, borderRadius: 5 },
 
   badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   badgeCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     width: '47%',
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     alignItems: 'center',
     gap: spacing.xs,
   },

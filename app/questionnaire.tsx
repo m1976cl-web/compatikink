@@ -21,7 +21,8 @@ import { PronounsPicker } from '@/components/PronounsPicker';
 import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
+import { AppHeader } from '@/components/AppHeader';
 import {
   CATEGORY_LABELS,
   CATEGORY_EMOJIS,
@@ -123,7 +124,7 @@ export default function QuestionnaireScreen() {
       const initiatorProfile: UserProfile = {
         ...profile,
         nickname: name,
-        pin: profile?.pin || undefined,
+        pin: undefined,
         pronouns: pronouns || undefined,
         experienceLevel,
         notes: userNotes.trim() || undefined,
@@ -149,11 +150,11 @@ export default function QuestionnaireScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.intro}>
-          <Text style={styles.introTitle}>Antes de empezar</Text>
-          <Text style={styles.introText}>
-            Responderás preguntas sobre tus preferencias eróticas de forma 100% privada. 
-            Tus respuestas solo se cruzarán con tu invitado cuando ambos terminen.
-          </Text>
+          <AppHeader
+            brand
+            title="Antes de empezar"
+            subtitle="Responderás de forma privada. Tus respuestas solo se cruzarán cuando ambos terminen."
+          />
 
           <View style={styles.divider} />
           <Text style={styles.sectionSubTitle}>1. Tu Perfil (Iniciador)</Text>
@@ -578,52 +579,45 @@ const styles = StyleSheet.create({
   scroll: { padding: spacing.lg, paddingBottom: spacing.xl },
   intro: { padding: spacing.lg, gap: spacing.md },
   introTitle: {
+    fontFamily: fonts.displaySemi,
     color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '700',
+    fontSize: fontSize.xxl,
   },
   introText: {
-    color: colors.textMuted,
-    lineHeight: 22,
-    fontSize: fontSize.md,
+    ...typography.bodyMuted,
   },
   label: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
+    ...typography.label,
   },
   input: {
     backgroundColor: colors.surface,
-    borderRadius: 10,
+    borderRadius: radii.md,
     padding: spacing.md,
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.md,
+    fontFamily: fonts.body,
   },
   category: {
+    ...typography.label,
     color: colors.primary,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   activityName: {
+    fontFamily: fonts.displaySemi,
     color: colors.text,
     fontSize: fontSize.xl,
-    fontWeight: '700',
     marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
   description: {
-    color: colors.textMuted,
-    fontSize: fontSize.md,
-    lineHeight: 22,
+    ...typography.bodyMuted,
     marginBottom: spacing.lg,
   },
   sectionLabel: {
+    fontFamily: fonts.bodySemi,
     color: colors.text,
     fontSize: fontSize.md,
-    fontWeight: '600',
     marginBottom: spacing.sm,
   },
   fieldGap: {

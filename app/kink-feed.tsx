@@ -8,9 +8,9 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface FeedPost {
@@ -93,14 +93,14 @@ export default function KinkFeedScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>📰 Feed & Encuestas de la Comunidad</Text>
+          <Text style={styles.title}>Feed & Encuestas de la Comunidad</Text>
           <Text style={styles.subtitle}>
             Muro de debate anónimo, encuestas diarias y consejos de seguridad inspirados en la comunidad Mazmo
           </Text>
@@ -187,7 +187,7 @@ export default function KinkFeedScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -198,24 +198,24 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
   createCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   createTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
   createInput: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     padding: spacing.md,
     color: colors.text,
     fontSize: fontSize.xs,
@@ -224,26 +224,26 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: 'top',
   },
-  publishBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  publishBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   publishBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 
   postCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
     gap: spacing.md,
   },
   postHeader: { flexDirection: 'row', alignItems: 'center' },
-  postAuthor: { color: colors.neonPurple, fontSize: fontSize.sm, fontWeight: '800' },
+  postAuthor: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '800' },
   postMeta: { color: colors.textMuted, fontSize: 10, marginTop: 2 },
   postContent: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
 
   pollBox: { gap: spacing.xs, marginVertical: 4 },
   pollOptionBtn: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
+    borderRadius: radii.md,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -253,9 +253,9 @@ const styles = StyleSheet.create({
   pollOptionBtnVoted: { borderColor: colors.primary },
   pollOptionText: { color: colors.text, fontSize: fontSize.xs, fontWeight: '700' },
   pollPctText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
-  pollFillBar: { position: 'absolute', top: 0, bottom: 0, left: 0, backgroundColor: 'rgba(192, 132, 252, 0.18)', borderRadius: 12 },
+  pollFillBar: { position: 'absolute', top: 0, bottom: 0, left: 0, backgroundColor: colors.accentSoft, borderRadius: radii.md },
 
   postFooter: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.xs },
   likeBtn: { alignSelf: 'flex-start' },
-  likeBtnText: { color: colors.neonPink, fontSize: fontSize.xs, fontWeight: '800' },
+  likeBtnText: { color: colors.accent, fontSize: fontSize.xs, fontWeight: '800' },
 });

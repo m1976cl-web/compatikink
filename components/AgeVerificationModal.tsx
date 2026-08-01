@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 
 const AGE_KEY = 'age_verified_18_v1';
 
@@ -35,29 +35,34 @@ export function AgeVerificationModal() {
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
-        <View style={styles.card}>
-          <Text style={styles.emoji}>🔞</Text>
-          <Text style={styles.title}>Contenido Exclusivo para Mayores de 18 Años</Text>
+        <View style={styles.panel}>
+          <Text style={styles.brand}>Compatikink</Text>
+          <Text style={styles.eyebrow}>Acceso restringido</Text>
+          <Text style={styles.title}>Solo para mayores de 18 años</Text>
           <Text style={styles.desc}>
-            Compatikink es una plataforma orientada a la educación, exploración consensuada y evaluación de compatibilidad BDSM/Kink entre adultos.
+            Plataforma orientada a la educación, exploración consensuada y evaluación de
+            compatibilidad BDSM/Kink entre adultos.
           </Text>
 
           <View style={styles.noticeBox}>
             <Text style={styles.noticeText}>
-              🛡️ Todos los contenidos, dinámicas y acuerdos requieren consentimiento libre, informado y madurez legal.
+              Todos los contenidos, dinámicas y acuerdos requieren consentimiento libre,
+              informado y madurez legal.
             </Text>
           </View>
 
-          {/* Confirmation Checkbox */}
           <TouchableOpacity
             style={styles.checkboxRow}
             onPress={() => setAccepted((prev) => !prev)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: accepted }}
           >
             <View style={[styles.checkbox, accepted && styles.checkboxChecked]}>
-              {accepted && <Text style={styles.checkmark}>✓</Text>}
+              {accepted ? <Text style={styles.checkmark}>✓</Text> : null}
             </View>
             <Text style={styles.checkboxLabel}>
-              Confirmo que tengo **18 años o más** y acepto explorar la plataforma bajo principios SSC / RACK.
+              Confirmo que tengo 18 años o más y acepto explorar la plataforma bajo principios
+              SSC / RACK.
             </Text>
           </TouchableOpacity>
 
@@ -65,8 +70,9 @@ export function AgeVerificationModal() {
             style={[styles.confirmBtn, !accepted && styles.confirmBtnDisabled]}
             onPress={handleConfirm}
             disabled={!accepted}
+            accessibilityRole="button"
           >
-            <Text style={styles.confirmBtnText}>Ingresar a Compatikink ✨</Text>
+            <Text style={styles.confirmBtnText}>Entrar</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -77,48 +83,58 @@ export function AgeVerificationModal() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(10, 6, 18, 0.95)',
+    backgroundColor: 'rgba(12, 10, 9, 0.94)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.md,
   },
-  card: {
+  panel: {
     backgroundColor: colors.surface,
-    borderRadius: 24,
+    borderRadius: radii.xl,
     padding: spacing.xl,
     maxWidth: 440,
     width: '100%',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(239, 68, 68, 0.5)',
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
-  emoji: { fontSize: 44 },
+  brand: {
+    fontFamily: fonts.display,
+    fontSize: fontSize.xl,
+    color: colors.primary,
+    letterSpacing: 2,
+  },
+  eyebrow: {
+    ...typography.label,
+    color: colors.danger,
+  },
   title: {
-    color: colors.text,
+    fontFamily: fonts.displaySemi,
     fontSize: fontSize.lg,
-    fontWeight: '900',
+    color: colors.text,
     textAlign: 'center',
+    lineHeight: 26,
   },
   desc: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
+    ...typography.bodyMuted,
     textAlign: 'center',
-    lineHeight: 18,
+    fontSize: fontSize.sm,
   },
   noticeBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: 'rgba(196, 92, 92, 0.08)',
     borderWidth: 1,
-    borderColor: colors.danger,
-    borderRadius: 14,
+    borderColor: 'rgba(196, 92, 92, 0.35)',
+    borderRadius: radii.md,
     padding: spacing.md,
     width: '100%',
   },
   noticeText: {
-    color: colors.danger,
+    fontFamily: fonts.body,
+    color: colors.textMuted,
     fontSize: fontSize.xs,
-    fontWeight: '600',
     textAlign: 'center',
+    lineHeight: 18,
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -129,22 +145,23 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
+    borderRadius: radii.sm,
+    borderWidth: 1.5,
     borderColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.backgroundMid,
   },
   checkboxChecked: {
     backgroundColor: colors.primary,
   },
   checkmark: {
-    color: '#fff',
-    fontWeight: '900',
+    color: colors.onPrimary,
+    fontFamily: fonts.bodyBold,
     fontSize: 14,
   },
   checkboxLabel: {
+    fontFamily: fonts.body,
     color: colors.text,
     fontSize: fontSize.xs,
     flex: 1,
@@ -153,7 +170,7 @@ const styles = StyleSheet.create({
   confirmBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
-    borderRadius: 16,
+    borderRadius: radii.md,
     width: '100%',
     alignItems: 'center',
   },
@@ -162,8 +179,9 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   confirmBtnText: {
-    color: '#fff',
+    fontFamily: fonts.bodySemi,
+    color: colors.onPrimary,
     fontSize: fontSize.sm,
-    fontWeight: '800',
+    letterSpacing: 0.4,
   },
 });

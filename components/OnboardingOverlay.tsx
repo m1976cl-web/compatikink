@@ -1,42 +1,37 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Animated,
-  Dimensions,
   Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ONBOARDING_KEY = 'onboarding_done';
 
 const STEPS = [
   {
-    emoji: '🔥',
+    mark: 'I',
     title: 'Bienvenido/a a Compatikink',
     desc: 'Descubre qué tan compatibles son tus preferencias eróticas con alguien especial, de forma completamente privada y consensuada.',
-    color: colors.neonPurple,
   },
   {
-    emoji: '⚡',
-    title: 'Crea tu Perfil en 2 minutos',
+    mark: 'II',
+    title: 'Crea tu perfil en dos minutos',
     desc: 'El Perfil Rápido te hace solo 10 preguntas clave. Puedes ampliar cuando quieras. Nadie más verá tus respuestas individuales.',
-    color: colors.neonPink,
   },
   {
-    emoji: '📨',
+    mark: 'III',
     title: 'Invita a quien tú elijas',
     desc: 'Genera un código de invitación único y compártelo por WhatsApp, Telegram o donde prefieras. La otra persona responde en privado.',
-    color: colors.info,
   },
   {
-    emoji: '📊',
-    title: 'Ve el Reporte de Compatibilidad',
-    desc: 'Cuando ambos terminen, recibirás un análisis visual completo: Compás Kink, Arquetipos, Matches Mutuos y más. Sin revelar las respuestas individuales.',
-    color: colors.neonGreen,
+    mark: 'IV',
+    title: 'Reporte de compatibilidad',
+    desc: 'Cuando ambos terminen, recibirás un análisis visual completo: Compás Kink, Arquetipos, Matches Mutuos y más — sin revelar respuestas individuales.',
   },
 ];
 
@@ -101,29 +96,24 @@ export function OnboardingOverlay({ onDone }: Props) {
   return (
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
       <View style={styles.overlay}>
-        <Animated.View style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          {/* Step dots */}
+        <Animated.View style={[styles.panel, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <Text style={styles.brand}>Compatikink</Text>
+          <Text style={styles.noxMark}>Nox</Text>
+
           <View style={styles.dotsRow}>
             {STEPS.map((_, i) => (
-              <TouchableOpacity key={i} onPress={() => animateStep(i)}>
-                <View
-                  style={[
-                    styles.dot,
-                    i === step && { backgroundColor: current.color, width: 20 },
-                  ]}
-                />
+              <TouchableOpacity key={i} onPress={() => animateStep(i)} accessibilityLabel={`Paso ${i + 1}`}>
+                <View style={[styles.dot, i === step && styles.dotActive]} />
               </TouchableOpacity>
             ))}
           </View>
 
-          {/* Content */}
-          <Text style={styles.emoji}>{current.emoji}</Text>
-          <Text style={[styles.title, { color: current.color }]}>{current.title}</Text>
+          <Text style={styles.mark}>{current.mark}</Text>
+          <Text style={styles.title}>{current.title}</Text>
           <Text style={styles.desc}>{current.desc}</Text>
 
-          {/* Actions */}
-          <TouchableOpacity style={[styles.nextBtn, { backgroundColor: current.color }]} onPress={handleNext}>
-            <Text style={styles.nextBtnText}>{isLast ? '¡Empezar! 🚀' : 'Siguiente →'}</Text>
+          <TouchableOpacity style={styles.nextBtn} onPress={handleNext} accessibilityRole="button">
+            <Text style={styles.nextBtnText}>{isLast ? 'Empezar' : 'Siguiente'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleDone} style={styles.skipBtn}>
@@ -135,26 +125,39 @@ export function OnboardingOverlay({ onDone }: Props) {
   );
 }
 
-// Static method to reset onboarding (for testing)
 OnboardingOverlay.reset = () => AsyncStorage.removeItem(ONBOARDING_KEY);
 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.88)',
+    backgroundColor: 'rgba(12, 10, 9, 0.92)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
-  card: {
+  panel: {
     backgroundColor: colors.surface,
-    borderRadius: 24,
+    borderRadius: radii.xl,
     padding: spacing.xl,
     width: '100%',
-    maxWidth: 380,
+    maxWidth: 400,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.25)',
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  brand: {
+    fontFamily: fonts.display,
+    fontSize: fontSize.xl,
+    color: colors.primary,
+    letterSpacing: 2,
+    marginBottom: spacing.xs,
+  },
+  noxMark: {
+    fontFamily: fonts.displayItalic,
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+    letterSpacing: 3,
+    marginBottom: spacing.md,
   },
   dotsRow: {
     flexDirection: 'row',
@@ -167,44 +170,51 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.border,
   },
-  emoji: {
-    fontSize: 60,
-    marginBottom: spacing.md,
+  dotActive: {
+    backgroundColor: colors.primary,
+    width: 22,
+  },
+  mark: {
+    fontFamily: fonts.display,
+    fontSize: fontSize.xxl,
+    color: colors.primary,
+    letterSpacing: 4,
+    marginBottom: spacing.sm,
+    opacity: 0.85,
   },
   title: {
+    fontFamily: fonts.displaySemi,
     fontSize: fontSize.xl,
-    fontWeight: '800',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.sm,
     lineHeight: 30,
   },
   desc: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
+    ...typography.bodyMuted,
     textAlign: 'center',
-    lineHeight: 22,
     marginBottom: spacing.xl,
+    fontSize: fontSize.sm,
   },
   nextBtn: {
     width: '100%',
     paddingVertical: spacing.md,
-    borderRadius: 14,
+    borderRadius: radii.md,
     alignItems: 'center',
     marginBottom: spacing.sm,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
+    backgroundColor: colors.primary,
   },
   nextBtnText: {
-    color: '#fff',
+    fontFamily: fonts.bodySemi,
+    color: colors.onPrimary,
     fontSize: fontSize.md,
-    fontWeight: '800',
+    letterSpacing: 0.4,
   },
   skipBtn: {
     paddingVertical: spacing.xs,
   },
   skipBtnText: {
+    fontFamily: fonts.body,
     color: colors.textMuted,
     fontSize: fontSize.xs,
     textDecorationLine: 'underline',

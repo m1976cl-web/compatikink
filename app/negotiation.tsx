@@ -8,11 +8,12 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
-import { getSessionByToken, listMyLocalSessions } from '@/lib/storage';
+import { listMyLocalSessions } from '@/lib/storage';
+import { getSessionByToken } from '@/lib/sessions';
 import { generateReport } from '@/lib/compatibility';
 import { Session, ReportItem, RATING_LABELS, ROLE_LABELS } from '@/types';
 
@@ -71,14 +72,14 @@ export default function NegotiationScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>📋 Sala de Negociación en Vivo</Text>
+          <Text style={styles.title}>Sala de Negociación en Vivo</Text>
           <Text style={styles.subtitle}>
             Revisión sincrónica de actividades mutuas, definición de reglas y firma consensuada
           </Text>
@@ -111,7 +112,6 @@ export default function NegotiationScreen() {
         {/* Content */}
         {!selectedSession || !report ? (
           <View style={styles.emptyState}>
-            <Text style={{ fontSize: 44 }}>📋</Text>
             <Text style={styles.emptyTitle}>No hay sesión completa seleccionada</Text>
             <Text style={styles.emptyText}>
               Completa un test de compatibilidad en pareja primero para habilitar la sala de negociación.
@@ -122,7 +122,7 @@ export default function NegotiationScreen() {
             {/* Header Card */}
             <View style={styles.infoCard}>
               <Text style={styles.infoTitle}>
-                Negociando con: <Text style={{ color: colors.neonPurple }}>{selectedSession.guestNickname || 'Pareja'}</Text>
+                Negociando con: <Text style={{ color: colors.primary }}>{selectedSession.guestNickname || 'Pareja'}</Text>
               </Text>
               <Text style={styles.infoSub}>
                 Revisen juntos las {mutualItems.length} actividades de interés mutuo antes de realizar la escena.
@@ -203,7 +203,7 @@ export default function NegotiationScreen() {
           </ScrollView>
         )}
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -214,9 +214,9 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   sessionPickerBar: {
     flexDirection: 'row',
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   pickerChip: {
     paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.border,
@@ -241,10 +241,10 @@ const styles = StyleSheet.create({
 
   infoCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     gap: 4,
   },
   infoTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
@@ -252,19 +252,19 @@ const styles = StyleSheet.create({
 
   itemCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
     borderColor: colors.border,
     gap: spacing.sm,
   },
   itemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  itemName: { color: colors.neonPurple, fontSize: fontSize.md, fontWeight: '800', flex: 1 },
+  itemName: { color: colors.primary, fontSize: fontSize.md, fontWeight: '800', flex: 1 },
   statusBadge: {
     backgroundColor: colors.surfaceLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
 
   noteInput: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     color: colors.text,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   signBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     alignItems: 'center',
     marginTop: spacing.sm,
   },

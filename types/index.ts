@@ -74,7 +74,17 @@ export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export interface UserProfile {
   nickname: string;
+  /** @deprecated Legacy plaintext PIN — migrated to pinSalt/pinVerifier on first unlock. Never write new plaintext PINs. */
   pin?: string;
+  /** PBKDF2 salt (base64) — never store the PIN itself. */
+  pinSalt?: string;
+  /** AES-GCM sealed verifier blob (ck1:…) proving PIN knowledge. */
+  pinVerifier?: string;
+  /** Sealed ProfileSecrets (notes, baseResponses, session ids) when vault is active. */
+  secretsCipher?: string;
+  vaultVersion?: number;
+  /** Explicit local admin role; required together with an unlocked vault for /admin. */
+  isLocalAdmin?: boolean;
   pronouns?: string;
   experienceLevel?: ExperienceLevel;
   notes?: string;
@@ -89,6 +99,19 @@ export interface Session {
   id: string;
   inviteCode: string;
   initiatorToken: string;
+  /**
+   * High-entropy invite secret (URL fragment/query). Used to wrap/unwrap the session DEK.
+   * Kept client-side / in the invite link — not sent as plaintext payload to the server when remote.
+   */
+  inviteSecret?: string;
+  /** Raw DEK (base64) held in memory / local store for initiator decrypt — never upload raw. */
+  sessionDekB64?: string;
+  /** DEK wrapped with inviteSecret for guest encryption (server may store this opaque blob). */
+  dekWrapInvite?: string;
+  /** Opaque ciphertext of initiator profile+responses (remote ZK). */
+  initiatorCiphertext?: string;
+  /** Opaque ciphertext of guest profile+responses (remote ZK). */
+  guestCiphertext?: string;
   initiatorNickname?: string;
   guestNickname?: string;
   initiatorProfile?: UserProfile;

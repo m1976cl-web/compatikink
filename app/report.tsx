@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View, Alert, TouchableOpacity, Animated, 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
+import { VaultLockGate } from '@/components/VaultLockGate';
 import { ReportCard } from '@/components/ReportCard';
 import { CompatibilityInfographic } from '@/components/CompatibilityInfographic';
 import { SocialShareModal } from '@/components/SocialShareModal';
@@ -10,11 +11,12 @@ import { ScenePlannerModal } from '@/components/ScenePlannerModal';
 import { SceneRouletteModal } from '@/components/SceneRouletteModal';
 import { SceneTimerModal } from '@/components/SceneTimerModal';
 import { SceneDebriefModal } from '@/components/SceneDebriefModal';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { generateReport } from '@/lib/compatibility';
 import { getSessionByToken, refreshSession } from '@/lib/sessions';
 import { getInitiatorToken, getGuestProfile, getSceneAgreements, getWishlist, toggleWishlist, WishlistItem } from '@/lib/storage';
+import { VaultLockGateAPI } from '@/lib/cryptoVault';
 import {
   ActivityMood,
   CompatibilityReport,
@@ -57,6 +59,7 @@ export default function ReportScreen() {
   const [planningItem, setPlanningItem] = useState<ReportItem | null>(null);
   const [agreements, setAgreements] = useState<SceneAgreement[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [unlocked, setUnlocked] = useState(() => VaultLockGateAPI.isUnlocked());
 
   const loadWishlist = useCallback(async () => {
     const list = await getWishlist();
@@ -74,8 +77,15 @@ export default function ReportScreen() {
     setAgreements(list);
   }, []);
 
+  useEffect(() => VaultLockGateAPI.subscribe((s) => setUnlocked(s.unlocked)), []);
+
   useEffect(() => {
+    if (!unlocked) {
+      setLoading(false);
+      return;
+    }
     (async () => {
+      setLoading(true);
       const token = params.token ?? (await getInitiatorToken());
       if (!token) {
         setLoading(false);
@@ -149,7 +159,7 @@ export default function ReportScreen() {
 
       return () => scoreAnim.removeListener(listenerId);
     })();
-  }, [params.token, router, loadAgreements]);
+  }, [params.token, router, loadAgreements, unlocked]);
 
   const filteredItems = useMemo(() => {
     if (!report) return [];
@@ -167,10 +177,24 @@ export default function ReportScreen() {
     })).filter((g) => g.items.length > 0);
   }, [filteredItems]);
 
+  if (!unlocked) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <View style={styles.center}>
+          <VaultLockGate
+            title="Reporte cifrado"
+            subtitle="Desbloquea la bóveda para ver el análisis de compatibilidad."
+            showLockButton={false}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (loading) {
     return (
       <View style={styles.center}>
-        <Text style={styles.muted}>Generando reporte...</Text>
+        <Text style={styles.muted}>Generando reporte…</Text>
       </View>
     );
   }
@@ -192,6 +216,7 @@ export default function ReportScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
+        <VaultLockGate showLockButton>
         {isDesktop ? (
           <View style={styles.desktopSummaryContainer}>
             {/* Left Column: Overall Match % & Stats */}
@@ -459,6 +484,7 @@ export default function ReportScreen() {
             onSaved={() => setDebriefItem(null)}
           />
         ) : null}
+        </VaultLockGate>
       </ScrollView>
     </SafeAreaView>
   );
@@ -544,10 +570,11 @@ const styles = StyleSheet.create({
   score: {
     color: colors.primary,
     fontSize: 48,
-    fontWeight: '800',
+    fontFamily: fonts.display,
   },
   scoreLabel: {
     color: colors.textMuted,
+    fontFamily: fonts.body,
     marginBottom: spacing.md,
   },
   stats: {
@@ -559,17 +586,17 @@ const styles = StyleSheet.create({
   statValue: { fontSize: fontSize.xl, fontWeight: '700' },
   statLabel: { color: colors.textMuted, fontSize: fontSize.sm },
   shareCardTrigger: {
-    backgroundColor: 'rgba(147, 51, 234, 0.15)',
+    backgroundColor: colors.accentSoft,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    borderRadius: 20,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: colors.borderSubtle,
     marginTop: spacing.xs,
   },
   shareCardTriggerText: {
-    color: colors.primaryLight,
-    fontWeight: '700',
+    color: colors.primary,
+    fontFamily: fonts.bodySemi,
     fontSize: fontSize.sm,
   },
   guestNote: {

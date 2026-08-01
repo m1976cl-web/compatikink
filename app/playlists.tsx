@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface SoundscapePreset {
@@ -87,14 +87,14 @@ export default function PlaylistsScreen() {
   const [metronomePlaying, setMetronomePlaying] = useState(false);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🎶 Ambientes Sonoros & Playlists</Text>
+          <Text style={styles.title}>Ambientes Sonoros & Playlists</Text>
           <Text style={styles.subtitle}>
             Ambientes auditivos diseñados para sincronizar el ritmo, la concentración y la relajación en escenas
           </Text>
@@ -166,7 +166,7 @@ export default function PlaylistsScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -177,16 +177,16 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
   grid: { gap: spacing.sm },
 
   presetCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   presetCardActive: {
     borderColor: colors.primary,
-    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    backgroundColor: colors.accentSoft,
   },
   presetEmoji: { fontSize: 32 },
   presetTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
 
   detailCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
     borderColor: colors.primary,
@@ -218,13 +218,13 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   detailHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  detailTitle: { color: colors.neonPurple, fontSize: fontSize.lg, fontWeight: '900' },
+  detailTitle: { color: colors.primary, fontSize: fontSize.lg, fontWeight: '900' },
   detailBpm: { color: colors.textMuted, fontSize: fontSize.xs },
   detailDesc: { color: colors.text, fontSize: fontSize.sm, lineHeight: 20 },
 
   rhythmBox: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
-    borderRadius: 12,
+    borderRadius: radii.md,
     marginTop: 4,
   },
   pulseBtnActive: { backgroundColor: colors.warning },

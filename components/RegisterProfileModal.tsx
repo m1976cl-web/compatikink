@@ -8,7 +8,7 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import { UserProfile, ExperienceLevel } from '@/types';
 import { registerProfile, getProfile } from '@/lib/storage';
 import { PronounsPicker } from '@/components/PronounsPicker';
@@ -62,11 +62,10 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
 
       const created = await registerProfile(newProfile);
       Alert.alert(
-        '¡Perfil Creado! 🎉',
-        `Bienvenido/a, ${cleanNick}. Tu perfil personal ha sido creado y protegido con tu PIN.`
+        'Perfil creado',
+        `Bienvenido/a, ${cleanNick}. Tu perfil está protegido con tu PIN.`
       );
 
-      // Reset form
       setNickname('');
       setPin('');
       setPronouns('');
@@ -86,30 +85,30 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.card}>
-          <Text style={styles.headerEmoji}>👤</Text>
-          <Text style={styles.title}>Crear Perfil Personal</Text>
+        <View style={styles.panel}>
+          <Text style={styles.brand}>Compatikink</Text>
+          <Text style={styles.title}>Crear perfil</Text>
           <Text style={styles.subtitle}>
-            Registra tu cuenta con tu Nombre y un PIN de 4 dígitos para proteger tus respuestas y sesiones.
+            Registra tu nombre y un PIN de al menos 4 dígitos para proteger respuestas y sesiones
+            en este dispositivo.
           </Text>
 
-          {/* Form Fields */}
           <View style={styles.formGroup}>
-            <Text style={styles.fieldLabel}>Tu Nick o Nombre *</Text>
+            <Text style={styles.fieldLabel}>Nick o nombre</Text>
             <TextInput
               style={styles.input}
               placeholder="Ej: Alex"
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={colors.textDim}
               value={nickname}
               onChangeText={setNickname}
               autoFocus
             />
 
-            <Text style={styles.fieldLabel}>PIN de Seguridad (4 dígitos) *</Text>
+            <Text style={styles.fieldLabel}>PIN de seguridad</Text>
             <TextInput
               style={[styles.input, styles.pinInput]}
-              placeholder="1234"
-              placeholderTextColor={colors.textMuted}
+              placeholder="••••"
+              placeholderTextColor={colors.textDim}
               value={pin}
               onChangeText={setPin}
               keyboardType="numeric"
@@ -120,18 +119,18 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
             <Text style={styles.fieldLabel}>Pronombres (opcional)</Text>
             <PronounsPicker value={pronouns} onChange={setPronouns} />
 
-            <Text style={styles.fieldLabel}>Nivel de Experiencia en Kink</Text>
+            <Text style={styles.fieldLabel}>Nivel de experiencia</Text>
             <ExperiencePicker value={experienceLevel} onChange={setExperienceLevel} />
           </View>
 
-          {/* Submit Action */}
           <TouchableOpacity
             style={[styles.submitBtn, loading && styles.btnDisabled]}
             onPress={handleRegister}
             disabled={loading}
+            accessibilityRole="button"
           >
             <Text style={styles.submitBtnText}>
-              {loading ? 'Creando...' : 'Crear mi Perfil Personal 🔐'}
+              {loading ? 'Creando…' : 'Crear perfil'}
             </Text>
           </TouchableOpacity>
 
@@ -147,42 +146,39 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.88)',
+    backgroundColor: 'rgba(12, 10, 9, 0.92)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
-  card: {
+  panel: {
     backgroundColor: colors.surface,
-    borderRadius: 24,
+    borderRadius: radii.xl,
     padding: spacing.xl,
     width: '100%',
     maxWidth: 420,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
   },
-  headerEmoji: {
-    fontSize: 48,
+  brand: {
+    fontFamily: fonts.display,
+    fontSize: fontSize.lg,
+    color: colors.primary,
+    letterSpacing: 2,
     marginBottom: spacing.xs,
   },
   title: {
-    color: colors.neonPurple,
+    fontFamily: fonts.displaySemi,
     fontSize: fontSize.xl,
-    fontWeight: '900',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 4,
   },
   subtitle: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
+    ...typography.bodyMuted,
     textAlign: 'center',
-    lineHeight: 18,
+    fontSize: fontSize.sm,
     marginBottom: spacing.lg,
   },
   formGroup: {
@@ -191,44 +187,37 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   fieldLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...typography.label,
   },
   input: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
+    backgroundColor: colors.backgroundMid,
+    borderRadius: radii.md,
     padding: spacing.md,
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
+    fontFamily: fonts.body,
     fontSize: fontSize.md,
   },
   pinInput: {
+    fontFamily: fonts.bodyBold,
     fontSize: 22,
-    letterSpacing: 6,
+    letterSpacing: 8,
     textAlign: 'center',
-    fontWeight: '700',
   },
   submitBtn: {
     width: '100%',
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
-    borderRadius: 14,
+    borderRadius: radii.md,
     alignItems: 'center',
     marginBottom: spacing.sm,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
   },
   submitBtnText: {
-    color: '#fff',
-    fontWeight: '800',
+    fontFamily: fonts.bodySemi,
+    color: colors.onPrimary,
     fontSize: fontSize.md,
+    letterSpacing: 0.3,
   },
   btnDisabled: {
     opacity: 0.5,
@@ -237,6 +226,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   closeBtnText: {
+    fontFamily: fonts.body,
     color: colors.textMuted,
     fontSize: fontSize.xs,
     textDecorationLine: 'underline',

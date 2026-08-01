@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/Button';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { VaultLockGate } from '@/components/VaultLockGate';
+import { AppHeader } from '@/components/AppHeader';
+import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { getCurrentProfile, listMyLocalSessions, getWishlist, toggleWishlist, WishlistItem } from '@/lib/storage';
 import { calculateCompassPoint, determineArchetype } from '@/lib/compatibility';
+import { VaultLockGateAPI } from '@/lib/cryptoVault';
 import { UserProfile, Session, CATEGORY_LABELS, CATEGORY_EMOJIS, ActivityCategory } from '@/types';
 import { getAllActivities } from '@/data/activities';
 
@@ -16,6 +19,24 @@ export default function CompassScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedPartnerIndex, setSelectedPartnerIndex] = useState<number>(0);
+  const [unlocked, setUnlocked] = useState(() => VaultLockGateAPI.isUnlocked());
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+
+  const leftColWidth = isDesktop ? Math.min(420, width * 0.42) : width - 48;
+
+  const loadData = async () => {
+    const p = await getCurrentProfile();
+    setProfile(p);
+    const sess = await listMyLocalSessions();
+    setSessions(sess.filter((s) => s.status === 'complete' && s.guestResponses));
+    setWishlist(await getWishlist());
+  };
+
+  useEffect(() => {
+    const unsub = VaultLockGateAPI.subscribe((s) => setUnlocked(s.unlocked));
+    loadData();
+    return unsub;
+  }, []);
 
   // Calculate Category Affinity Breakdown for profile baseResponses
   const categoryBreakdown = useMemo(() => {
@@ -204,10 +225,10 @@ export default function CompassScreen() {
       </View>
 
       <View style={styles.archetypeBreakdown}>
-        <Text style={styles.cardHeader}>✨ Tu Arquetipo: <Text style={{ color: colors.neonPurple }}>{myArchetype}</Text></Text>
+        <Text style={styles.cardHeader}>Tu arquetipo: <Text style={{ color: colors.primary }}>{myArchetype}</Text></Text>
         {partnerArchetype ? (
           <Text style={[styles.cardHeader, { marginTop: 6 }]}>
-            ✨ Arquetipo de {partnerName}: <Text style={{ color: colors.neonPink }}>{partnerArchetype}</Text>
+            Arquetipo de {partnerName}: <Text style={{ color: colors.accent }}>{partnerArchetype}</Text>
           </Text>
         ) : null}
       </View>
@@ -242,13 +263,19 @@ export default function CompassScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.header}>
-          <Text style={styles.title}>🧭 Compás Kink Interactivo</Text>
-          <Text style={styles.subtitle}>
-            Mapa 2D interactivo de tu perfil erótico y comparación con tus vínculos.
-          </Text>
-        </View>
+        <Button title="← Volver" variant="ghost" onPress={() => router.back()} style={styles.backBtn} />
+        <AppHeader
+          title="Compás kink"
+          subtitle="Mapa 2D de tu perfil erótico y comparación con tus vínculos."
+        />
 
+        {!unlocked ? (
+          <VaultLockGate
+            title="Compás cifrado"
+            subtitle="Desbloquea la bóveda para ver tu mapa y sesiones."
+          />
+        ) : (
+          <>
         {isDesktop ? (
           <View style={styles.desktopLayout}>
             {/* Left Column: Dynamic Compass Plot */}
@@ -289,6 +316,8 @@ export default function CompassScreen() {
         )}
 
         <Button title="Volver al inicio" onPress={() => router.replace('/')} variant="secondary" style={styles.backBtn} />
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -339,26 +368,26 @@ const styles = StyleSheet.create({
   },
   plotCardDesktop: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
-    borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
     alignItems: 'center',
     width: '100%',
   },
   plotCardMobile: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.md,
-    borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
     alignItems: 'center',
   },
   compassPlot: {
-    backgroundColor: 'rgba(13, 8, 25, 0.95)',
-    borderRadius: 16,
+    backgroundColor: colors.backgroundMid,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.25)',
+    borderColor: colors.borderSubtle,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -369,11 +398,11 @@ const styles = StyleSheet.create({
   },
   qTR: {
     top: 0, right: 0,
-    backgroundColor: 'rgba(192, 132, 252, 0.05)',
+    backgroundColor: 'rgba(201, 160, 106, 0.05)',
   },
   qBL: {
     bottom: 0, left: 0,
-    backgroundColor: 'rgba(244, 114, 182, 0.05)',
+    backgroundColor: 'rgba(154, 107, 79, 0.05)',
   },
   gridLineX: {
     position: 'absolute',

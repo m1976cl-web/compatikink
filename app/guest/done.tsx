@@ -3,7 +3,15 @@ import { StyleSheet, Text, View, TextInput, Alert, ScrollView } from 'react-nati
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { AppHeader } from '@/components/AppHeader';
+import {
+  colors,
+  fonts,
+  fontSize,
+  radii,
+  spacing,
+  typography,
+} from '@/constants/theme';
 import { getLocalSessionByToken, convertSessionToProfile } from '@/lib/storage';
 import { Session } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,14 +35,14 @@ export default function GuestDoneScreen() {
   const handleCreateProfile = async () => {
     if (!session) return;
     if (pin.length < 4) {
-      Alert.alert('PIN inválido', 'El PIN de seguridad debe tener al menos 4 dígitos.');
+      Alert.alert('PIN inválido', 'El PIN debe tener al menos 4 dígitos.');
       return;
     }
 
     setCreating(true);
     try {
       await convertSessionToProfile(session, pin, {}, true);
-      Alert.alert('Perfil Creado', 'Tu perfil ha sido creado con éxito. Ahora verás tu Dashboard.');
+      Alert.alert('Perfil creado', 'Tu perfil está listo. Verás tu espacio en el inicio.');
       await AsyncStorage.removeItem('last_completed_guest_session_token');
       router.replace('/');
     } catch (e: any) {
@@ -47,41 +55,43 @@ export default function GuestDoneScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.content}>
-          <Text style={styles.emoji}>✓</Text>
-          <Text style={styles.title}>¡Gracias!</Text>
-          <Text style={styles.desc}>
-            Tus respuestas se enviaron de forma privada. Quien te invitó recibirá el análisis de
-            compatibilidad. Si quiere compartir contigo un resumen, te lo hará saber.
-          </Text>
+        <AppHeader
+          brand
+          title="Gracias"
+          subtitle="Tus respuestas se enviaron de forma privada. Quien te invitó recibirá el análisis de compatibilidad."
+        />
 
-          {session ? (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>🔐 Crea tu Perfil Protegido</Text>
-              <Text style={styles.cardDesc}>
-                Guarda tus respuestas en un perfil protegido con PIN de 4 dígitos. Esto te permitirá invitar a otras personas y ver reportes sin volver a responder el test.
-              </Text>
-              <Text style={styles.label}>PIN de seguridad (4+ dígitos)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ej: 1234"
-                placeholderTextColor={colors.textMuted}
-                value={pin}
-                onChangeText={setPin}
-                keyboardType="numeric"
-                secureTextEntry
-                maxLength={8}
-              />
-              <Button
-                title={creating ? 'Creando Perfil...' : 'Crear Perfil con PIN'}
-                onPress={handleCreateProfile}
-                disabled={creating}
-              />
-            </View>
-          ) : null}
+        {session ? (
+          <View style={styles.panel}>
+            <Text style={styles.panelTitle}>Crear perfil protegido</Text>
+            <Text style={styles.panelDesc}>
+              Guarda tus respuestas con un PIN. Podrás invitar a otras personas sin repetir el test.
+            </Text>
+            <Text style={styles.label}>PIN de seguridad (4+ dígitos)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="••••"
+              placeholderTextColor={colors.textDim}
+              value={pin}
+              onChangeText={setPin}
+              keyboardType="numeric"
+              secureTextEntry
+              maxLength={8}
+            />
+            <Button
+              title={creating ? 'Creando…' : 'Crear perfil con PIN'}
+              onPress={handleCreateProfile}
+              disabled={creating}
+            />
+          </View>
+        ) : null}
 
-          <Button title="Cerrar y volver al inicio" onPress={() => router.replace('/')} variant="ghost" style={styles.closeBtn} />
-        </View>
+        <Button
+          title="Volver al inicio"
+          onPress={() => router.replace('/')}
+          variant="ghost"
+          style={styles.closeBtn}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -89,67 +99,38 @@ export default function GuestDoneScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  scroll: { flexGrow: 1 },
-  content: {
-    flex: 1,
+  scroll: {
+    flexGrow: 1,
     padding: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emoji: {
-    fontSize: 64,
-    color: colors.success,
-    marginBottom: spacing.md,
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
-  },
-  desc: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: spacing.xl,
-  },
-  card: {
+    maxWidth: 520,
     width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.lg,
+    alignSelf: 'center',
+  },
+  panel: {
+    width: '100%',
     gap: spacing.md,
+    marginBottom: spacing.lg,
   },
-  cardTitle: {
+  panelTitle: {
+    fontFamily: fonts.displaySemi,
+    fontSize: fontSize.xl,
     color: colors.text,
-    fontSize: fontSize.md,
-    fontWeight: '700',
   },
-  cardDesc: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    lineHeight: 20,
+  panelDesc: {
+    ...typography.bodyMuted,
   },
-  label: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    marginBottom: -4,
-  },
+  label: { ...typography.label },
   input: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
     padding: spacing.md,
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
-    fontSize: fontSize.md,
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.xl,
     textAlign: 'center',
-    letterSpacing: 4,
+    letterSpacing: 8,
   },
-  closeBtn: {
-    marginTop: spacing.md,
-  },
+  closeBtn: { marginTop: spacing.md },
 });

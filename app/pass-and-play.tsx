@@ -8,9 +8,9 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { getAllActivities } from '@/data/activities';
 import { ActivityResponse, Rating, RolePreference } from '@/types';
@@ -87,14 +87,14 @@ export default function PassAndPlayScreen() {
   const currentP2Act = activities[p2Index];
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🧑‍🤝‍🧑 Modo Presencial (Mismo Teléfono)</Text>
+          <Text style={styles.title}>Modo Presencial (Mismo Teléfono)</Text>
           <Text style={styles.subtitle}>
             Respondan en el mismo dispositivo de forma privada, turnándose secuencialmente.
           </Text>
@@ -134,7 +134,7 @@ export default function PassAndPlayScreen() {
               <TouchableOpacity style={[styles.rBtn, { borderColor: '#4ade80' }]} onPress={() => handleP1Response('love')}>
                 <Text style={styles.rBtnText}>🔥 Me Encanta</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: '#c084fc' }]} onPress={() => handleP1Response('like')}>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.primary }]} onPress={() => handleP1Response('like')}>
                 <Text style={styles.rBtnText}>💜 Me Interesa</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.rBtn, { borderColor: '#38bdf8' }]} onPress={() => handleP1Response('curious')}>
@@ -156,7 +156,7 @@ export default function PassAndPlayScreen() {
             <Text style={{ fontSize: 56 }}>🙈📱</Text>
             <Text style={styles.cardTitle}>¡Turno de Persona 1 Finalizado!</Text>
             <Text style={styles.curtainDesc}>
-              Entrega el teléfono a <Text style={{ color: colors.neonPink, fontWeight: '800' }}>Persona 2</Text> sin mirar la pantalla para mantener la privacidad absoluta.
+              Entrega el teléfono a <Text style={{ color: colors.accent, fontWeight: '800' }}>Persona 2</Text> sin mirar la pantalla para mantener la privacidad absoluta.
             </Text>
             <TouchableOpacity style={styles.btnPrimary} onPress={() => setStep('p2_setup')}>
               <Text style={styles.btnPrimaryText}>Soy Persona 2, Comienzo Mi Turno 🚀</Text>
@@ -167,7 +167,7 @@ export default function PassAndPlayScreen() {
         {/* Step 4: P2 Setup */}
         {step === 'p2_setup' && (
           <View style={styles.card}>
-            <Text style={[styles.stepBadge, { color: colors.neonPink }]}>PASO 2 DE 2 — PAREJA / INVITADO</Text>
+            <Text style={[styles.stepBadge, { color: colors.accent }]}>PASO 2 DE 2 — PAREJA / INVITADO</Text>
             <Text style={styles.cardTitle}>Nombre de Persona 2</Text>
             <TextInput
               style={styles.input}
@@ -186,7 +186,7 @@ export default function PassAndPlayScreen() {
         {step === 'p2_questions' && currentP2Act && (
           <View style={styles.card}>
             <View style={styles.progressHeader}>
-              <Text style={[styles.progressText, { color: colors.neonPink }]}>
+              <Text style={[styles.progressText, { color: colors.accent }]}>
                 {p2Name} · Pregunta {p2Index + 1} de {activities.length}
               </Text>
             </View>
@@ -198,7 +198,7 @@ export default function PassAndPlayScreen() {
               <TouchableOpacity style={[styles.rBtn, { borderColor: '#4ade80' }]} onPress={() => handleP2Response('love')}>
                 <Text style={styles.rBtnText}>🔥 Me Encanta</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: '#c084fc' }]} onPress={() => handleP2Response('like')}>
+              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.primary }]} onPress={() => handleP2Response('like')}>
                 <Text style={styles.rBtnText}>💜 Me Interesa</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.rBtn, { borderColor: '#38bdf8' }]} onPress={() => handleP2Response('curious')}>
@@ -214,7 +214,7 @@ export default function PassAndPlayScreen() {
           </View>
         )}
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -225,16 +225,16 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
   title: { color: colors.text, fontSize: fontSize.xl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     marginVertical: spacing.md,
     gap: spacing.md,
   },
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   cardTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800' },
   input: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
     color: colors.text,
@@ -253,21 +253,21 @@ const styles = StyleSheet.create({
   btnPrimary: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     alignItems: 'center',
   },
   btnPrimaryText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '800' },
 
   progressHeader: { alignItems: 'center', marginBottom: spacing.xs },
   progressText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
-  actName: { color: colors.neonPurple, fontSize: fontSize.xl, fontWeight: '900', textAlign: 'center' },
+  actName: { color: colors.primary, fontSize: fontSize.xl, fontWeight: '900', textAlign: 'center' },
   actDesc: { color: colors.text, fontSize: fontSize.sm, textAlign: 'center', lineHeight: 20 },
 
   ratingButtons: { gap: spacing.xs, width: '100%' },
   rBtn: {
     backgroundColor: colors.surfaceLight,
     paddingVertical: 12,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1.5,
     alignItems: 'center',
   },

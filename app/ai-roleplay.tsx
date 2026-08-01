@@ -8,9 +8,9 @@ import {
   TextInput,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface AIPersona {
@@ -99,14 +99,14 @@ export default function AIRoleplayScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🤖 Roleplay con Inteligencia Artificial</Text>
+          <Text style={styles.title}>Roleplay con Inteligencia Artificial</Text>
           <Text style={styles.subtitle}>
             Ensayo de dinámicas BDSM, simulación de negociación y exploración de fantasías en un entorno seguro
           </Text>
@@ -165,7 +165,7 @@ export default function AIRoleplayScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -176,16 +176,16 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   personaScroll: { gap: spacing.xs, marginVertical: spacing.xs },
   personaChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surfaceLight,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.xs,
     paddingRight: spacing.md,
     borderWidth: 1,
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   personaRole: { color: colors.textMuted, fontSize: 9 },
 
   chatScroll: { gap: spacing.sm, paddingVertical: spacing.xs },
-  bubble: { maxWidth: '85%', padding: spacing.md, borderRadius: 16, gap: 2 },
+  bubble: { maxWidth: '85%', padding: spacing.md, borderRadius: radii.lg, gap: 2 },
   bubbleUser: { alignSelf: 'flex-end', backgroundColor: colors.primaryDark, borderBottomRightRadius: 4 },
   bubbleAI: { alignSelf: 'flex-start', backgroundColor: colors.surfaceLight, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.border },
   senderLabel: { color: colors.primaryLight, fontSize: 10, fontWeight: '800' },
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   typingText: { color: colors.textMuted, fontSize: 10, fontStyle: 'italic', alignSelf: 'flex-start' },
 
   inputRow: { flexDirection: 'row', gap: spacing.xs, paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
-  input: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: 14, paddingHorizontal: spacing.md, paddingVertical: 10, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
-  sendBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: 14, justifyContent: 'center' },
+  input: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: 10, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
+  sendBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radii.lg, justifyContent: 'center' },
   sendBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 });

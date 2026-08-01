@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Share, Alert } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { AppHeader } from '@/components/AppHeader';
+import { VaultLockGate } from '@/components/VaultLockGate';
+import { colors, fonts, fontSize, spacing, typography } from '@/constants/theme';
 import { filterReportForSharing, generateReport } from '@/lib/compatibility';
 import { getSessionByToken } from '@/lib/sessions';
 import { getInitiatorToken } from '@/lib/storage';
+import { VaultLockGateAPI } from '@/lib/cryptoVault';
 import { ReportSectionType, SECTION_LABELS } from '@/types';
 
 type ShareMode = 'mutual_only' | 'mutual_explore' | 'full_safe';
@@ -25,17 +28,22 @@ const MODES: { id: ShareMode; label: string; sections: ReportSectionType[] }[] =
   },
   {
     id: 'full_safe',
-    label: 'Completo (sin tus intereses privados)',
+    label: 'Completo (sin intereses privados)',
     sections: ['mutual_match', 'explore_together', 'role_mismatch', 'guest_only', 'hard_limit_conflict'],
   },
 ];
 
 export default function ShareScreen() {
+  const router = useRouter();
   const { token: paramToken } = useLocalSearchParams<{ token?: string }>();
   const [mode, setMode] = useState<ShareMode>('mutual_only');
   const [previewCount, setPreviewCount] = useState(0);
+  const [unlocked, setUnlocked] = useState(() => VaultLockGateAPI.isUnlocked());
+
+  useEffect(() => VaultLockGateAPI.subscribe((s) => setUnlocked(s.unlocked)), []);
 
   useEffect(() => {
+    if (!unlocked) return;
     (async () => {
       const token = paramToken || (await getInitiatorToken());
       if (!token) return;
@@ -46,7 +54,7 @@ export default function ShareScreen() {
       const filtered = filterReportForSharing(full, selected.sections);
       setPreviewCount(filtered.items.length);
     })();
-  }, [paramToken, mode]);
+  }, [paramToken, mode, unlocked]);
 
   const share = async () => {
     const token = paramToken || (await getInitiatorToken());
@@ -67,40 +75,44 @@ export default function ShareScreen() {
       `Compatibilidad: ${filtered.compatibilityScore}%\n` +
       `Matches: ${filtered.mutualMatchCount} · Explorar: ${filtered.exploreCount}\n\n` +
       (lines.length > 0 ? lines.join('\n') : 'Sin coincidencias en este filtro.') +
-      `\n\n💬 Conversemos con calma y consentimiento.`;
+      `\n\nConversemos con calma y consentimiento.`;
 
     try {
       await Share.share({ message });
       Alert.alert('Compartido', 'Elige la app donde enviar el resumen.');
-    } catch (e) {
+    } catch {
       await Clipboard.setStringAsync(message);
-      Alert.alert('Copiado', 'El resumen del reporte se ha copiado al portapapeles.');
+      Alert.alert('Copiado', 'El resumen se ha copiado al portapapeles.');
     }
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>¿Qué compartir?</Text>
-        <Text style={styles.desc}>
-          Tú controlas qué ve la otra persona. Tus intereses no compartidos no se incluyen por defecto.
-        </Text>
+        <Button title="← Volver" variant="ghost" onPress={() => router.back()} style={styles.back} />
+        <AppHeader
+          title="¿Qué compartir?"
+          subtitle="Tú controlas qué ve la otra persona. Tus intereses no compartidos no se incluyen por defecto."
+        />
 
-        {MODES.map((m) => (
-          <Button
-            key={m.id}
-            title={m.label}
-            onPress={() => setMode(m.id)}
-            variant={mode === m.id ? 'primary' : 'secondary'}
-            style={styles.modeBtn}
-          />
-        ))}
+        <VaultLockGate
+          unlocked={unlocked}
+          title="Compartir reporte"
+          subtitle="Desbloquea la bóveda para leer la sesión y generar el resumen."
+        >
+          {MODES.map((m) => (
+            <Button
+              key={m.id}
+              title={m.label}
+              onPress={() => setMode(m.id)}
+              variant={mode === m.id ? 'primary' : 'secondary'}
+              style={styles.modeBtn}
+            />
+          ))}
 
-        <Text style={styles.preview}>
-          Vista previa: {previewCount} actividades en este filtro
-        </Text>
-
-        <Button title="Compartir por WhatsApp / etc." onPress={share} />
+          <Text style={styles.preview}>Vista previa: {previewCount} actividades en este filtro</Text>
+          <Button title="Compartir" onPress={share} />
+        </VaultLockGate>
       </ScrollView>
     </SafeAreaView>
   );
@@ -108,22 +120,19 @@ export default function ShareScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: spacing.lg },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
+  scroll: {
+    padding: spacing.lg,
+    maxWidth: 560,
+    width: '100%',
+    alignSelf: 'center',
   },
-  desc: {
-    color: colors.textMuted,
-    lineHeight: 22,
-    marginBottom: spacing.lg,
-  },
+  back: { alignSelf: 'flex-start', marginBottom: spacing.sm },
   modeBtn: { marginBottom: spacing.sm },
   preview: {
-    color: colors.textMuted,
+    ...typography.bodyMuted,
     textAlign: 'center',
     marginVertical: spacing.lg,
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
   },
 });

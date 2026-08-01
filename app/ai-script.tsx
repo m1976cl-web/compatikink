@@ -7,9 +7,9 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { generateAISceneScript, ScriptScene } from '@/lib/aiScriptBuilder';
 
@@ -27,14 +27,14 @@ export default function AIScriptScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🤖 AI Scene Builder & Guiones</Text>
+          <Text style={styles.title}>AI Scene Builder & Guiones</Text>
           <Text style={styles.subtitle}>
             Generador de guiones teatrales completos para escenas BDSM con diálogos sugeridos y tonos personalizables
           </Text>
@@ -95,7 +95,7 @@ export default function AIScriptScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -106,34 +106,34 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
-  card: { backgroundColor: colors.surface, borderRadius: 20, padding: spacing.lg, borderWidth: 1.5, borderColor: 'rgba(192, 132, 252, 0.3)', gap: spacing.md },
+  card: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, borderWidth: 1.5, borderColor: colors.borderSubtle, gap: spacing.md },
   cardTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '900' },
 
   toneGrid: { gap: 6 },
-  toneChip: { padding: spacing.md, borderRadius: 12, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
+  toneChip: { padding: spacing.md, borderRadius: radii.md, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
   toneChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   toneChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '800' },
 
-  generateBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  generateBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   generateBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '900' },
 
   scriptTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
-  scriptMeta: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '800' },
+  scriptMeta: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
 
-  notesBox: { backgroundColor: 'rgba(192, 132, 252, 0.1)', padding: spacing.md, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(192, 132, 252, 0.3)' },
+  notesBox: { backgroundColor: colors.accentSoft, padding: spacing.md, borderRadius: radii.md, borderWidth: 1, borderColor: colors.borderSubtle },
   notesText: { color: colors.text, fontSize: fontSize.xs, lineHeight: 16 },
 
   sectionLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '800' },
-  dialogueRow: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 12, borderWidth: 1, borderColor: colors.border, gap: 2 },
+  dialogueRow: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.md, borderWidth: 1, borderColor: colors.border, gap: 2 },
   dialogueRole: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   dialogueLine: { color: colors.text, fontSize: fontSize.xs, fontStyle: 'italic' },
 
-  safetyBox: { backgroundColor: 'rgba(251, 191, 36, 0.1)', padding: spacing.md, borderRadius: 12, borderWidth: 1, borderColor: colors.warning },
+  safetyBox: { backgroundColor: 'rgba(251, 191, 36, 0.1)', padding: spacing.md, borderRadius: radii.md, borderWidth: 1, borderColor: colors.warning },
   safetyText: { color: colors.warning, fontSize: fontSize.xs, fontWeight: '700' },
 });

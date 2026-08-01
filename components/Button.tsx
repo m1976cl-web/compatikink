@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 
 interface ButtonProps {
   title: string;
@@ -27,6 +27,8 @@ export function Button({
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
     >
       <Text style={[styles.text, styles[`${variant}Text` as keyof typeof styles] as TextStyle]}>
         {title}
@@ -39,14 +41,14 @@ const styles = StyleSheet.create({
   base: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    borderRadius: 12,
+    borderRadius: radii.md,
     alignItems: 'center',
   },
   primary: {
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.primary,
   },
   secondary: {
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -54,17 +56,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   danger: {
-    backgroundColor: '#7f1d1d',
+    backgroundColor: colors.danger,
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
   text: {
+    fontFamily: fonts.bodySemi,
     fontSize: fontSize.md,
-    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   primaryText: {
-    color: colors.text,
+    color: colors.onPrimary,
   },
   secondaryText: {
     color: colors.text,

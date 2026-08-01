@@ -8,9 +8,9 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface CommunityGroup {
@@ -88,14 +88,14 @@ export default function CommunitiesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🏘️ Comunidades & Grupos Privados</Text>
+          <Text style={styles.title}>Comunidades & Grupos Privados</Text>
           <Text style={styles.subtitle}>
             Espacios temáticos para compartir recursos, debates de seguridad y experiencias de nicho
           </Text>
@@ -177,7 +177,7 @@ export default function CommunitiesScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -188,22 +188,22 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
   groupCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   groupHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  groupMembers: { color: colors.neonPurple, fontSize: 10, fontWeight: '800' },
+  groupMembers: { color: colors.primary, fontSize: 10, fontWeight: '800' },
   groupName: { color: colors.text, fontSize: fontSize.md, fontWeight: '900', marginTop: 2 },
   groupDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
 
@@ -211,15 +211,15 @@ const styles = StyleSheet.create({
   joinBtnActive: { backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
   joinBtnText: { color: '#fff', fontSize: 10, fontWeight: '900' },
 
-  enterBtn: { backgroundColor: colors.surfaceLight, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  enterBtn: { backgroundColor: colors.surfaceLight, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   enterBtnText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
 
-  createBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 14, gap: spacing.xs },
+  createBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.lg, gap: spacing.xs },
   createTitle: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
-  input: { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: 8, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
+  input: { backgroundColor: colors.surface, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: 8, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
 
-  topicRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 12, borderWidth: 1, borderColor: colors.border, gap: spacing.md },
+  topicRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.md, borderWidth: 1, borderColor: colors.border, gap: spacing.md },
   topicTitle: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
   topicAuthor: { color: colors.textMuted, fontSize: 10, marginTop: 2 },
-  repliesCount: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '800' },
+  repliesCount: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
 });

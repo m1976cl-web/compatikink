@@ -7,9 +7,9 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { RITUAL_TEMPLATES, RitualTemplate } from '@/data/ritualTemplates';
 
@@ -35,14 +35,14 @@ export default function RitualsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>📋 Ritual Builder & Protocolos D/s</Text>
+          <Text style={styles.title}>Ritual Builder & Protocolos D/s</Text>
           <Text style={styles.subtitle}>
             Diseñador de secuencias guiadas para saludos matutinos, prevención de riesgos pre-escena y aftercare nocturno
           </Text>
@@ -105,7 +105,7 @@ export default function RitualsScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -116,23 +116,23 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
-  card: { backgroundColor: colors.surface, borderRadius: 20, padding: spacing.lg, borderWidth: 1.5, borderColor: 'rgba(192, 132, 252, 0.3)', gap: spacing.md },
+  card: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, borderWidth: 1.5, borderColor: colors.borderSubtle, gap: spacing.md },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  catBadge: { color: colors.neonPink, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  catBadge: { color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900', marginTop: 2 },
   cardDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
 
-  startBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  startBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   startBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 
   sectionLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '800' },
-  stepRow: { flexDirection: 'row', gap: spacing.md, backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 14, borderWidth: 1, borderColor: colors.border },
+  stepRow: { flexDirection: 'row', gap: spacing.md, backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border },
   stepNum: { color: colors.primary, fontSize: fontSize.md, fontWeight: '900' },
   stepTitle: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
   stepDesc: { color: colors.textMuted, fontSize: 10, marginTop: 2, lineHeight: 14 },

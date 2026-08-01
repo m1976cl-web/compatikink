@@ -1,12 +1,43 @@
-import { ScrollView, StyleSheet, Text, TextInput, View, Alert, TouchableOpacity, Modal } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Alert,
+  TouchableOpacity,
+  Animated,
+  Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { Button } from '@/components/Button';
-import { colors, fontSize, spacing, glowShadowPrimary } from '@/constants/theme';
+import { ModuleTile } from '@/components/ModuleTile';
+import { Section } from '@/components/Section';
+import { EmptyState } from '@/components/EmptyState';
+import { VaultLockGate } from '@/components/VaultLockGate';
+import { OnboardingOverlay } from '@/components/OnboardingOverlay';
+import { RegisterProfileModal } from '@/components/RegisterProfileModal';
+import { PolyComparatorModal } from '@/components/PolyComparatorModal';
+import { CommunityTrendsModal } from '@/components/CommunityTrendsModal';
+import { SceneDebriefModal } from '@/components/SceneDebriefModal';
+import { AgeVerificationModal } from '@/components/AgeVerificationModal';
+import { PWAInstallPromptModal } from '@/components/PWAInstallPromptModal';
+import { AccessibilityModal } from '@/components/AccessibilityModal';
+import {
+  colors,
+  fonts,
+  fontSize,
+  gradients,
+  radii,
+  spacing,
+  typography,
+} from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { VaultLockGateAPI } from '@/lib/cryptoVault';
 import {
   getCurrentProfile,
   loginProfile,
@@ -20,16 +51,15 @@ import {
   importUserDataJSON,
 } from '@/lib/storage';
 import { UserProfile, Session, EXPERIENCE_LABELS, SceneAgreement } from '@/types';
-import { PolyComparatorModal } from '@/components/PolyComparatorModal';
-import { OnboardingOverlay } from '@/components/OnboardingOverlay';
-import { RegisterProfileModal } from '@/components/RegisterProfileModal';
-import { CommunityTrendsModal } from '@/components/CommunityTrendsModal';
-import { SceneDebriefModal } from '@/components/SceneDebriefModal';
-import { AgeVerificationModal } from '@/components/AgeVerificationModal';
-import { PWAInstallPromptModal } from '@/components/PWAInstallPromptModal';
-import { AccessibilityModal } from '@/components/AccessibilityModal';
-import { OctopusHost } from '@/components/OctopusHost';
 import { exportSceneAgreementPDF } from '@/lib/exportPDF';
+
+type ModuleDef = {
+  title: string;
+  description: string;
+  mark: string;
+  route?: string;
+  onPress?: () => void;
+};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -37,59 +67,44 @@ export default function HomeScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profilesList, setProfilesList] = useState<UserProfile[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [sceneAgreements, setSceneAgreements] = useState<{ sessionId: string; agreements: SceneAgreement[] }[]>([]);
+  const [sceneAgreements, setSceneAgreements] = useState<
+    { sessionId: string; agreements: SceneAgreement[] }[]
+  >([]);
+  const [vaultOpen, setVaultOpen] = useState(() => VaultLockGateAPI.isUnlocked());
 
-  // Guest input code
   const [guestCode, setGuestCode] = useState('');
-
-  // Login states
   const [loginNick, setLoginNick] = useState('');
   const [loginPin, setLoginPin] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  // Quick Invite states
   const [showQuickInvite, setShowQuickInvite] = useState(false);
   const [quickGuestNick, setQuickGuestNick] = useState('');
   const [quickGuestNotes, setQuickGuestNotes] = useState('');
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [expiryOption, setExpiryOption] = useState<'24h' | '7d' | 'none'>('7d');
 
-  // Modals
   const [showPolyComparator, setShowPolyComparator] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showTrendsModal, setShowTrendsModal] = useState(false);
-  const [showThemeModal, setShowThemeModal] = useState(false);
   const [showPWAInstallModal, setShowPWAInstallModal] = useState(false);
   const [showA11yModal, setShowA11yModal] = useState(false);
-  const [activeCategoryTab, setActiveCategoryTab] = useState<'all' | 'explore' | 'ds' | 'scenes' | 'community'>('all');
-  const [selectedTheme, setSelectedTheme] = useState<'purple' | 'red' | 'cyan' | 'emerald'>('purple');
-  const [debriefTarget, setDebriefTarget] = useState<{ sessionId: string; activityId: string; activityName: string } | null>(null);
+  const [debriefTarget, setDebriefTarget] = useState<{
+    sessionId: string;
+    activityId: string;
+    activityName: string;
+  } | null>(null);
 
-  const handlePanicWipe = () => {
-    Alert.alert(
-      '🛡️ Borrado de Emergencia (Pánico)',
-      '¿Estás seguro/a? Se eliminarán inmediatamente todas las sesiones, perfiles y acuerdos guardados en este dispositivo.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sí, borrar todo ahora',
-          style: 'destructive',
-          onPress: async () => {
-            await panicWipeData();
-            setProfile(null);
-            setSessions([]);
-            setProfilesList([]);
-            setSceneAgreements([]);
-            Alert.alert('Datos Eliminados', 'El historial y los perfiles han sido borrados por completo.');
-            await loadHomeData();
-          },
-        },
-      ]
-    );
-  };
+  const heroFade = useRef(new Animated.Value(0)).current;
+  const heroSlide = useRef(new Animated.Value(18)).current;
+  const scrollRef = useRef<ScrollView>(null);
+  const guestSectionY = useRef(0);
 
   useEffect(() => {
     loadHomeData();
+    const unsub = VaultLockGateAPI.subscribe((snap) => setVaultOpen(snap.unlocked));
+    Animated.parallel([
+      Animated.timing(heroFade, { toValue: 1, duration: 520, useNativeDriver: true }),
+      Animated.timing(heroSlide, { toValue: 0, duration: 520, useNativeDriver: true }),
+    ]).start();
+    return unsub;
   }, []);
 
   const loadHomeData = async () => {
@@ -103,13 +118,41 @@ export default function HomeScreen() {
     setSceneAgreements(agreements);
   };
 
+  const handlePanicWipe = () => {
+    Alert.alert(
+      'Borrado de emergencia',
+      '¿Eliminar sesiones, perfiles y acuerdos de este dispositivo?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Borrar todo',
+          style: 'destructive',
+          onPress: async () => {
+            await panicWipeData();
+            setProfile(null);
+            setSessions([]);
+            setProfilesList([]);
+            setSceneAgreements([]);
+            Alert.alert('Datos eliminados', 'El historial y los perfiles se borraron por completo.');
+            await loadHomeData();
+          },
+        },
+      ]
+    );
+  };
+
   const handleLogin = async () => {
     if (!loginNick.trim()) {
-      Alert.alert('Datos incompletos', 'Por favor selecciona o ingresa tu nick.');
+      Alert.alert('Datos incompletos', 'Selecciona o ingresa tu nick.');
       return;
     }
-    const selectedProfile = profilesList.find((p) => p.nickname.toLowerCase() === loginNick.trim().toLowerCase());
-    if (selectedProfile && !selectedProfile.pin) {
+    const selectedProfile = profilesList.find(
+      (p) => p.nickname.toLowerCase() === loginNick.trim().toLowerCase()
+    );
+    const profileHasPin = selectedProfile
+      ? Boolean(selectedProfile.pinSalt || selectedProfile.pinVerifier || selectedProfile.pin)
+      : true;
+    if (selectedProfile && !profileHasPin) {
       const { setCurrentProfile } = await import('@/lib/storage');
       await setCurrentProfile(selectedProfile.nickname);
       setLoginPin('');
@@ -117,7 +160,7 @@ export default function HomeScreen() {
       return;
     }
     if (!loginPin) {
-      Alert.alert('PIN requerido', 'Por favor ingresa tu PIN de seguridad.');
+      Alert.alert('PIN requerido', 'Ingresa tu PIN de seguridad.');
       return;
     }
     const res = await loginProfile(loginNick.trim(), loginPin);
@@ -125,7 +168,7 @@ export default function HomeScreen() {
       setLoginPin('');
       await loadHomeData();
     } else {
-      Alert.alert('Error de login', 'El nick o el PIN de seguridad es incorrecto.');
+      Alert.alert('Error de login', 'Nick o PIN incorrecto.');
     }
   };
 
@@ -137,17 +180,34 @@ export default function HomeScreen() {
   };
 
   const joinAsGuest = () => {
-    const code = guestCode.trim().toUpperCase();
+    const raw = guestCode.trim();
+    const secretFromPaste = (() => {
+      try {
+        if (raw.includes('k=')) {
+          const m = raw.match(/[?#&]k=([^&\s#]+)/);
+          if (m) return decodeURIComponent(m[1]);
+        }
+      } catch {
+        /* ignore */
+      }
+      return undefined;
+    })();
+    const codeMatch = raw.match(/guest\/([A-Za-z0-9]+)/i);
+    const code = (codeMatch ? codeMatch[1] : raw.replace(/[^A-Za-z0-9]/g, '')).toUpperCase();
     if (code.length < 4) {
-      Alert.alert('Código inválido', 'Introduce el código que te compartieron.');
+      Alert.alert('Código inválido', 'Introduce el código o el enlace completo que te compartieron.');
       return;
     }
-    router.push(`/guest/${code}`);
+    if (secretFromPaste) {
+      router.push(`/guest/${code}?k=${encodeURIComponent(secretFromPaste)}`);
+    } else {
+      router.push(`/guest/${code}`);
+    }
   };
 
   const handleQuickInvite = async () => {
     if (!profile || !profile.baseResponses || profile.baseResponses.length === 0) {
-      Alert.alert('Sin respuestas', 'Debes responder tu cuestionario base primero.');
+      Alert.alert('Sin respuestas', 'Responde tu cuestionario base primero.');
       return;
     }
     if (!quickGuestNick.trim()) {
@@ -157,8 +217,6 @@ export default function HomeScreen() {
     setCreatingInvite(true);
     try {
       const guestNotesObj = { nickname: quickGuestNick.trim(), notes: quickGuestNotes.trim() };
-
-      // Compute expiration date
       let expiresAt: string | undefined;
       if (expiryOption === '24h') {
         expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -166,915 +224,337 @@ export default function HomeScreen() {
         expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       }
 
-      const session = await createLocalSession(profile.nickname, profile.baseResponses, profile, expiresAt);
-      // Save private guest notes if any
+      const session = await createLocalSession(
+        profile.nickname,
+        profile.baseResponses,
+        profile,
+        expiresAt
+      );
       const { saveGuestProfile } = await import('@/lib/storage');
       await saveGuestProfile(session.id, guestNotesObj);
 
-      Alert.alert('Invitación Creada', 'Se generó el código de invitación. Envíalo a tu pareja.');
+      Alert.alert('Invitación creada', 'Envía el código a tu pareja.');
       setShowQuickInvite(false);
       setQuickGuestNick('');
       setQuickGuestNotes('');
       await loadHomeData();
       router.push({ pathname: '/invite', params: { token: session.initiatorToken } });
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'No se pudo crear la sesión de invitación.');
     } finally {
       setCreatingInvite(false);
     }
   };
 
-  const renderUserManualCard = () => (
-    <TouchableOpacity
-      style={[
-        styles.quickProfileCard,
-        {
-          borderColor: 'rgba(192, 132, 252, 0.5)',
-          backgroundColor: 'rgba(192, 132, 252, 0.12)',
-          ...glowShadowPrimary(0.25),
+  const handleBackup = () => {
+    const askPassphrase = (title: string): string | null => {
+      if (typeof globalThis !== 'undefined' && 'prompt' in globalThis) {
+        return (globalThis as unknown as { prompt: (m: string) => string | null }).prompt(title);
+      }
+      return null;
+    };
+    Alert.alert('Copia de seguridad cifrada', 'Backups con PBKDF2 + AES-GCM.', [
+      {
+        text: 'Exportar',
+        onPress: async () => {
+          const passphrase = askPassphrase('Contraseña para cifrar el backup (mín. 4):');
+          if (!passphrase || passphrase.length < 4) {
+            Alert.alert('Cancelado', 'Se requiere contraseña de exportación.');
+            return;
+          }
+          try {
+            const json = await exportUserDataJSON(passphrase);
+            await Clipboard.setStringAsync(json);
+            Alert.alert('Backup listo', 'Ciphertext copiado. Guarda también tu contraseña.');
+          } catch (e: any) {
+            Alert.alert('Error', e?.message || 'No se pudo exportar.');
+          }
         },
-      ]}
-      onPress={() => router.push('/manual' as any)}
-      activeOpacity={0.85}
-    >
-      <View style={styles.quickProfileInner}>
-        <Text style={styles.quickProfileEmoji}>📖</Text>
-        <View style={styles.quickProfileText}>
-          <Text style={styles.quickProfileTitle}>Manual de Usuario Interactivo</Text>
-          <Text style={[styles.quickProfileDesc, { color: colors.neonPurple, lineHeight: 18 }]}>
-            Guía completa paso a paso para los 25+ módulos: Seguridad, Castidad, Negociación, Bóveda Zero-Knowledge y más.
-          </Text>
-        </View>
+      },
+      {
+        text: 'Importar',
+        onPress: async () => {
+          const str = await Clipboard.getStringAsync();
+          const passphrase = askPassphrase('Contraseña del backup (si está cifrado):') || undefined;
+          try {
+            const count = await importUserDataJSON(str, passphrase);
+            Alert.alert('Restaurado', `Se restauraron ${count} registros locales.`);
+            await loadHomeData();
+          } catch (e: any) {
+            Alert.alert('Error', e?.message || 'Backup inválido o contraseña incorrecta.');
+          }
+        },
+      },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
+  };
 
-        <TouchableOpacity
-          style={styles.manualActionButton}
-          onPress={() => router.push('/manual' as any)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.manualActionButtonText}>Explorar Manual ↗</Text>
-        </TouchableOpacity>
+  const go = (path: string) => () => router.push(path as any);
+
+  const flujoPrincipal: ModuleDef[] = [
+    { title: 'Cuestionario base', description: 'Preferencias privadas y límites', mark: 'Q', route: '/questionnaire' },
+    { title: 'Perfil rápido', description: '10 preguntas · ~2 minutos', mark: '10', route: '/quick-profile' },
+    { title: 'Pass & Play', description: 'Mismo dispositivo, cortina de privacidad', mark: 'P', route: '/pass-and-play' },
+    { title: 'Manual', description: 'Guía de módulos y seguridad', mark: 'M', route: '/manual' },
+    { title: 'Glosario', description: 'Términos y consentimiento', mark: 'G', route: '/glossary' },
+    { title: 'Guía de seguridad', description: 'SSC/RACK y protocolos', mark: 'S', route: '/safety-guide' },
+  ];
+
+  const escenas: ModuleDef[] = [
+    { title: 'Negociación en vivo', description: 'Acuerdos y firma de escenas', mark: 'N', route: '/negotiation' },
+    { title: 'Compás kink', description: 'Mapa de afinidades', mark: 'C', route: '/compass' },
+    { title: 'Arquetipos', description: 'Perfil de roles', mark: 'A', route: '/archetypes' },
+    { title: 'Rituales D/s', description: 'Protocolos guiados', mark: 'R', route: '/rituals' },
+    { title: 'Contratos', description: 'Acuerdos digitales', mark: '§', route: '/contracts' },
+    { title: 'Fantasy Match', description: 'Coincidencias double-blind', mark: 'F', route: '/fantasy-match' },
+    { title: 'Verdad o reto', description: 'Cartas para citas', mark: 'V', route: '/truth-or-dare' },
+    { title: 'Calendario', description: 'Escenas y aftercare', mark: '·', route: '/calendar' },
+    { title: 'Playlists', description: 'Ambientes sonoros', mark: '♪', route: '/playlists' },
+    { title: 'Gear Closet', description: 'Inventario de equipo', mark: '⚙', route: '/gear-closet' },
+  ];
+
+  const comunidad: ModuleDef[] = [
+    { title: 'Dating kink', description: 'Conexiones por afinidad', mark: 'D', route: '/dating' },
+    { title: 'Feed', description: 'Debate y encuestas', mark: '◈', route: '/kink-feed' },
+    { title: 'Comunidades', description: 'Grupos temáticos', mark: '◉', route: '/communities' },
+    { title: 'Eventos', description: 'Munches y talleres', mark: 'E', route: '/events' },
+    { title: 'Cursos', description: 'Kink Academy', mark: 'K', route: '/courses' },
+    { title: 'Escritos', description: 'Diario y reflexiones', mark: 'W', route: '/writings' },
+    { title: 'Wrapped', description: 'Resumen anual', mark: 'Y', route: '/wrapped' },
+    { title: 'Reto semanal', description: 'Desafíos con XP', mark: '7', route: '/weekly-challenge' },
+    { title: 'Matriz poli', description: '3+ personas', mark: '3', route: '/poly-group' },
+    { title: 'Tienda', description: 'Partners y recomendaciones', mark: '$', route: '/store' },
+  ];
+
+  const escenasIa: ModuleDef[] = [
+    { title: 'Roleplay IA', description: 'Ensayo de dinámicas', mark: 'I', route: '/ai-roleplay' },
+    { title: 'Escenas IA', description: 'Rutinas personalizadas', mark: 'Σ', route: '/scene-ai' },
+    { title: 'Guiones IA', description: 'Diálogos e instrucciones', mark: 'Γ', route: '/ai-script' },
+    { title: 'Music Sync', description: 'Háptica + BPM', mark: '≈', route: '/music-sync' },
+    { title: 'Castidad', description: 'Keyholding seguro', mark: '⌀', route: '/chastity' },
+    { title: 'Hardware', description: 'QIUI / Lovense', mark: 'H', route: '/hardware' },
+    { title: 'Economía D/s', description: 'Tareas y recompensas', mark: '◈', route: '/task-economy' },
+    { title: 'Analítica', description: 'Subspace tracker', mark: 'Δ', route: '/analytics' },
+    { title: 'Logros', description: 'Insignias de exploración', mark: '✦', route: '/achievements' },
+    { title: 'Premium', description: 'Compatikink PRO', mark: 'P', route: '/premium' },
+  ];
+
+  const bovedaMods: ModuleDef[] = [
+    { title: 'Cuenta & bóveda', description: 'Acceso Zero-Knowledge', mark: 'B', route: '/auth' },
+    { title: 'Álbum privado', description: 'Fotos cifradas AES-GCM', mark: '◻', route: '/private-album' },
+    { title: 'Backup cifrado', description: 'Exportar / importar', mark: '⇄', onPress: handleBackup },
+    { title: 'Admin', description: 'Requiere bóveda + rol local', mark: '◆', route: '/admin' },
+    { title: 'Instalar app', description: 'PWA en el dispositivo', mark: '↓', onPress: () => setShowPWAInstallModal(true) },
+    { title: 'Accesibilidad', description: 'Contraste y tipografía', mark: 'A', onPress: () => setShowA11yModal(true) },
+  ];
+
+  const renderModuleList = (items: ModuleDef[]) =>
+    items.map((m) => (
+      <ModuleTile
+        key={m.title}
+        title={m.title}
+        description={m.description}
+        mark={m.mark}
+        onPress={m.onPress || (m.route ? go(m.route) : () => {})}
+      />
+    ));
+
+  const webBg =
+    Platform.OS === 'web'
+      ? ({ backgroundImage: gradients.inkRadialHint } as object)
+      : undefined;
+
+  const renderHero = (loggedIn: boolean) => (
+    <Animated.View
+      style={[
+        styles.hero,
+        { opacity: heroFade, transform: [{ translateY: heroSlide }] },
+      ]}
+    >
+      <Text style={styles.brand} accessibilityRole="header">
+        Compatikink
+      </Text>
+      <Text style={styles.mark}>Nox</Text>
+      <Text style={styles.headline}>
+        {loggedIn
+          ? `Hola, ${profile?.nickname}`
+          : 'Preferencias privadas. Compatibilidad consensuada.'}
+      </Text>
+      <Text style={styles.heroSupport}>
+        {loggedIn
+          ? profile?.experienceLevel
+            ? `Nivel: ${EXPERIENCE_LABELS[profile.experienceLevel]}`
+            : 'Tu espacio cifrado en este dispositivo.'
+          : 'Define límites, invita a alguien y recibe un reporte sin revelar respuestas individuales.'}
+      </Text>
+
+      <View style={styles.ctaGroup}>
+        {loggedIn ? (
+          <>
+            <Button
+              title="Crear invitación"
+              onPress={() => setShowQuickInvite(true)}
+              style={styles.ctaPrimary}
+            />
+            <Button
+              title="Editar respuestas"
+              variant="secondary"
+              onPress={go('/questionnaire')}
+              style={styles.ctaSecondary}
+            />
+            <Button
+              title={vaultOpen ? 'Bloquear bóveda' : 'Abrir bóveda'}
+              variant="ghost"
+              onPress={() => {
+                if (vaultOpen) VaultLockGateAPI.lock();
+                else router.push('/auth' as any);
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <Button
+              title="Empezar"
+              onPress={go('/questionnaire')}
+              style={styles.ctaPrimary}
+            />
+            <Button
+              title="Me invitaron"
+              variant="secondary"
+              onPress={() =>
+                scrollRef.current?.scrollTo({ y: Math.max(0, guestSectionY.current - 24), animated: true })
+              }
+              style={styles.ctaSecondary}
+            />
+            <Button title="Entrar a bóveda" variant="ghost" onPress={go('/auth')} />
+          </>
+        )}
       </View>
-    </TouchableOpacity>
+    </Animated.View>
   );
 
-  const renderLanding = () => (
-    <ScrollView contentContainerStyle={styles.scroll}>
-      <View style={styles.hero}>
-        <Text style={styles.emoji}>🔥</Text>
-        <Text style={styles.titleText}>Compatikink</Text>
-        <Text style={styles.tagline}>
-          Define tus preferencias, invita a alguien y recibe un reporte de compatibilidad privado y consensuado.
-        </Text>
+  const renderGuestJoin = () => (
+    <View onLayout={(e) => { guestSectionY.current = e.nativeEvent.layout.y; }}>
+    <Section title="Me invitaron" subtitle="Pega el código o el enlace completo (#k= / ?k=).">
+      <View style={styles.interactivePanel}>
+        <TextInput
+          style={styles.inputInvite}
+          placeholder="Código o enlace de invitación"
+          placeholderTextColor={colors.textDim}
+          value={guestCode}
+          onChangeText={setGuestCode}
+          autoCapitalize="characters"
+        />
+        <Button title="Unirme" onPress={joinAsGuest} variant="secondary" />
       </View>
+    </Section>
+    </View>
+  );
 
-      {/* 🐙 Mysterious Host Nox */}
-      <OctopusHost />
-
-      {/* 🔮 Organized Category Filter Bar */}
-      <View style={styles.categoryFilterRow}>
-        {[
-          { id: 'all' as const, label: '✨ Todas' },
-          { id: 'explore' as const, label: '🔮 Exploración' },
-          { id: 'ds' as const, label: '🗝️ D/s & Control' },
-          { id: 'scenes' as const, label: '🎭 Escenas & IA' },
-          { id: 'community' as const, label: '🌐 Comunidad' },
-        ].map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[styles.categoryFilterChip, activeCategoryTab === cat.id && styles.categoryFilterChipActive]}
-            onPress={() => setActiveCategoryTab(cat.id)}
-          >
-            <Text style={[styles.categoryFilterChipText, activeCategoryTab === cat.id && { color: '#fff' }]}>
-              {cat.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {renderUserManualCard()}
-
-      {/* 🔐 Account & Zero-Knowledge Vault CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.5)', backgroundColor: 'rgba(74, 222, 128, 0.12)' }]}
-        onPress={() => router.push('/auth')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🔐</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Cuenta de Usuario & Bóveda Cifrada</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Acceso con cifrado Zero-Knowledge End-to-End</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 👤 Register Personal Profile Button */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(59, 130, 246, 0.4)', backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}
-        onPress={() => setShowRegisterModal(true)}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>👤</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Crear Perfil Personal</Text>
-            <Text style={[styles.quickProfileDesc, { color: '#60a5fa' }]}>Registra tu nombre + PIN de 4 dígitos</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: '#60a5fa' }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* ⚡ Quick Profile CTA — Secondary action */}
-      <TouchableOpacity style={styles.quickProfileCard} onPress={() => router.push('/quick-profile')}>
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>⚡</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Perfil Rápido (10 Preguntas)</Text>
-            <Text style={styles.quickProfileDesc}>Solo 10 preguntas · ~2 minutos · Privado</Text>
-          </View>
-          <Text style={styles.quickProfileArrow}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 📚 Glossary CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
-        onPress={() => router.push('/glossary')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>📚</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Glosario Kink</Text>
-            <Text style={[styles.quickProfileDesc, { color: '#38bdf8' }]}>Términos esenciales · Educación y consentimiento</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: '#38bdf8' }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 💘 Dating & Match Discovery CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.5)', backgroundColor: 'rgba(244, 114, 182, 0.12)' }]}
-        onPress={() => router.push('/dating')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>💘</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Conexiones & Dating Kink</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Descubre personas compatibles con tus gustos real-time</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 📋 Live Negotiation Room CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
-        onPress={() => router.push('/negotiation')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>📋</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Sala de Negociación en Vivo</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Revisión sincrónica de escenas y firma de acuerdos</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🛡️ Safety & Health Guide CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
-        onPress={() => router.push('/safety-guide')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🛡️</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Guía de Seguridad & Salud Kink</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Protocolos de riesgos, SSC/RACK y primeros auxilios</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🧑‍🤝‍🧑 Pass & Play CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
-        onPress={() => router.push('/pass-and-play')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🧑‍🤝‍🧑</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Modo Presencial (Mismo Teléfono)</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Responder en el mismo dispositivo con cortina de privacidad</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🧰 Gear Closet CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
-        onPress={() => router.push('/gear-closet')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🧰</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Inventario de Equipamiento (Gear Closet)</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Administra accesorios, cuerdas y herramientas de seguridad</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🎶 Playlists CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
-        onPress={() => router.push('/playlists')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🎶</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Ambientes Sonoros & Playlists</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Música y ritmos corporales diseñados para acompañar escenas</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
-        onPress={() => router.push('/calendar')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>📅</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Calendario de Escenas & Aftercare</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Agendar citas y alertas de seguimiento emocional a las 24h</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🎴 Truth or Dare Game CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
-        onPress={() => router.push('/truth-or-dare')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🎴</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Juego de Cartas: Verdad o Reto Kink</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Cartas interactivas para citas basadas en sus matches mutuos</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 👥 Poly Group Matrix CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.08)' }]}
-        onPress={() => router.push('/poly-group')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>👥</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Matriz Grupal & Poliamor (3+ personas)</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Cruzar respuestas entre 3 o más personas simultáneamente</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 📈 Analytics Tracker CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
-        onPress={() => router.push('/analytics')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>📈</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Analítica Emocional & Subspace Tracker</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Gráfico histórico de emociones post-escena y aftercare</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 👑 Admin Dashboard CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(234, 179, 8, 0.4)', backgroundColor: 'rgba(234, 179, 8, 0.08)' }]}
-        onPress={() => router.push('/admin')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>👑</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Panel de Administración & Analítica Global</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Inspección de inscritos, respuestas y métricas globales (PIN 9999)</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 💎 Compatikink PRO Premium CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.5)', backgroundColor: 'rgba(244, 114, 182, 0.12)' }]}
-        onPress={() => router.push('/premium')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>💎</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Compatikink PRO (Suscripción & Beneficios)</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Herramientas ilimitadas, recomendador IA y matriz poliamor</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🏅 Achievements & Badges CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
-        onPress={() => router.push('/achievements')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🏅</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Logros & Insignias Kink</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Recompensas por explorar actividades y cuidar la seguridad</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🔒 Chastity & Keyholding CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
-        onPress={() => router.push('/chastity')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🔒</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Módulo de Castidad & Keyholding</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Encuentro seguro entre Keyholders y Sumis en Castidad</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* ⚡ Hardware & QIUI Direct Control CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
-        onPress={() => router.push('/hardware')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>⚡</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Control Hardware & QIUI Direct</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Conexión Bluetooth (WebBLE) para QIUI Cellmate y Lovense</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🛍️ Kink Store & Sexshop Marketplace CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
-        onPress={() => router.push('/store')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🛍️</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Mercado & Tienda Kink (Sexshop Partners)</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Accesorios, cuerdas y juguetes recomendados por tus gustos</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🤖 AI BDSM Roleplay Companion CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
-        onPress={() => router.push('/ai-roleplay')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🤖</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Roleplay con Inteligencia Artificial</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Ensayo de dinámicas, negociación y exploración de fantasías</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 📰 Community Feed & Polls CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
-        onPress={() => router.push('/kink-feed')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>📰</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Feed & Encuestas de la Comunidad</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Muro de debate anónimo y encuestas diarias estilo Mazmo</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🤖 Scene AI Generator CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
-        onPress={() => router.push('/scene-ai')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🤖</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Recomendador IA de Escenas</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Rutinas paso a paso personalizadas según tu historial y wishlist</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🎓 Kink Academy & Courses CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
-        onPress={() => router.push('/courses')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🎓</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Kink Academy & Cursos Interactivos</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Lecciones guiadas, prevención de riesgos y quizzes de certificación</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🏘️ Communities & Private Groups CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
-        onPress={() => router.push('/communities')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🏘️</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Comunidades & Grupos Privados</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Foros temáticos de Shibari, Aftercare, D/s y estilo de vida</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🗓️ Events & Munches Directory CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
-        onPress={() => router.push('/events')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🗓️</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Directorio de Eventos & Munches</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Reuniones presenciales, talleres y reservas discretas de RSVP</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 📊 Compatikink Wrapped CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
-        onPress={() => router.push('/wrapped')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>📊</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Compatikink Wrapped 2026</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Tu resumen anual animado de exploración y estadísticas</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🎲 Weekly Kink Challenge CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
-        onPress={() => router.push('/weekly-challenge')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🎲</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Retos Semanales Kink</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Desafíos personalizados guiados con recompensas de XP</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 📲 PWA Direct Browser Installer CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.5)', backgroundColor: 'rgba(74, 222, 128, 0.12)' }]}
-        onPress={() => setShowPWAInstallModal(true)}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>📲</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Instalar App en el Teléfono (PWA 1-Tap)</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Acceso directo sin tienda, notificaciones y funcionamiento offline</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* ♿ Accessibility & High Contrast CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
-        onPress={() => setShowA11yModal(true)}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>♿</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Ajustes de Accesibilidad (A11y)</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Modo Alto Contraste, tamaño de fuente y lectores de pantalla</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🎮 Task Economy D/s CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
-        onPress={() => router.push('/task-economy')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🎮</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Economía D/s & Tareas Gamificadas</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Completa tareas y protocolos para ganar Kink Coins y canjear recompensas</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🤝 Double-Blind Fantasy Match CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
-        onPress={() => router.push('/fantasy-match')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🤝</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Match Secreto de Fantasías (Double-Blind)</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Revela solo coincidencias mutuas sin riesgo de juicio o vergüenza</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 📊 BDSM Archetypes Quiz CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
-        onPress={() => router.push('/archetypes')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>📊</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Quiz de Arquetipos BDSM</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Diagnóstico porcentual de roles (Dom, Sub, Rigger, Sadist, etc.)</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 📋 Ritual Builder D/s CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(56, 189, 248, 0.4)', backgroundColor: 'rgba(56, 189, 248, 0.08)' }]}
-        onPress={() => router.push('/rituals')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>📋</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Ritual Builder & Protocolos D/s</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.info }]}>Diseñador de secuencias guiadas de saludos, prevención y aftercare</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.info }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 📜 Digital D/s Contracts CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
-        onPress={() => router.push('/contracts')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>📜</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Contratos D/s Digitales & Acuerdos</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Firma digital de acuerdos con límites duros, safewords y renovación</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🔐 Encrypted Private Photo Album CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(74, 222, 128, 0.4)', backgroundColor: 'rgba(74, 222, 128, 0.08)' }]}
-        onPress={() => router.push('/private-album')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🔐</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Bóveda de Fotos Privadas (AES-256)</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.success }]}>Álbum cifrado con links de acceso temporal y botón de revocación total</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.success }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* ✍️ Personal Blog & Kink Writings CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(251, 191, 36, 0.4)', backgroundColor: 'rgba(251, 191, 36, 0.08)' }]}
-        onPress={() => router.push('/writings')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>✍️</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Blog Personal & Escritos Kink</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.warning }]}>Espacio personal estilo FetLife Writings para diarios, reflexiones y poesía</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.warning }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🎵 Music Vibration Teledildonics Sync CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(244, 114, 182, 0.4)', backgroundColor: 'rgba(244, 114, 182, 0.08)' }]}
-        onPress={() => router.push('/music-sync')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🎵</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Sync de Vibraciones & Ambientes</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPink }]}>Sincronización háptica de dispositivos Bluetooth con audio y BPM (Lovense/QIUI)</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPink }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🤖 AI Scene Builder & Dialogue Script CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
-        onPress={() => router.push('/ai-script')}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🤖</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>AI Scene Builder & Guiones Teatrales</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Generador de guiones completos con diálogos e instrucciones en vivo</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🔐 Backup & Restore CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.3)', backgroundColor: 'rgba(192, 132, 252, 0.06)' }]}
-        onPress={async () => {
-          Alert.alert(
-            '🔐 Copia de Seguridad Local (Backup)',
-            '¿Qué acción deseas realizar con tus datos guardados?',
-            [
-              {
-                text: '📥 Exportar JSON',
-                onPress: async () => {
-                  const json = await exportUserDataJSON();
-                  await Clipboard.setStringAsync(json);
-                  Alert.alert('Copia Exportada 📋', 'Se ha copiado el JSON de respaldo al portapapeles.');
-                },
-              },
-              {
-                text: '📤 Importar Backup',
-                onPress: async () => {
-                  const str = await Clipboard.getStringAsync();
-                  try {
-                    const count = await importUserDataJSON(str);
-                    Alert.alert('Backup Restaurado ✅', `Se han restaurado ${count} registros locales.`);
-                  } catch {
-                    Alert.alert('Error', 'El portapapeles no contiene un JSON de backup válido.');
-                  }
-                },
-              },
-              { text: 'Cancelar', style: 'cancel' },
-            ]
-          );
-        }}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🔐</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Copia de Seguridad (Backup JSON)</Text>
-            <Text style={styles.quickProfileDesc}>Exportar / Importar perfiles y respuestas encriptadas</Text>
-          </View>
-          <Text style={styles.quickProfileArrow}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* 🎨 Theme Switcher CTA */}
-      <TouchableOpacity
-        style={[styles.quickProfileCard, { borderColor: 'rgba(192, 132, 252, 0.4)', backgroundColor: 'rgba(192, 132, 252, 0.1)' }]}
-        onPress={() => setShowThemeModal(true)}
-      >
-        <View style={styles.quickProfileInner}>
-          <Text style={styles.quickProfileEmoji}>🎨</Text>
-          <View style={styles.quickProfileText}>
-            <Text style={styles.quickProfileTitle}>Personalizar Tema Visual</Text>
-            <Text style={[styles.quickProfileDesc, { color: colors.neonPurple }]}>Morado Neón, Rojo Pasional, Azul Eléctrico o Verde Esmeralda</Text>
-          </View>
-          <Text style={[styles.quickProfileArrow, { color: colors.neonPurple }]}>›</Text>
-        </View>
-      </TouchableOpacity>
-
-      {profilesList.length > 0 ? (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Inicia Sesión con tu Perfil</Text>
+  const renderLoginPanel = () => (
+    <Section
+      title="Entrar con perfil local"
+      subtitle="Tu PIN deriva la clave de bóveda (PBKDF2). No sale de este dispositivo."
+    >
+      <View style={styles.interactivePanel}>
+        {profilesList.length > 0 ? (
           <View style={styles.profilesRow}>
             {profilesList.map((p) => (
               <TouchableOpacity
                 key={p.nickname}
-                style={[styles.profileButton, loginNick === p.nickname && styles.profileButtonActive]}
+                style={[styles.profileChip, loginNick === p.nickname && styles.profileChipActive]}
                 onPress={() => setLoginNick(p.nickname)}
               >
-                <Text style={styles.profileButtonText}>
-                  {p.nickname} {p.pin ? '🔐' : ''}
-                </Text>
+                <Text style={styles.profileChipText}>{p.nickname}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          {loginNick ? (() => {
-            const selProfile = profilesList.find((p) => p.nickname.toLowerCase() === loginNick.toLowerCase());
-            const hasPin = selProfile ? Boolean(selProfile.pin) : false;
-
-            return (
-              <View style={styles.loginForm}>
-                {hasPin ? (
-                  <>
-                    <Text style={styles.label}>PIN de seguridad para {loginNick}</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Introduce tu PIN"
-                      placeholderTextColor={colors.textMuted}
-                      value={loginPin}
-                      onChangeText={setLoginPin}
-                      secureTextEntry
-                      keyboardType="numeric"
-                      maxLength={8}
-                    />
-                    <Button title="Entrar" onPress={handleLogin} />
-                  </>
-                ) : (
-                  <>
-                    <Text style={[styles.label, { color: colors.success }]}>✓ Perfil sin PIN (Acceso directo)</Text>
-                    <Button title={`Entrar como ${loginNick} 🚀`} onPress={handleLogin} />
-                  </>
-                )}
-              </View>
-            );
-          })() : null}
-        </View>
-      ) : null}
-
-      {/* Initial Registration/Preferences Card */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Empezar Cuestionario Base</Text>
-        <Text style={styles.cardDesc}>
-          Crea tu perfil y define tus preferencias de forma privada. Recibirás un PIN para proteger tu cuenta.
-        </Text>
-        <Button title="Crear Perfil y Empezar" onPress={() => router.push('/questionnaire')} />
+        ) : (
+          <>
+            <Text style={styles.label}>Nickname</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Tu nick"
+              placeholderTextColor={colors.textDim}
+              value={loginNick}
+              onChangeText={setLoginNick}
+              autoCapitalize="none"
+            />
+          </>
+        )}
+        {loginNick ? (
+          <>
+            <Text style={styles.label}>PIN</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="••••"
+              placeholderTextColor={colors.textDim}
+              value={loginPin}
+              onChangeText={setLoginPin}
+              secureTextEntry
+              keyboardType="numeric"
+              maxLength={8}
+            />
+            <Button title="Entrar" onPress={handleLogin} />
+          </>
+        ) : null}
+        <Button
+          title="Crear perfil personal"
+          variant="ghost"
+          onPress={() => setShowRegisterModal(true)}
+        />
       </View>
+    </Section>
+  );
 
-      {/* Manual Login (Fallback if profile not in quicklist) */}
-      {!loginNick && profilesList.length === 0 ? (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Iniciar Sesión Manual</Text>
-          <Text style={styles.label}>Tu Nickname</Text>
-          <TextInput
-            style={[styles.input, { textAlign: 'left' }]}
-            placeholder="Introduce tu nick"
-            placeholderTextColor={colors.textMuted}
-            value={loginNick}
-            onChangeText={setLoginNick}
-            autoCapitalize="none"
-          />
-          <Text style={styles.label}>PIN de seguridad</Text>
+  const renderQuickInviteForm = () =>
+    showQuickInvite ? (
+      <Section title="Invitación rápida" subtitle="Usa tus respuestas base guardadas.">
+        <View style={styles.interactivePanel}>
+          <Text style={styles.label}>Apodo de la otra persona</Text>
           <TextInput
             style={styles.input}
-            placeholder="Introduce tu PIN"
-            placeholderTextColor={colors.textMuted}
-            value={loginPin}
-            onChangeText={setLoginPin}
-            secureTextEntry
-            keyboardType="numeric"
-            maxLength={8}
-          />
-          <Button title="Entrar" onPress={handleLogin} />
-        </View>
-      ) : null}
-
-      {/* Guest joining */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Me invitaron (Tengo un Código)</Text>
-        <Text style={styles.cardDesc}>
-          Responde de forma privada. Quien te invitó verá la compatibilidad mutua.
-        </Text>
-        <TextInput
-          style={styles.inputInvite}
-          placeholder="Código de invitación"
-          placeholderTextColor={colors.textMuted}
-          value={guestCode}
-          onChangeText={setGuestCode}
-          autoCapitalize="characters"
-          maxLength={8}
-        />
-        <Button title="Unirme con código" onPress={joinAsGuest} variant="secondary" />
-      </View>
-
-      {!isSupabaseConfigured ? (
-        <Text style={styles.warning}>
-          ⚠️ Modo local: Tus perfiles y reportes están guardados de forma segura en este dispositivo.
-        </Text>
-      ) : null}
-    </ScrollView>
-  );
-
-  const renderProfileSummaryCard = () => (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>👤 Mi Perfil</Text>
-      <Text style={styles.cardDesc}>
-        Nick: <Text style={{ color: colors.text, fontWeight: '700' }}>{profile?.nickname}</Text>
-        {profile?.pronouns ? ` (${profile.pronouns})` : ''}
-      </Text>
-      {profile?.experienceLevel ? (
-        <Text style={styles.cardDesc}>
-          Nivel: {EXPERIENCE_LABELS[profile.experienceLevel]}
-        </Text>
-      ) : null}
-      {profile?.notes ? <Text style={[styles.cardDesc, { fontStyle: 'italic' }]}>"{profile.notes}"</Text> : null}
-    </View>
-  );
-
-  const renderQuickInviteBox = () => (
-    <View style={styles.card}>
-      {!showQuickInvite ? (
-        <Button
-          title="⚡ Crear Invitación Rápida"
-          onPress={() => setShowQuickInvite(true)}
-        />
-      ) : (
-        <View style={styles.quickInviteForm}>
-          <Text style={styles.cardTitle}>⚡ Invitación Rápida</Text>
-          <Text style={styles.cardDesc}>
-            Se generará un enlace usando tus respuestas base guardadas. No necesitas repetir las 70 preguntas.
-          </Text>
-
-          <Text style={styles.label}>Apodo de la otra persona *</Text>
-          <TextInput
-            style={[styles.input, { textAlign: 'left' }]}
             placeholder="Ej: Sam"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={colors.textDim}
             value={quickGuestNick}
             onChangeText={setQuickGuestNick}
           />
-
-          <Text style={styles.label}>Notas confidenciales sobre ella (opcional)</Text>
+          <Text style={styles.label}>Notas confidenciales (opcional)</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Ej: Nos conocimos en FetLife. Spanking..."
-            placeholderTextColor={colors.textMuted}
+            placeholder="Notas privadas…"
+            placeholderTextColor={colors.textDim}
             value={quickGuestNotes}
             onChangeText={setQuickGuestNotes}
             multiline
-            numberOfLines={3}
           />
-
-          <Text style={styles.label}>⏳ Expiración del código</Text>
           <View style={styles.expiryRow}>
-            {([
-              { label: '24 horas', value: '24h' as const },
-              { label: '7 días', value: '7d' as const },
-              { label: 'Sin límite', value: 'none' as const },
-            ] as const).map((opt) => (
+            {(
+              [
+                { label: '24 h', value: '24h' as const },
+                { label: '7 días', value: '7d' as const },
+                { label: 'Sin límite', value: 'none' as const },
+              ] as const
+            ).map((opt) => (
               <TouchableOpacity
                 key={opt.value}
                 style={[styles.expiryChip, expiryOption === opt.value && styles.expiryChipActive]}
                 onPress={() => setExpiryOption(opt.value)}
               >
-                <Text style={[styles.expiryChipText, expiryOption === opt.value && styles.expiryChipTextActive]}>
+                <Text
+                  style={[
+                    styles.expiryChipText,
+                    expiryOption === opt.value && styles.expiryChipTextActive,
+                  ]}
+                >
                   {opt.label}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
-
           <View style={styles.formRow}>
             <Button
-              title={creatingInvite ? 'Creando...' : 'Crear Código'}
+              title={creatingInvite ? 'Creando…' : 'Crear código'}
               onPress={handleQuickInvite}
               disabled={creatingInvite}
               style={{ flex: 1 }}
@@ -1087,342 +567,249 @@ export default function HomeScreen() {
             />
           </View>
         </View>
-      )}
-    </View>
-  );
+      </Section>
+    ) : null;
 
-  const renderEditResponsesCard = () => (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>Tus Respuestas Base</Text>
-      <Text style={styles.cardDesc}>
-        ¿Quieres actualizar tus límites eróticos, roles o intensidades?
-      </Text>
-      <Button
-        title="Editar mis respuestas"
-        variant="secondary"
-        onPress={() => router.push('/questionnaire')}
-      />
-    </View>
-  );
-
-  const renderSceneAgreementsCard = () => (
-    sceneAgreements.length > 0 ? (
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>📋 Mis Acuerdos de Escena</Text>
-        <Text style={styles.cardDesc}>Acuerdos de safewords y límites guardados por pareja.</Text>
-        {sceneAgreements.map(({ sessionId, agreements }) => {
-          const session = sessions.find((s) => s.id === sessionId);
-          const partner = session
-            ? (session.guestNickname || session.initiatorNickname || 'Invitado')
-            : sessionId.slice(0, 8);
-          return (
-            <View key={sessionId} style={styles.sceneAgreementGroup}>
-              <Text style={styles.sceneAgreementPartner}>Con {partner}</Text>
-              {agreements.map((ag) => (
-                <TouchableOpacity
-                  key={ag.id}
-                  style={styles.sceneAgreementRow}
-                  onPress={() => router.push({ pathname: '/report', params: { token: session?.initiatorToken ?? '' } })}
-                >
-                  <View style={styles.sceneAgreementInfo}>
-                    <Text style={styles.sceneAgreementActivity}>{ag.activityName}</Text>
-                    <Text style={styles.sceneAgreementSafewords}>
-                      🟢 {ag.safewordGreen} · 🟡 {ag.safewordYellow} · 🔴 {ag.safewordRed}
-                    </Text>
-                  </View>
-
-                  <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                    <TouchableOpacity
-                      style={[styles.sessionActionBtn, { backgroundColor: 'rgba(192, 132, 252, 0.15)', borderRadius: 8 }]}
-                      onPress={() => setDebriefTarget({ sessionId: ag.sessionId, activityId: ag.activityId, activityName: ag.activityName })}
-                    >
-                      <Text style={{ color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '700' }}>📝 Debrief</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.sessionActionBtn, { backgroundColor: 'rgba(96, 165, 250, 0.15)', borderRadius: 8 }]}
-                      onPress={() => exportSceneAgreementPDF(ag, partner)}
-                    >
-                      <Text style={{ color: colors.info, fontSize: fontSize.xs, fontWeight: '700' }}>📄 PDF</Text>
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          );
-        })}
-      </View>
-    ) : null
-  );
-
-  const renderHistoryCard = () => (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>Historial de Compatividades</Text>
-      {sessions.length === 0 ? (
-        <Text style={styles.cardDesc}>Aún no has creado ni respondido ninguna invitación.</Text>
+  const renderSessions = () => (
+    <Section title="Historial" subtitle="Invitaciones y reportes en este dispositivo.">
+      {!vaultOpen ? (
+        <VaultLockGate
+          title="Historial cifrado"
+          subtitle="Desbloquea la bóveda para ver sesiones y acuerdos sensibles."
+          showLockButton={false}
+        />
+      ) : sessions.length === 0 ? (
+        <EmptyState
+          title="Sin sesiones aún"
+          description="Crea una invitación o completa un cuestionario para empezar."
+          actionLabel="Crear invitación"
+          onAction={() => setShowQuickInvite(true)}
+        />
       ) : (
         <View style={styles.sessionsList}>
           {sessions.map((s) => {
             const isInitiator = s.initiatorNickname === profile?.nickname;
-            const partner = isInitiator ? (s.guestNickname || 'Invitado') : (s.initiatorNickname || 'Iniciador');
+            const partner = isInitiator
+              ? s.guestNickname || 'Invitado'
+              : s.initiatorNickname || 'Iniciador';
             const isComplete = s.status === 'complete';
             const isWaiting = s.status === 'waiting';
-            const isExpired = !isComplete && s.expiresAt ? new Date(s.expiresAt) < new Date() : false;
-
-            const timeAgo = (iso?: string) => {
-              if (!iso) return '';
-              const diff = Date.now() - new Date(iso).getTime();
-              const mins = Math.floor(diff / 60000);
-              const hours = Math.floor(diff / 3600000);
-              const days = Math.floor(diff / 86400000);
-              if (mins < 2) return 'hace un momento';
-              if (mins < 60) return `hace ${mins} min`;
-              if (hours < 24) return `hace ${hours}h`;
-              return `hace ${days}d`;
-            };
-
-            const timeUntil = (iso?: string) => {
-              if (!iso) return null;
-              const diff = new Date(iso).getTime() - Date.now();
-              if (diff <= 0) return null;
-              const hours = Math.floor(diff / 3600000);
-              const days = Math.floor(diff / 86400000);
-              if (hours < 24) return `Expira en ${hours}h`;
-              return `Expira en ${days}d`;
-            };
-
+            const isExpired =
+              !isComplete && s.expiresAt ? new Date(s.expiresAt) < new Date() : false;
             const statusLabel = isExpired
-              ? '🚫 Expirada'
+              ? 'Expirada'
               : isComplete
-              ? `✅ Completado ${timeAgo(s.completedAt)}`
-              : isWaiting
-              ? `⏳ Esperando respuesta`
-              : '📝 Borrador';
+                ? 'Completado'
+                : isWaiting
+                  ? 'Esperando'
+                  : 'Borrador';
             const statusColor = isExpired
               ? colors.danger
               : isComplete
-              ? colors.success
-              : isWaiting
-              ? colors.warning
-              : colors.textMuted;
-
-            const expiryLabel = !isComplete && !isExpired ? timeUntil(s.expiresAt) : null;
+                ? colors.success
+                : isWaiting
+                  ? colors.warning
+                  : colors.textMuted;
 
             return (
               <View key={s.id} style={styles.sessionCard}>
                 <View style={styles.sessionCardHeader}>
-                  <View style={[styles.sessionStatusBadge, { borderColor: statusColor }]}>
-                    <Text style={[styles.sessionStatusText, { color: statusColor }]}>{statusLabel}</Text>
-                  </View>
-                  <Text style={styles.sessionTime}>{timeAgo(s.createdAt)}</Text>
+                  <Text style={[styles.sessionStatus, { color: statusColor }]}>{statusLabel}</Text>
+                  <Text style={styles.sessionCode}>{s.inviteCode}</Text>
                 </View>
-
-                <View style={styles.sessionCardBody}>
-                  <View style={styles.sessionInfo}>
-                    <Text style={styles.sessionPartner}>
-                      {isInitiator ? '↗ Tú → ' : '↙ '}
-                      <Text style={{ color: isComplete ? colors.neonPurple : colors.text }}>{partner}</Text>
-                    </Text>
-                    <Text style={styles.sessionDetails}>
-                      Código: <Text style={{ fontWeight: '700', letterSpacing: 1 }}>{s.inviteCode}</Text>
-                      {!isComplete && isWaiting ? ' · Compartir para recibir respuestas' : ''}
-                      {expiryLabel ? <Text style={{ color: colors.warning }}>{`\n${expiryLabel}`}</Text> : null}
-                      {isExpired ? <Text style={{ color: colors.danger }}>{'\nCódigo ya no válido'}</Text> : null}
-                    </Text>
-                  </View>
-                  <View style={styles.sessionActions}>
-                    {isComplete ? (
-                      <Button
-                        title="📊 Reporte"
-                        style={styles.sessionActionBtn}
-                        onPress={() => router.push({ pathname: '/report', params: { token: s.initiatorToken } })}
-                      />
-                    ) : (
-                      <Button
-                        title="📨 Invitar"
-                        variant="secondary"
-                        style={styles.sessionActionBtn}
-                        onPress={() => router.push({ pathname: '/invite', params: { token: s.initiatorToken } })}
-                      />
-                    )}
-                  </View>
+                <Text style={styles.sessionPartner}>{partner}</Text>
+                <View style={styles.sessionActions}>
+                  {isComplete ? (
+                    <Button
+                      title="Reporte"
+                      style={styles.sessionActionBtn}
+                      onPress={() =>
+                        router.push({ pathname: '/report', params: { token: s.initiatorToken } })
+                      }
+                    />
+                  ) : (
+                    <Button
+                      title="Invitar"
+                      variant="secondary"
+                      style={styles.sessionActionBtn}
+                      onPress={() =>
+                        router.push({ pathname: '/invite', params: { token: s.initiatorToken } })
+                      }
+                    />
+                  )}
                 </View>
               </View>
             );
           })}
         </View>
       )}
-    </View>
+    </Section>
   );
 
-  const renderAccountActionsCard = () => (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>⚙️ Cuenta y Seguridad</Text>
-      <Button title="Cerrar Sesión" variant="ghost" onPress={handleLogout} />
-      <Button
-        title="🛡️ Borrado de Emergencia / Pánico"
-        variant="ghost"
-        onPress={handlePanicWipe}
-        style={{ marginTop: spacing.xs }}
-      />
-    </View>
+  const renderAgreements = () => {
+    if (!vaultOpen || sceneAgreements.length === 0) return null;
+    return (
+      <Section title="Acuerdos de escena" subtitle="Safewords y límites por pareja.">
+        {sceneAgreements.map(({ sessionId, agreements }) => {
+          const session = sessions.find((s) => s.id === sessionId);
+          const partner = session
+            ? session.guestNickname || session.initiatorNickname || 'Invitado'
+            : sessionId.slice(0, 8);
+          return (
+            <View key={sessionId} style={styles.agreementGroup}>
+              <Text style={styles.agreementPartner}>Con {partner}</Text>
+              {agreements.map((ag) => (
+                <View key={ag.id} style={styles.agreementRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.agreementActivity}>{ag.activityName}</Text>
+                    <Text style={styles.agreementSafewords}>
+                      {ag.safewordGreen} · {ag.safewordYellow} · {ag.safewordRed}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setDebriefTarget({
+                        sessionId: ag.sessionId,
+                        activityId: ag.activityId,
+                        activityName: ag.activityName,
+                      })
+                    }
+                  >
+                    <Text style={styles.linkAction}>Debrief</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => exportSceneAgreementPDF(ag, partner)}>
+                    <Text style={styles.linkAction}>PDF</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          );
+        })}
+      </Section>
+    );
+  };
+
+  const renderModules = () => (
+    <>
+      <Section
+        eyebrow="Flujo"
+        title="Principal"
+        subtitle="Cuestionario, invitación y fundamentos."
+      >
+        {renderModuleList(flujoPrincipal)}
+      </Section>
+      <Section eyebrow="Práctica" title="Escenas" subtitle="Negociación, rituales y herramientas de sesión.">
+        {renderModuleList(escenas)}
+      </Section>
+      <Section eyebrow="Social" title="Comunidad" subtitle="Conexiones, eventos y contenido.">
+        {renderModuleList(comunidad)}
+      </Section>
+      <Section eyebrow="Extendido" title="IA & hardware" subtitle="Exploración asistida y dispositivos.">
+        {renderModuleList(escenasIa)}
+      </Section>
+      <Section eyebrow="Privacidad" title="Bóveda" subtitle="Cifrado local, backup y cuenta.">
+        {renderModuleList(bovedaMods)}
+      </Section>
+    </>
   );
 
-  const renderCommunityToolsCard = () => (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>🛠️ Herramientas y Comunidad</Text>
-      {sessions.filter((s) => s.status === 'complete').length >= 2 ? (
-        <Button
-          title="👥 Comparar Parejas (Poli / Multi-Vínculo)"
-          variant="secondary"
-          onPress={() => setShowPolyComparator(true)}
-        />
+  const renderLanding = () => (
+    <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll}>
+      {renderHero(false)}
+      {renderGuestJoin()}
+      {renderLoginPanel()}
+      {renderModules()}
+      {!isSupabaseConfigured ? (
+        <Text style={styles.footnote}>
+          Modo local: perfiles y reportes viven cifrados en este dispositivo.
+        </Text>
       ) : null}
-      <Button
-        title="📊 Radar de Tendencias de la Comunidad"
-        variant="secondary"
-        onPress={() => setShowTrendsModal(true)}
-      />
-    </View>
+    </ScrollView>
   );
 
   const renderDashboard = () => (
-    <ScrollView contentContainerStyle={styles.scroll}>
-      <View style={styles.dashboardHeader}>
-        <Text style={styles.welcomeText}>¡Hola, {profile?.nickname}! 👋</Text>
-        {profile?.pronouns ? <Text style={styles.pronounsBadge}>{profile.pronouns}</Text> : null}
-        {profile?.experienceLevel ? (
-          <Text style={styles.expBadge}>
-            Nivel: {EXPERIENCE_LABELS[profile.experienceLevel]}
-          </Text>
-        ) : null}
-      </View>
-
-      {/* 🐙 Mysterious Host Nox */}
-      <OctopusHost />
-
-      {/* 🔮 Organized Category Filter Bar */}
-      <View style={styles.categoryFilterRow}>
-        {[
-          { id: 'all' as const, label: '✨ Todas' },
-          { id: 'explore' as const, label: '🔮 Exploración' },
-          { id: 'ds' as const, label: '🗝️ D/s & Control' },
-          { id: 'scenes' as const, label: '🎭 Escenas & IA' },
-          { id: 'community' as const, label: '🌐 Comunidad' },
-        ].map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[styles.categoryFilterChip, activeCategoryTab === cat.id && styles.categoryFilterChipActive]}
-            onPress={() => setActiveCategoryTab(cat.id)}
-          >
-            <Text style={[styles.categoryFilterChipText, activeCategoryTab === cat.id && { color: '#fff' }]}>
-              {cat.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll}>
+      {renderHero(true)}
+      {renderQuickInviteForm()}
 
       {isDesktop ? (
         <View style={styles.desktopGrid}>
-          {/* Left Column (~48% width) */}
-          <View style={styles.desktopColLeft}>
-            {renderProfileSummaryCard()}
-            {renderUserManualCard()}
-            {renderQuickInviteBox()}
-            {renderEditResponsesCard()}
-            {renderAccountActionsCard()}
+          <View style={styles.desktopCol}>
+            {renderSessions()}
+            {renderAgreements()}
+            <Section title="Cuenta">
+              <View style={styles.interactivePanel}>
+                {sessions.filter((s) => s.status === 'complete').length >= 2 ? (
+                  <Button
+                    title="Comparar parejas"
+                    variant="secondary"
+                    onPress={() => setShowPolyComparator(true)}
+                  />
+                ) : null}
+                <Button
+                  title="Tendencias de comunidad"
+                  variant="secondary"
+                  onPress={() => setShowTrendsModal(true)}
+                />
+                <Button title="Cerrar sesión" variant="ghost" onPress={handleLogout} />
+                <Button title="Borrado de pánico" variant="danger" onPress={handlePanicWipe} />
+              </View>
+            </Section>
           </View>
-
-          {/* Right Column (~52% width) */}
-          <View style={styles.desktopColRight}>
-            {renderHistoryCard()}
-            {renderSceneAgreementsCard()}
-            {renderCommunityToolsCard()}
-          </View>
+          <View style={styles.desktopCol}>{renderModules()}</View>
         </View>
       ) : (
         <>
-          {renderUserManualCard()}
-          {renderQuickInviteBox()}
-          {renderEditResponsesCard()}
-          {renderSceneAgreementsCard()}
-          {renderHistoryCard()}
-          <Button title="Cerrar Sesión" variant="ghost" onPress={handleLogout} />
-          {sessions.filter((s) => s.status === 'complete').length >= 2 ? (
-            <Button
-              title="👥 Comparar Parejas (Poli / Multi-Vínculo)"
-              variant="secondary"
-              onPress={() => setShowPolyComparator(true)}
-            />
-          ) : null}
-          <Button
-            title="📊 Radar de Tendencias de la Comunidad"
-            variant="secondary"
-            onPress={() => setShowTrendsModal(true)}
-          />
-          <Button
-            title="🛡️ Borrado de Emergencia / Pánico"
-            variant="ghost"
-            onPress={handlePanicWipe}
-            style={{ marginTop: spacing.sm }}
-          />
+          {renderSessions()}
+          {renderAgreements()}
+          <Section title="Cuenta">
+            <View style={styles.interactivePanel}>
+              {sessions.filter((s) => s.status === 'complete').length >= 2 ? (
+                <Button
+                  title="Comparar parejas"
+                  variant="secondary"
+                  onPress={() => setShowPolyComparator(true)}
+                />
+              ) : null}
+              <Button
+                title="Tendencias de comunidad"
+                variant="secondary"
+                onPress={() => setShowTrendsModal(true)}
+              />
+              <Button title="Cerrar sesión" variant="ghost" onPress={handleLogout} />
+              <Button title="Borrado de pánico" variant="danger" onPress={handlePanicWipe} />
+            </View>
+          </Section>
+          {renderModules()}
         </>
       )}
 
-      <PolyComparatorModal
-        visible={showPolyComparator}
-        onClose={() => setShowPolyComparator(false)}
-        sessions={sessions}
-        currentProfile={profile!}
+      {profile ? (
+        <PolyComparatorModal
+          visible={showPolyComparator}
+          onClose={() => setShowPolyComparator(false)}
+          sessions={sessions}
+          currentProfile={profile}
+        />
+      ) : null}
+      <CommunityTrendsModal visible={showTrendsModal} onClose={() => setShowTrendsModal(false)} />
+    </ScrollView>
+  );
+
+  return (
+    <SafeAreaView style={[styles.safe, webBg as any]} edges={['bottom']}>
+      <OnboardingOverlay onDone={() => {}} />
+      <RegisterProfileModal
+        visible={showRegisterModal}
+        onClose={() => setShowRegisterModal(false)}
+        onSuccess={() => loadHomeData()}
       />
-
-      <CommunityTrendsModal
-        visible={showTrendsModal}
-        onClose={() => setShowTrendsModal(false)}
+      <AgeVerificationModal />
+      <PWAInstallPromptModal
+        visible={showPWAInstallModal}
+        onClose={() => setShowPWAInstallModal(false)}
       />
-
-      {/* 🎨 Theme Switcher Modal */}
-      <Modal visible={showThemeModal} transparent animationType="fade" onRequestClose={() => setShowThemeModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowThemeModal(false)}>
-              <Text style={styles.modalCloseText}>✕</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>🎨 Apariencia & Temas Visuales</Text>
-            <Text style={styles.modalSub}>Selecciona la atmósfera visual de la aplicación:</Text>
-
-            <View style={{ gap: spacing.sm, width: '100%', marginVertical: spacing.md }}>
-              {[
-                { id: 'purple', name: '🟣 Morado Neón (Predeterminado Cyberpunk)', color: '#c084fc' },
-                { id: 'red', name: '🔴 Rojo Pasión (Elegante & Pasional)', color: '#ef4444' },
-                { id: 'cyan', name: '🔵 Azul Eléctrico (Sleek High-Tech)', color: '#38bdf8' },
-                { id: 'emerald', name: '🟢 Verde Esmeralda (Velvet Dark)', color: '#34d399' },
-              ].map((t) => (
-                <TouchableOpacity
-                  key={t.id}
-                  style={[
-                    styles.themeOptionRow,
-                    selectedTheme === t.id && { borderColor: t.color, backgroundColor: `${t.color}15` },
-                  ]}
-                  onPress={() => {
-                    setSelectedTheme(t.id as any);
-                    Alert.alert('Tema Actualizado 🎨', `Se ha aplicado el tema ${t.name}.`);
-                    setShowThemeModal(false);
-                  }}
-                >
-                  <View style={[styles.themeColorDot, { backgroundColor: t.color }]} />
-                  <Text style={[styles.themeOptionText, selectedTheme === t.id && { color: t.color, fontWeight: '800' }]}>
-                    {t.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Button title="Cerrar" variant="ghost" onPress={() => setShowThemeModal(false)} />
-          </View>
-        </View>
-      </Modal>
-
+      <AccessibilityModal visible={showA11yModal} onClose={() => setShowA11yModal(false)} />
       {debriefTarget ? (
         <SceneDebriefModal
           visible={Boolean(debriefTarget)}
@@ -1436,37 +823,10 @@ export default function HomeScreen() {
           }}
         />
       ) : null}
-
-      {/* 🔞 Age Verification Modal */}
-      <AgeVerificationModal />
-
-      {/* 📲 PWA Direct Installer Modal */}
-      <PWAInstallPromptModal
-        visible={showPWAInstallModal}
-        onClose={() => setShowPWAInstallModal(false)}
-      />
-
-      {/* ♿ Accessibility Settings Modal */}
-      <AccessibilityModal
-        visible={showA11yModal}
-        onClose={() => setShowA11yModal(false)}
-      />
-    </ScrollView>
-  );
-
-  return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <OnboardingOverlay onDone={() => {}} />
-      <RegisterProfileModal
-        visible={showRegisterModal}
-        onClose={() => setShowRegisterModal(false)}
-        onSuccess={() => loadHomeData()}
-      />
       {profile ? renderDashboard() : renderLanding()}
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   safe: {
@@ -1474,261 +834,107 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   scroll: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
     maxWidth: 1140,
     alignSelf: 'center',
     width: '100%',
   },
-  desktopGrid: {
-    flexDirection: 'row',
-    gap: 24,
-    alignItems: 'flex-start',
-    width: '100%',
-  },
-  desktopColLeft: {
-    flex: 48,
-    gap: spacing.lg,
-  },
-  desktopColRight: {
-    flex: 52,
-    gap: spacing.lg,
-  },
   hero: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.xxl,
+    paddingTop: spacing.md,
   },
-  emoji: {
-    fontSize: 48,
+  brand: {
+    fontFamily: fonts.display,
+    fontSize: fontSize.brand,
+    color: colors.text,
+    letterSpacing: 1.4,
+    lineHeight: 52,
+  },
+  mark: {
+    fontFamily: fonts.displayItalic,
+    fontSize: fontSize.md,
+    color: colors.primary,
+    letterSpacing: 3,
+    marginTop: -2,
     marginBottom: spacing.md,
   },
-  titleText: {
+  headline: {
+    fontFamily: fonts.displaySemi,
     fontSize: fontSize.xxl,
-    fontWeight: '800',
     color: colors.text,
-    marginBottom: spacing.xs,
+    letterSpacing: 0.2,
+    lineHeight: 36,
+    maxWidth: 520,
   },
-  tagline: {
-    color: colors.textMuted,
-    fontSize: fontSize.md,
-    textAlign: 'center',
-    lineHeight: 22,
+  heroSupport: {
+    ...typography.bodyMuted,
+    marginTop: spacing.sm,
+    maxWidth: 480,
   },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+  ctaGroup: {
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+    maxWidth: 360,
+  },
+  ctaPrimary: { width: '100%' },
+  ctaSecondary: { width: '100%' },
+  interactivePanel: {
     gap: spacing.md,
   },
-  cardTitle: {
-    color: colors.text,
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-  },
-  cardDesc: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    lineHeight: 20,
-  },
-  label: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    marginBottom: -4,
-  },
   input: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
     padding: spacing.md,
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
+    fontFamily: fonts.body,
     fontSize: fontSize.md,
   },
   inputInvite: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
     padding: spacing.md,
     color: colors.text,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
+    fontFamily: fonts.bodySemi,
     fontSize: fontSize.md,
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     textAlign: 'center',
   },
-  warning: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    textAlign: 'center',
-    marginTop: spacing.md,
-    lineHeight: 18,
+  textArea: {
+    minHeight: 72,
+    textAlignVertical: 'top',
+  },
+  label: {
+    ...typography.label,
+    marginBottom: -4,
   },
   profilesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-    marginVertical: spacing.xs,
   },
-  profileButton: {
-    backgroundColor: colors.surfaceLight,
+  profileChip: {
+    backgroundColor: colors.surface,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    borderRadius: 20,
+    borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  profileButtonActive: {
+  profileChipActive: {
     borderColor: colors.primary,
-    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+    backgroundColor: colors.accentSoft,
   },
-  profileButtonText: {
-    color: colors.text,
-    fontWeight: '600',
-    fontSize: fontSize.sm,
-  },
-  loginForm: {
-    gap: spacing.md,
-    marginTop: spacing.xs,
-  },
-  dashboardHeader: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    gap: 4,
-  },
-  welcomeText: {
-    fontSize: fontSize.xl,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  pronounsBadge: {
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
-  },
-  expBadge: {
-    fontSize: fontSize.xs,
-    color: colors.primaryLight,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  formRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.xs,
-  },
-  textArea: {
-    minHeight: 60,
-    textAlignVertical: 'top',
-  },
-  quickInviteForm: {
-    gap: spacing.md,
-  },
-  sessionsList: {
-    gap: spacing.sm,
-  },
-  sessionCard: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  sessionCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xs,
-  },
-  sessionCardBody: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  sessionStatusBadge: {
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-  },
-  sessionStatusText: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  sessionTime: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-  },
-  sessionInfo: {
-    flex: 2,
-  },
-  sessionPartner: {
+  profileChipText: {
+    fontFamily: fonts.bodySemi,
     color: colors.text,
     fontSize: fontSize.sm,
-    fontWeight: '600',
   },
-  sessionDetails: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  sessionActions: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  sessionActionBtn: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-
-  // Scene Agreement styles
-  sceneAgreementGroup: {
-    marginTop: spacing.sm,
-    gap: spacing.xs,
-  },
-  sceneAgreementPartner: {
-    color: colors.neonPurple,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  sceneAgreementRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 10,
-    padding: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  sceneAgreementInfo: {
-    flex: 1,
-  },
-  sceneAgreementActivity: {
-    color: colors.text,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  sceneAgreementSafewords: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  sceneAgreementArrow: {
-    color: colors.textMuted,
-    fontSize: 22,
-    paddingLeft: spacing.sm,
-  },
-
-  // Expiry picker chips
   expiryRow: {
     flexDirection: 'row',
     gap: spacing.xs,
@@ -1737,161 +943,112 @@ const styles = StyleSheet.create({
   expiryChip: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
-    borderRadius: 20,
+    borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.surface,
   },
   expiryChipActive: {
-    borderColor: colors.warning,
-    backgroundColor: 'rgba(251, 191, 36, 0.12)',
+    borderColor: colors.primary,
+    backgroundColor: colors.accentSoft,
   },
   expiryChipText: {
+    fontFamily: fonts.body,
     color: colors.textMuted,
     fontSize: fontSize.xs,
-    fontWeight: '600',
   },
   expiryChipTextActive: {
-    color: colors.warning,
-    fontWeight: '700',
+    color: colors.primary,
+    fontFamily: fonts.bodySemi,
   },
-
-  quickProfileCard: {
-    backgroundColor: 'rgba(192, 132, 252, 0.1)',
-    borderRadius: 16,
-    marginBottom: spacing.lg,
-    borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.4)',
-    overflow: 'hidden',
-  },
-  quickProfileInner: {
+  formRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
     gap: spacing.md,
   },
-  quickProfileEmoji: {
-    fontSize: 32,
-  },
-  quickProfileText: {
-    flex: 1,
-  },
-  quickProfileTitle: {
-    color: colors.text,
-    fontSize: fontSize.lg,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  quickProfileDesc: {
-    color: colors.neonPurple,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  quickProfileArrow: {
-    color: colors.neonPurple,
-    fontSize: 28,
-    fontWeight: '300',
-  },
-
-  // Theme Switcher Styles
-  themeOptionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
-    padding: spacing.md,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    gap: spacing.md,
-  },
-  themeColorDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
-  themeOptionText: {
-    color: colors.text,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    flex: 1,
-  },
-  manualActionButton: {
-    backgroundColor: 'rgba(192, 132, 252, 0.2)',
-    paddingVertical: spacing.xs + 2,
-    paddingHorizontal: spacing.sm + 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.5)',
-    alignSelf: 'center',
-  },
-  categoryFilterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginVertical: spacing.xs,
-    justifyContent: 'center',
-  },
-  categoryFilterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    backgroundColor: 'rgba(30, 20, 51, 0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
-  },
-  categoryFilterChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  categoryFilterChipText: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
-  },
-  manualActionButtonText: {
-    color: colors.text,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(10, 6, 18, 0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.md,
-  },
-  modalCard: {
+  sessionsList: { gap: spacing.sm },
+  sessionCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: spacing.lg,
-    width: '100%',
-    maxWidth: 480,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
+    borderColor: colors.borderSubtle,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
-  modalCloseBtn: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    zIndex: 10,
-    padding: spacing.xs,
-  },
-  modalCloseText: {
-    color: colors.textMuted,
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-  },
-  modalTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '800',
-    color: colors.text,
-    marginTop: spacing.xs,
+  sessionCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: spacing.xs,
   },
-  modalSub: {
-    fontSize: fontSize.sm,
+  sessionStatus: {
+    fontFamily: fonts.bodySemi,
+    fontSize: fontSize.xs,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  sessionCode: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.xs,
     color: colors.textMuted,
+    letterSpacing: 1,
+  },
+  sessionPartner: {
+    fontFamily: fonts.bodySemi,
+    color: colors.text,
+    fontSize: fontSize.md,
+    marginBottom: spacing.sm,
+  },
+  sessionActions: { alignItems: 'flex-start' },
+  sessionActionBtn: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  agreementGroup: { marginBottom: spacing.md, gap: spacing.xs },
+  agreementPartner: {
+    ...typography.label,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+  },
+  agreementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  agreementActivity: {
+    fontFamily: fonts.bodySemi,
+    color: colors.text,
+    fontSize: fontSize.sm,
+  },
+  agreementSafewords: {
+    fontFamily: fonts.body,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    marginTop: 2,
+  },
+  linkAction: {
+    fontFamily: fonts.bodySemi,
+    color: colors.primary,
+    fontSize: fontSize.xs,
+  },
+  desktopGrid: {
+    flexDirection: 'row',
+    gap: spacing.xl,
+    alignItems: 'flex-start',
+  },
+  desktopCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  footnote: {
+    fontFamily: fonts.body,
+    color: colors.textDim,
+    fontSize: fontSize.xs,
     textAlign: 'center',
+    marginTop: spacing.lg,
+    lineHeight: 18,
   },
 });

@@ -10,10 +10,19 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { Button } from '@/components/Button';
+import { AppHeader } from '@/components/AppHeader';
+import {
+  colors,
+  fonts,
+  fontSize,
+  radii,
+  spacing,
+  typography,
+} from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import { saveProfile, getCurrentProfile } from '@/lib/storage';
+import { saveProfile } from '@/lib/storage';
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -27,17 +36,16 @@ export default function AuthScreen() {
 
   const handleSignIn = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Campos Incompletos', 'Ingresa tu correo y contraseña.');
+      Alert.alert('Campos incompletos', 'Ingresa tu correo y contraseña.');
       return;
     }
 
     setLoading(true);
     try {
       if (!isSupabaseConfigured || !supabase) {
-        // Fallback local sign in simulator
         const nick = email.split('@')[0];
         await saveProfile({ nickname: nick, notes: 'Cuenta verificada localmente' });
-        Alert.alert('¡Sesión Iniciada! 🔐', `Bienvenido/a de vuelta, ${nick}.`);
+        Alert.alert('Sesión iniciada', `Bienvenido/a de vuelta, ${nick}.`);
         router.replace('/');
         return;
       }
@@ -52,10 +60,10 @@ export default function AuthScreen() {
       const nick = data.user?.user_metadata?.nickname || email.split('@')[0];
       await saveProfile({ nickname: nick });
 
-      Alert.alert('¡Sesión Iniciada! 🔐', `Bienvenido/a, ${nick}. Bóveda cifrada activa.`);
+      Alert.alert('Sesión iniciada', `Bienvenido/a, ${nick}. Bóveda cifrada activa.`);
       router.replace('/');
     } catch (err: any) {
-      Alert.alert('Error de Autenticación', err.message || 'No se pudo iniciar sesión.');
+      Alert.alert('Error de autenticación', err.message || 'No se pudo iniciar sesión.');
     } finally {
       setLoading(false);
     }
@@ -63,12 +71,12 @@ export default function AuthScreen() {
 
   const handleSignUp = async () => {
     if (!email.trim() || !password.trim() || !nickname.trim()) {
-      Alert.alert('Campos Incompletos', 'Por favor llena todos los campos incluyendo tu apodo.');
+      Alert.alert('Campos incompletos', 'Llena todos los campos incluyendo tu apodo.');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Contraseña Débil', 'La contraseña debe tener al menos 6 caracteres.');
+      Alert.alert('Contraseña débil', 'La contraseña debe tener al menos 6 caracteres.');
       return;
     }
 
@@ -76,12 +84,12 @@ export default function AuthScreen() {
     try {
       if (!isSupabaseConfigured || !supabase) {
         await saveProfile({ nickname: nickname.trim() });
-        Alert.alert('¡Cuenta Creada! 🎉', `Bienvenido/a, ${nickname}. Modo local cifrado listo.`);
+        Alert.alert('Cuenta creada', `Bienvenido/a, ${nickname}. Modo local listo.`);
         router.replace('/');
         return;
       }
 
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -92,10 +100,10 @@ export default function AuthScreen() {
       if (error) throw error;
 
       await saveProfile({ nickname: nickname.trim() });
-      Alert.alert('¡Registro Exitoso! 📩', 'Verifica tu correo para confirmar tu cuenta.');
+      Alert.alert('Registro exitoso', 'Verifica tu correo para confirmar tu cuenta.');
       router.replace('/');
     } catch (err: any) {
-      Alert.alert('Error de Registro', err.message || 'No se pudo crear la cuenta.');
+      Alert.alert('Error de registro', err.message || 'No se pudo crear la cuenta.');
     } finally {
       setLoading(false);
     }
@@ -103,14 +111,14 @@ export default function AuthScreen() {
 
   const handleMagicLink = async () => {
     if (!email.trim()) {
-      Alert.alert('Email Requerido', 'Ingresa tu correo para enviarte el enlace de acceso.');
+      Alert.alert('Email requerido', 'Ingresa tu correo para enviarte el enlace.');
       return;
     }
 
     setLoading(true);
     try {
       if (!isSupabaseConfigured || !supabase) {
-        Alert.alert('Enlace Enviado 📩', 'Verifica tu bandeja de entrada.');
+        Alert.alert('Enlace enviado', 'Verifica tu bandeja de entrada.');
         return;
       }
 
@@ -120,7 +128,7 @@ export default function AuthScreen() {
 
       if (error) throw error;
 
-      Alert.alert('Enlace Enviado 📩', 'Te hemos enviado un enlace mágico a tu correo para acceder sin contraseña.');
+      Alert.alert('Enlace enviado', 'Te enviamos un enlace mágico para acceder sin contraseña.');
     } catch (err: any) {
       Alert.alert('Error', err.message || 'No se pudo enviar el enlace.');
     } finally {
@@ -130,189 +138,165 @@ export default function AuthScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={[styles.container, isDesktop && styles.containerDesktop]}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>← Volver</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>🔐 Cuentas de Usuario & Bóveda Cifrada</Text>
-          <Text style={styles.subtitle}>
-            Acceso seguro con cifrado Zero-Knowledge End-to-End para respaldar tus respuestas
-          </Text>
-        </View>
+      <ScrollView
+        contentContainerStyle={[styles.container, isDesktop && styles.containerDesktop]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backBtnText}>← Volver</Text>
+        </TouchableOpacity>
 
-        {/* Mode Selector Tabs */}
+        <AppHeader
+          brand
+          title="Cuenta y bóveda"
+          subtitle="Clave AES-GCM-256 derivada con PBKDF2-SHA-256 (~310k). El servidor solo ve ciphertext."
+        />
+
         <View style={styles.tabsRow}>
-          <TouchableOpacity
-            style={[styles.tab, mode === 'signin' && styles.tabActive]}
-            onPress={() => setMode('signin')}
-          >
-            <Text style={[styles.tabText, mode === 'signin' && styles.tabTextActive]}>Iniciar Sesión</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tab, mode === 'signup' && styles.tabActive]}
-            onPress={() => setMode('signup')}
-          >
-            <Text style={[styles.tabText, mode === 'signup' && styles.tabTextActive]}>Crear Cuenta</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tab, mode === 'magic' && styles.tabActive]}
-            onPress={() => setMode('magic')}
-          >
-            <Text style={[styles.tabText, mode === 'magic' && styles.tabTextActive]}>Magic Link ✉️</Text>
-          </TouchableOpacity>
+          {(
+            [
+              { id: 'signin' as const, label: 'Entrar' },
+              { id: 'signup' as const, label: 'Crear' },
+              { id: 'magic' as const, label: 'Magic link' },
+            ] as const
+          ).map((t) => (
+            <TouchableOpacity
+              key={t.id}
+              style={[styles.tab, mode === t.id && styles.tabActive]}
+              onPress={() => setMode(t.id)}
+            >
+              <Text style={[styles.tabText, mode === t.id && styles.tabTextActive]}>{t.label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Auth Form Card */}
-        <View style={styles.card}>
-          {mode === 'signup' && (
+        <View style={styles.form}>
+          {mode === 'signup' ? (
             <>
-              <Text style={styles.fieldLabel}>Apodo / Nickname Público *</Text>
+              <Text style={styles.fieldLabel}>Apodo público</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Ej: Alex_Kink"
-                placeholderTextColor={colors.textMuted}
+                placeholder="Ej: Alex"
+                placeholderTextColor={colors.textDim}
                 value={nickname}
                 onChangeText={setNickname}
               />
             </>
-          )}
+          ) : null}
 
-          <Text style={styles.fieldLabel}>Correo Electrónico *</Text>
+          <Text style={styles.fieldLabel}>Correo</Text>
           <TextInput
             style={styles.input}
             placeholder="usuario@ejemplo.com"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={colors.textDim}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
           />
 
-          {mode !== 'magic' && (
+          {mode !== 'magic' ? (
             <>
-              <Text style={styles.fieldLabel}>Contraseña *</Text>
+              <Text style={styles.fieldLabel}>Contraseña</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Mínimo 6 caracteres"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={colors.textDim}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
               />
             </>
-          )}
+          ) : null}
 
-          <View style={styles.privacyBadge}>
-            <Text style={styles.privacyText}>
-              🛡️ **Bóveda Zero-Knowledge**: Tus respuestas a las 158+ actividades se cifran localmente en tu dispositivo con clave AES-256 antes de guardarse.
-            </Text>
-          </View>
+          <Text style={styles.privacyNote}>
+            Bóveda Zero-Knowledge: las respuestas sensibles se cifran en el dispositivo antes de
+            guardarse. PBKDF2 + AES-GCM — no Argon2 (WebCrypto).
+          </Text>
 
-          {mode === 'signin' && (
-            <TouchableOpacity
-              style={[styles.btnPrimary, loading && { opacity: 0.6 }]}
+          {mode === 'signin' ? (
+            <Button
+              title={loading ? 'Entrando…' : 'Entrar a mi bóveda'}
               onPress={handleSignIn}
               disabled={loading}
-            >
-              <Text style={styles.btnPrimaryText}>{loading ? 'Iniciando Sesión...' : 'Entrar a Mi Bóveda 🔐'}</Text>
-            </TouchableOpacity>
-          )}
-
-          {mode === 'signup' && (
-            <TouchableOpacity
-              style={[styles.btnPrimary, loading && { opacity: 0.6 }]}
+            />
+          ) : null}
+          {mode === 'signup' ? (
+            <Button
+              title={loading ? 'Creando…' : 'Registrar y crear bóveda'}
               onPress={handleSignUp}
               disabled={loading}
-            >
-              <Text style={styles.btnPrimaryText}>{loading ? 'Creando Cuenta...' : 'Registrar Cuenta & Crear Bóveda 🚀'}</Text>
-            </TouchableOpacity>
-          )}
-
-          {mode === 'magic' && (
-            <TouchableOpacity
-              style={[styles.btnPrimary, loading && { opacity: 0.6 }]}
+            />
+          ) : null}
+          {mode === 'magic' ? (
+            <Button
+              title={loading ? 'Enviando…' : 'Enviar enlace mágico'}
               onPress={handleMagicLink}
               disabled={loading}
-            >
-              <Text style={styles.btnPrimaryText}>{loading ? 'Enviando Enlace...' : 'Enviar Enlace Mágico a Mi Correo ✉️'}</Text>
-            </TouchableOpacity>
-          )}
+            />
+          ) : null}
 
-          <TouchableOpacity style={styles.anonBtn} onPress={() => router.replace('/')}>
-            <Text style={styles.anonBtnText}>Continuar en Modo Anónimo Local 📲</Text>
-          </TouchableOpacity>
+          <Button title="Continuar en modo local" variant="ghost" onPress={() => router.replace('/')} />
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  container: { flex: 1, paddingHorizontal: spacing.md },
-  containerDesktop: { maxWidth: 540, alignSelf: 'center', width: '100%' },
-
-  header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
-  backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
-
-  tabsRow: { flexDirection: 'row', gap: 4, marginVertical: spacing.sm },
+  container: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxl,
+    paddingTop: spacing.md,
+  },
+  containerDesktop: { maxWidth: 520, alignSelf: 'center', width: '100%' },
+  backBtn: { alignSelf: 'flex-start', marginBottom: spacing.sm },
+  backBtnText: {
+    fontFamily: fonts.bodySemi,
+    color: colors.primary,
+    fontSize: fontSize.sm,
+  },
+  tabsRow: { flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.lg },
   tab: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceLight,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
   },
-  tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  tabText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
-  tabTextActive: { color: '#fff' },
-
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: spacing.lg,
-    borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
-    gap: spacing.md,
+  tabActive: {
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.primary,
   },
-  fieldLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  tabText: {
+    fontFamily: fonts.bodySemi,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+  },
+  tabTextActive: { color: colors.primary },
+  form: { gap: spacing.md },
+  fieldLabel: { ...typography.label },
   input: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     color: colors.text,
+    fontFamily: fonts.body,
     fontSize: fontSize.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
-
-  privacyBadge: {
-    backgroundColor: 'rgba(74, 222, 128, 0.1)',
-    borderWidth: 1,
-    borderColor: colors.success,
-    borderRadius: 12,
+  privacyNote: {
+    ...typography.bodyMuted,
+    fontSize: fontSize.sm,
+    backgroundColor: colors.accentSoft,
+    borderRadius: radii.md,
     padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
   },
-  privacyText: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
-
-  btnPrimary: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  btnPrimaryText: { color: '#fff', fontSize: fontSize.md, fontWeight: '800' },
-
-  anonBtn: { alignItems: 'center', paddingVertical: spacing.xs },
-  anonBtnText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '600' },
 });

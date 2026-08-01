@@ -10,20 +10,22 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import { Activity, ActivityResponse, ExperienceLevel, Rating, RolePreference } from '@/types';
 import { QUICK_PROFILE_ACTIVITIES } from '@/data/quickProfile';
 import { createSession } from '@/lib/sessions';
 import { saveProfile, getCurrentProfile, setCurrentProfile, getProfile } from '@/lib/storage';
 import { PronounsPicker } from '@/components/PronounsPicker';
 import { ExperiencePicker } from '@/components/ExperiencePicker';
+import { AppHeader } from '@/components/AppHeader';
+import { Button } from '@/components/Button';
 
-const RATING_OPTIONS: { label: string; value: Rating; emoji: string; color: string }[] = [
-  { label: 'Límite duro', value: 'hard_limit', emoji: '🚫', color: '#f87171' },
-  { label: 'No me interesa', value: 'not_interested', emoji: '😐', color: '#94a3b8' },
-  { label: 'Curiosidad', value: 'curious', emoji: '🤔', color: '#fbbf24' },
-  { label: 'Me gusta', value: 'like', emoji: '😊', color: '#60a5fa' },
-  { label: 'Me encanta', value: 'love', emoji: '🔥', color: '#c084fc' },
+const RATING_OPTIONS: { label: string; value: Rating; color: string }[] = [
+  { label: 'Límite duro', value: 'hard_limit', color: colors.danger },
+  { label: 'No me interesa', value: 'not_interested', color: colors.textMuted },
+  { label: 'Curiosidad', value: 'curious', color: colors.warning },
+  { label: 'Me gusta', value: 'like', color: colors.info },
+  { label: 'Me encanta', value: 'love', color: colors.primary },
 ];
 
 const ROLE_OPTIONS: { label: string; value: RolePreference }[] = [
@@ -91,20 +93,47 @@ export default function QuickProfileScreen() {
       const finalResponses = Object.values(responses);
       const cleanNick = nickname.trim();
       const existing = await getProfile(cleanNick);
+      const pinValue = pin.trim();
 
-      // Save profile locally
-      const profile = {
-        nickname: cleanNick,
-        pronouns: pronouns || existing?.pronouns || undefined,
-        experienceLevel: experienceLevel || existing?.experienceLevel,
-        pin: pin.trim() || existing?.pin || undefined,
-        baseResponses: finalResponses,
-        createdSessionIds: existing?.createdSessionIds ?? [],
-        receivedSessionIds: existing?.receivedSessionIds ?? [],
-        isQuickProfile: true, // flag indicating it can be expanded
-      };
-      await saveProfile(profile as any);
-      await setCurrentProfile(cleanNick);
+      if (!existing && pinValue.length >= 4) {
+        const { registerProfile } = await import('@/lib/storage');
+        await registerProfile({
+          nickname: cleanNick,
+          pin: pinValue,
+          pronouns: pronouns || undefined,
+          experienceLevel: experienceLevel || undefined,
+          baseResponses: finalResponses,
+          createdSessionIds: [],
+          receivedSessionIds: [],
+        });
+      } else if (existing && pinValue.length >= 4 && !existing.pinSalt) {
+        const { setupVaultForNewProfile, VAULT_VERSION } = await import('@/lib/cryptoVault');
+        const meta = await setupVaultForNewProfile(cleanNick, pinValue);
+        await saveProfile({
+          ...existing,
+          pin: undefined,
+          pinSalt: meta.saltB64,
+          pinVerifier: meta.verifierB64,
+          vaultVersion: VAULT_VERSION,
+          pronouns: pronouns || existing.pronouns,
+          experienceLevel: experienceLevel || existing.experienceLevel,
+          baseResponses: finalResponses,
+        });
+        await setCurrentProfile(cleanNick);
+      } else {
+        await saveProfile({
+          nickname: cleanNick,
+          pronouns: pronouns || existing?.pronouns || undefined,
+          experienceLevel: experienceLevel || existing?.experienceLevel,
+          pinSalt: existing?.pinSalt,
+          pinVerifier: existing?.pinVerifier,
+          vaultVersion: existing?.vaultVersion,
+          baseResponses: finalResponses,
+          createdSessionIds: existing?.createdSessionIds ?? [],
+          receivedSessionIds: existing?.receivedSessionIds ?? [],
+        } as any);
+        await setCurrentProfile(cleanNick);
+      }
 
       // Mark onboarding as seen
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
@@ -128,15 +157,15 @@ export default function QuickProfileScreen() {
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.heroSection}>
-            <Text style={styles.heroEmoji}>⚡</Text>
-            <Text style={styles.heroTitle}>Perfil Rápido</Text>
-            <Text style={styles.heroDesc}>
-              Solo 10 preguntas clave. En menos de 2 minutos tendrás tu perfil listo para invitar a alguien.
-            </Text>
+            <AppHeader
+              brand
+              title="Perfil rápido"
+              subtitle="Solo 10 preguntas clave. En menos de 2 minutos tendrás tu perfil listo para invitar."
+            />
             <View style={styles.pillRow}>
-              <View style={styles.pill}><Text style={styles.pillText}>⏱ ~2 minutos</Text></View>
-              <View style={styles.pill}><Text style={styles.pillText}>🔐 100% privado</Text></View>
-              <View style={styles.pill}><Text style={styles.pillText}>✨ Ampliable luego</Text></View>
+              <View style={styles.pill}><Text style={styles.pillText}>~2 minutos</Text></View>
+              <View style={styles.pill}><Text style={styles.pillText}>Privado</Text></View>
+              <View style={styles.pill}><Text style={styles.pillText}>Ampliable luego</Text></View>
             </View>
           </View>
 
@@ -205,8 +234,7 @@ export default function QuickProfileScreen() {
                   style={[styles.ratingBtn, selected && { borderColor: opt.color, backgroundColor: `${opt.color}18` }]}
                   onPress={() => setRating(opt.value)}
                 >
-                  <Text style={styles.ratingEmoji}>{opt.emoji}</Text>
-                  <Text style={[styles.ratingLabel, selected && { color: opt.color, fontWeight: '700' }]}>
+                  <Text style={[styles.ratingLabel, selected && { color: opt.color }]}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -334,66 +362,59 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pill: {
-    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    backgroundColor: colors.accentSoft,
     paddingVertical: 5,
     paddingHorizontal: spacing.sm,
-    borderRadius: 20,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
   },
   pillText: {
-    color: colors.neonPurple,
+    color: colors.primary,
     fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontFamily: fonts.bodySemi,
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.lg,
     marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   fieldLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...typography.label,
   },
   input: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 10,
+    backgroundColor: colors.backgroundMid,
+    borderRadius: radii.md,
     padding: spacing.md,
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
+    fontFamily: fonts.body,
     fontSize: fontSize.md,
   },
   pinInput: {
     fontSize: 24,
     textAlign: 'center',
     letterSpacing: 8,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
   },
   pinHint: {
     color: colors.textMuted,
     fontSize: fontSize.xs,
     textAlign: 'center',
     lineHeight: 18,
+    fontFamily: fonts.body,
   },
   primaryBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md + 2,
-    borderRadius: 14,
+    borderRadius: radii.md,
     alignItems: 'center',
     marginBottom: spacing.md,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
   },
   primaryBtnSmall: {
     backgroundColor: colors.primary,

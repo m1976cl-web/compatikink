@@ -7,9 +7,9 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface KinkEvent {
@@ -89,14 +89,14 @@ export default function EventsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🗓️ Directorio de Eventos & Munches</Text>
+          <Text style={styles.title}>Directorio de Eventos & Munches</Text>
           <Text style={styles.subtitle}>
             Calendario de reuniones sociales, talleres presenciales de Shibari y webinars de consentimiento
           </Text>
@@ -156,7 +156,7 @@ export default function EventsScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -167,12 +167,12 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   filterScroll: { gap: 6, marginVertical: spacing.xs },
-  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
+  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.lg, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
   filterChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   filterChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
   filterChipTextActive: { color: '#fff' },
@@ -181,23 +181,23 @@ const styles = StyleSheet.create({
 
   eventCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   eventHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  typeBadge: { color: colors.neonPink, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  typeBadge: { color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   eventTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900', marginTop: 2 },
-  attendeesText: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '800' },
+  attendeesText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
 
-  metaBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 12, gap: 4 },
+  metaBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.md, gap: 4 },
   metaItem: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
 
   eventDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
 
-  rsvpBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  rsvpBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   rsvpBtnActive: { backgroundColor: 'rgba(74, 222, 128, 0.15)', borderWidth: 1, borderColor: colors.success },
   rsvpBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 });

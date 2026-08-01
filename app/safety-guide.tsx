@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface SafetyTopic {
@@ -115,14 +115,14 @@ export default function SafetyGuideScreen() {
     : SAFETY_TOPICS.filter((t) => t.category === selectedCategory);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>📚 Guía de Seguridad & Salud Kink</Text>
+          <Text style={styles.title}>Guía de Seguridad & Salud Kink</Text>
           <Text style={styles.subtitle}>
             Protocolos de mitigación de riesgos, prevención de lesiones y primeros auxilios
           </Text>
@@ -186,7 +186,7 @@ export default function SafetyGuideScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -210,9 +210,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   filterBar: {
     maxHeight: 40,
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   catChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     backgroundColor: colors.surfaceLight,
     marginRight: 6,
     borderWidth: 1,
@@ -247,10 +247,10 @@ const styles = StyleSheet.create({
   },
   topicCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.25)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   topicHeader: {
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     fontSize: 40,
   },
   topicTitle: {
-    color: colors.neonPurple,
+    color: colors.primary,
     fontSize: fontSize.lg,
     fontWeight: '900',
   },
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(251, 191, 36, 0.1)',
     borderWidth: 1,
     borderColor: colors.warning,
-    borderRadius: 12,
+    borderRadius: radii.md,
     padding: spacing.md,
     gap: 4,
   },

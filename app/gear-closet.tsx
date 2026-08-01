@@ -8,10 +8,10 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 export interface GearItem {
@@ -82,14 +82,14 @@ export default function GearClosetScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🧰 Inventario de Equipamiento (Gear Closet)</Text>
+          <Text style={styles.title}>Inventario de Equipamiento (Gear Closet)</Text>
           <Text style={styles.subtitle}>
             Administra tus accesorios, cuerdas y herramientas de seguridad para vincular a escenas
           </Text>
@@ -179,7 +179,7 @@ export default function GearClosetScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -190,15 +190,15 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   addTriggerBtn: {
     backgroundColor: colors.surfaceLight,
     borderWidth: 1.5,
     borderColor: colors.primary,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginVertical: spacing.sm,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
 
   formCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   formTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
   input: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 12,
+    borderRadius: radii.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     color: colors.text,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: radii.md,
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.border,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   list: { gap: spacing.sm, paddingTop: spacing.xs },
   gearCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  gearName: { color: colors.neonPurple, fontSize: fontSize.md, fontWeight: '800' },
+  gearName: { color: colors.primary, fontSize: fontSize.md, fontWeight: '800' },
   gearCategory: { color: colors.textMuted, fontSize: fontSize.xs, marginTop: 2 },
   condBadge: { marginTop: 4 },
   condText: { color: colors.text, fontSize: fontSize.xs, fontWeight: '600' },

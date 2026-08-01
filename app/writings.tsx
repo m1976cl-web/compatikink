@@ -8,9 +8,9 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface Writing {
@@ -72,14 +72,14 @@ export default function WritingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>✍️ Blog Personal & Escritos Kink</Text>
+          <Text style={styles.title}>Blog Personal & Escritos Kink</Text>
           <Text style={styles.subtitle}>
             Espacio de expresión personal estilo FetLife Writings para redactar diarios de escena, poesía erótica y reflexiones
           </Text>
@@ -144,7 +144,7 @@ export default function WritingsScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -155,28 +155,28 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
-  createCard: { backgroundColor: colors.surface, borderRadius: 20, padding: spacing.lg, borderWidth: 1.5, borderColor: 'rgba(192, 132, 252, 0.4)', gap: spacing.sm },
+  createCard: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, borderWidth: 1.5, borderColor: colors.borderSubtle, gap: spacing.sm },
   createTitle: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
-  input: { backgroundColor: colors.surfaceLight, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: 10, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
+  input: { backgroundColor: colors.surfaceLight, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: 10, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
   textArea: { height: 90, textAlignVertical: 'top' },
 
   catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  catChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
+  catChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: radii.md, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
   catChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   catChipText: { color: colors.textMuted, fontSize: 10, fontWeight: '800' },
 
-  publishBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  publishBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   publishBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '900' },
 
-  card: { backgroundColor: colors.surface, borderRadius: 20, padding: spacing.lg, borderWidth: 1.5, borderColor: 'rgba(192, 132, 252, 0.3)', gap: spacing.xs },
+  card: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, borderWidth: 1.5, borderColor: colors.borderSubtle, gap: spacing.xs },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  catBadge: { color: colors.neonPink, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  catBadge: { color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   privacyBadge: { color: colors.success, fontSize: 10, fontWeight: '800' },
   cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900', marginTop: 2 },
   cardDesc: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },

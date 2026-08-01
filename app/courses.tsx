@@ -7,9 +7,9 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface Course {
@@ -92,14 +92,14 @@ export default function CoursesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🎓 Kink Academy & Cursos</Text>
+          <Text style={styles.title}>Kink Academy & Cursos</Text>
           <Text style={styles.subtitle}>
             Módulos educativos guiados con lecciones prácticas, prevención de riesgos y quizzes de certificación
           </Text>
@@ -166,7 +166,7 @@ export default function CoursesScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -177,18 +177,18 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
   courseCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   courseHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
@@ -196,15 +196,15 @@ const styles = StyleSheet.create({
   courseTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900', marginTop: 2 },
   courseDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
 
-  startBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  startBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   startBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 
-  lessonTitle: { color: colors.neonPurple, fontSize: fontSize.md, fontWeight: '800' },
-  lessonContent: { color: colors.text, fontSize: fontSize.xs, lineHeight: 20, backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 14 },
+  lessonTitle: { color: colors.primary, fontSize: fontSize.md, fontWeight: '800' },
+  lessonContent: { color: colors.text, fontSize: fontSize.xs, lineHeight: 20, backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.lg },
 
-  quizBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 14, gap: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  quizBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.lg, gap: spacing.sm, borderWidth: 1, borderColor: colors.border },
   quizQuestion: { color: colors.warning, fontSize: fontSize.xs, fontWeight: '800' },
-  quizOpt: { backgroundColor: colors.surface, padding: spacing.md, borderRadius: 12, borderWidth: 1, borderColor: colors.border },
+  quizOpt: { backgroundColor: colors.surface, padding: spacing.md, borderRadius: radii.md, borderWidth: 1, borderColor: colors.border },
   quizOptSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   quizOptText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
   quizOptTextSelected: { color: '#fff' },

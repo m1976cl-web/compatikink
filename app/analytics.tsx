@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { SceneDebrief } from '@/lib/storage';
 
@@ -63,14 +63,14 @@ export default function AnalyticsScreen() {
   }, [allDebriefs]);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>📈 Analítica Emocional & Subspace Tracker</Text>
+          <Text style={styles.title}>Analítica Emocional & Subspace Tracker</Text>
           <Text style={styles.subtitle}>
             Monitoreo histórico de satisfacción, frecuencia de subspace y efectividad del aftercare
           </Text>
@@ -112,7 +112,7 @@ export default function AnalyticsScreen() {
                         <Text style={{ color: colors.text, fontSize: fontSize.xs, fontWeight: '700' }}>
                           {emotion}
                         </Text>
-                        <Text style={{ color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '800' }}>
+                        <Text style={{ color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' }}>
                           {count} veces ({pct}%)
                         </Text>
                       </View>
@@ -136,7 +136,7 @@ export default function AnalyticsScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -147,43 +147,43 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
   metricsRow: { flexDirection: 'row', gap: spacing.xs },
   metricCard: {
     flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.md,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
-  metricValue: { color: colors.neonPurple, fontSize: fontSize.xl, fontWeight: '900' },
+  metricValue: { color: colors.primary, fontSize: fontSize.xl, fontWeight: '900' },
   metricLabel: { color: colors.textMuted, fontSize: 10, fontWeight: '700', textAlign: 'center', marginTop: 2 },
 
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
   emptyText: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
 
   infoBox: {
-    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    backgroundColor: colors.accentSoft,
     borderWidth: 1,
     borderColor: colors.primary,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.md,
     gap: 4,
   },
-  infoTitle: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '800' },
+  infoTitle: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
   infoText: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
 });

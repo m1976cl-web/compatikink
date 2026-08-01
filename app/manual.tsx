@@ -8,9 +8,9 @@ import {
   View,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing, glowShadowPrimary } from '@/constants/theme';
+import { colors, fontSize, spacing, glowShadowPrimary, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import {
   MANUAL_AREAS,
@@ -98,7 +98,7 @@ export default function UserManualScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={styles.root}>
         {/* Top Header Bar */}
         <View style={styles.headerBar}>
@@ -111,7 +111,7 @@ export default function UserManualScreen() {
           </TouchableOpacity>
 
           <View style={styles.headerTitleGroup}>
-            <Text style={styles.mainTitle}>📖 Manual de Usuario</Text>
+            <Text style={styles.mainTitle}>Manual de Usuario</Text>
             <Text style={styles.mainSubtitle}>
               Guía interactiva, tutoriales paso a paso y protocolos BDSM de seguridad
             </Text>
@@ -472,7 +472,7 @@ export default function UserManualScreen() {
           </ScrollView>
         )}
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -670,9 +670,9 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   mainTitle: {
+    fontFamily: fonts.displaySemi,
     color: colors.text,
     fontSize: fontSize.xl,
-    fontWeight: '900',
     letterSpacing: -0.5,
   },
   mainSubtitle: {
@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryDark,
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
-    borderRadius: 12,
+    borderRadius: radii.md,
     marginVertical: spacing.xs,
     alignItems: 'center',
     borderWidth: 1,
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     borderWidth: 1.5,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
@@ -755,7 +755,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: radii.md,
     backgroundColor: colors.surface,
     marginBottom: 6,
     borderWidth: 1,
@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   sidebarCategoryItemActive: {
-    backgroundColor: 'rgba(192, 132, 252, 0.18)',
+    backgroundColor: colors.accentSoft,
     borderColor: colors.primary,
     ...glowShadowPrimary(0.3),
   },
@@ -806,7 +806,7 @@ const styles = StyleSheet.create({
   /* Export Action Cards */
   exportCard: {
     backgroundColor: colors.surface,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
   },
   exportCardMobile: {
     backgroundColor: colors.surface,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   exportCardTitle: {
-    color: colors.neonPurple,
+    color: colors.primary,
     fontSize: fontSize.xs,
     fontWeight: '800',
     marginBottom: 4,
@@ -877,14 +877,14 @@ const styles = StyleSheet.create({
   mobileChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     backgroundColor: colors.surfaceLight,
     marginRight: 8,
     borderWidth: 1,
     borderColor: colors.border,
   },
   mobileChipActive: {
-    backgroundColor: 'rgba(192, 132, 252, 0.2)',
+    backgroundColor: colors.accentSoft,
     borderColor: colors.primary,
     ...glowShadowPrimary(0.3),
   },
@@ -932,9 +932,9 @@ const styles = StyleSheet.create({
   /* Accordion Module Card */
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.25)',
+    borderColor: colors.borderSubtle,
     overflow: 'hidden',
   },
   cardExpanded: {
@@ -962,13 +962,13 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   categoryBadgeTag: {
-    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+    backgroundColor: colors.accentSoft,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   categoryBadgeTagText: {
-    color: colors.neonPurple,
+    color: colors.primary,
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -1016,7 +1016,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   detailSectionTitle: {
-    color: colors.neonPurple,
+    color: colors.primary,
     fontSize: fontSize.xs,
     fontWeight: '800',
     marginBottom: 2,
@@ -1027,7 +1027,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   featureBullet: {
-    color: colors.neonGreen,
+    color: colors.success,
     fontSize: fontSize.xs,
     fontWeight: '900',
   },
@@ -1079,7 +1079,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   codeSnippetText: {
-    color: colors.neonCyan,
+    color: colors.info,
     fontFamily: Platform.OS === 'web' ? 'monospace' : Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontSize: 11,
     lineHeight: 16,
@@ -1087,13 +1087,13 @@ const styles = StyleSheet.create({
 
   /* Callout Boxes */
   calloutContainer: {
-    borderRadius: 12,
+    borderRadius: radii.md,
     padding: spacing.md,
     borderWidth: 1,
   },
   calloutTip: {
     backgroundColor: 'rgba(56, 189, 248, 0.1)',
-    borderColor: colors.neonCyan,
+    borderColor: colors.info,
   },
   calloutWarning: {
     backgroundColor: 'rgba(251, 191, 36, 0.1)',
@@ -1110,7 +1110,7 @@ const styles = StyleSheet.create({
   actionBtnRoute: {
     backgroundColor: colors.primaryDark,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: radii.md,
     alignItems: 'center',
     marginTop: 4,
     ...glowShadowPrimary(0.3),

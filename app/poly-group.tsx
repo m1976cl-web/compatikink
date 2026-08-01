@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { listMyLocalSessions, getCurrentProfile } from '@/lib/storage';
 import { generateReport } from '@/lib/compatibility';
@@ -41,14 +41,14 @@ export default function PolyGroupScreen() {
   const selectedSessions = sessions.filter((s) => selectedSessionIds.includes(s.id));
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>👥 Matriz Grupal & Poliamor (3+ personas)</Text>
+          <Text style={styles.title}>Matriz Grupal & Poliamor (3+ personas)</Text>
           <Text style={styles.subtitle}>
             Cruza la compatibilidad erótica simultánea entre 3 o más participantes (triadas, quirks o dinámicas de grupo)
           </Text>
@@ -92,7 +92,7 @@ export default function PolyGroupScreen() {
                 🌐 Matriz de Coincidencia Grupal ({selectedSessions.length + 1} Participantes)
               </Text>
               <Text style={styles.matrixSub}>
-                Integrantes: <Text style={{ color: colors.neonPurple }}>{profile?.nickname || 'Tú'}</Text>
+                Integrantes: <Text style={{ color: colors.primary }}>{profile?.nickname || 'Tú'}</Text>
                 {selectedSessions.map((s) => `, ${s.guestNickname || 'Pareja'}`)}
               </Text>
 
@@ -129,7 +129,7 @@ export default function PolyGroupScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -140,9 +140,9 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   pickerSection: { gap: spacing.xs, marginVertical: spacing.sm },
   pickerTitle: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.border,
@@ -162,19 +162,19 @@ const styles = StyleSheet.create({
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
   matrixCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
-  matrixTitle: { color: colors.neonPurple, fontSize: fontSize.md, fontWeight: '900' },
+  matrixTitle: { color: colors.primary, fontSize: fontSize.md, fontWeight: '900' },
   matrixSub: { color: colors.textMuted, fontSize: fontSize.xs },
 
   scoresGrid: { gap: spacing.sm },
   scoreRowItem: {
     backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -189,19 +189,19 @@ const styles = StyleSheet.create({
     borderColor: colors.success,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: radii.md,
   },
   scorePillNum: { color: colors.success, fontSize: fontSize.sm, fontWeight: '900' },
 
   groupConsensusBox: {
-    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    backgroundColor: colors.accentSoft,
     borderWidth: 1,
     borderColor: colors.primary,
-    borderRadius: 14,
+    borderRadius: radii.lg,
     padding: spacing.md,
     gap: 4,
   },
-  groupConsensusTitle: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '800' },
+  groupConsensusTitle: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
   groupConsensusText: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
 
   emptyState: { alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.sm },

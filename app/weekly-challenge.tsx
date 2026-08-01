@@ -7,9 +7,9 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
 interface Challenge {
@@ -84,14 +84,14 @@ export default function WeeklyChallengeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🎲 Retos Semanales Kink</Text>
+          <Text style={styles.title}>Retos Semanales Kink</Text>
           <Text style={styles.subtitle}>
             Desafíos guiados personalizados para explorar nuevas dinámicas con tu pareja de forma segura
           </Text>
@@ -140,7 +140,7 @@ export default function WeeklyChallengeScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -151,31 +151,31 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   timerBanner: {
-    backgroundColor: 'rgba(192, 132, 252, 0.12)',
-    borderRadius: 16,
+    backgroundColor: colors.accentSoft,
+    borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     alignItems: 'center',
     gap: 2,
     marginVertical: spacing.xs,
   },
   timerTitle: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
-  timerNum: { color: colors.neonPurple, fontSize: fontSize.sm, fontWeight: '900' },
+  timerNum: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '900' },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   cardCompleted: { borderColor: colors.success, backgroundColor: 'rgba(74, 222, 128, 0.05)' },
@@ -183,14 +183,14 @@ const styles = StyleSheet.create({
   diffBadge: { color: colors.warning, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   catText: { color: colors.textMuted, fontSize: fontSize.xs },
   cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900', marginTop: 2 },
-  xpText: { color: colors.neonPink, fontSize: fontSize.sm, fontWeight: '900' },
+  xpText: { color: colors.accent, fontSize: fontSize.sm, fontWeight: '900' },
 
   cardDesc: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
 
-  safetyBox: { backgroundColor: 'rgba(251, 191, 36, 0.1)', padding: spacing.md, borderRadius: 12, borderWidth: 1, borderColor: colors.warning },
+  safetyBox: { backgroundColor: 'rgba(251, 191, 36, 0.1)', padding: spacing.md, borderRadius: radii.md, borderWidth: 1, borderColor: colors.warning },
   safetyText: { color: colors.warning, fontSize: fontSize.xs, lineHeight: 16, fontWeight: '600' },
 
-  completeBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  completeBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   completeBtnDone: { backgroundColor: 'rgba(74, 222, 128, 0.15)', borderWidth: 1, borderColor: colors.success },
   completeBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 });

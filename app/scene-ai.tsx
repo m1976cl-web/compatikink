@@ -7,9 +7,9 @@ import {
   View,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { generateAISceneRecommendations, SceneRecommendation } from '@/lib/sceneRecommender';
 
@@ -37,14 +37,14 @@ export default function SceneAIScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🤖 Recomendador IA de Escenas</Text>
+          <Text style={styles.title}>Recomendador IA de Escenas</Text>
           <Text style={styles.subtitle}>
             Rutinas paso a paso diseñadas a medida según tu historial, wishlist y nivel de intensidad preferido
           </Text>
@@ -98,7 +98,7 @@ export default function SceneAIScreen() {
           <View style={{ height: 60 }} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -109,39 +109,39 @@ const styles = StyleSheet.create({
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
-  title: { color: colors.text, fontSize: fontSize.xxl, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.xs },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderColor: colors.borderSubtle,
     gap: spacing.md,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  intensityBadge: { color: colors.neonPink, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  intensityBadge: { color: colors.accent, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   categoryText: { color: colors.textMuted, fontSize: fontSize.xs },
   cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900', marginTop: 2 },
-  durationText: { color: colors.neonPurple, fontSize: fontSize.sm, fontWeight: '900' },
+  durationText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '900' },
 
-  matchReasonBox: { backgroundColor: 'rgba(192, 132, 252, 0.1)', borderRadius: 12, padding: spacing.md, borderWidth: 1, borderColor: 'rgba(192, 132, 252, 0.3)' },
-  matchReasonText: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '700' },
+  matchReasonBox: { backgroundColor: colors.accentSoft, borderRadius: radii.md, padding: spacing.md, borderWidth: 1, borderColor: colors.borderSubtle },
+  matchReasonText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
 
   activitiesBox: { gap: 8 },
   sectionLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '800' },
-  actRow: { flexDirection: 'row', gap: spacing.md, backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 12, borderWidth: 1, borderColor: colors.border },
+  actRow: { flexDirection: 'row', gap: spacing.md, backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.md, borderWidth: 1, borderColor: colors.border },
   actIndex: { color: colors.primary, fontSize: fontSize.md, fontWeight: '900' },
   actName: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
   actNotes: { color: colors.textMuted, fontSize: 10, marginTop: 2 },
 
-  detailsRow: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: 12, gap: 4 },
+  detailsRow: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.md, gap: 4 },
   detailItem: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
 
-  scheduleBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: 14, alignItems: 'center' },
+  scheduleBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   scheduleBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
 });
