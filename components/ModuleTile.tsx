@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import {
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,29 +13,44 @@ interface ModuleTileProps {
   title: string;
   description?: string;
   onPress: () => void;
-  /** Optional leading mark (prefer typography/glyph over emoji) */
+  /** Leading mark (glyph, emoji, or letter) */
   mark?: string;
+  /** Category accent color — defaults to primary purple */
+  accent?: string;
   disabled?: boolean;
   style?: ViewStyle;
   children?: ReactNode;
 }
 
 /**
- * Interactive module entry — card allowed because it is a press target.
- * Prefer mark/glyph strings over emoji as primary iconography.
+ * Interactive module card with glassmorphism latex effect.
+ * Uses accent color for the mark badge and hover border glow.
  */
 export function ModuleTile({
   title,
   description,
   onPress,
   mark,
+  accent = colors.primary,
   disabled = false,
   style,
   children,
 }: ModuleTileProps) {
+  const webHoverStyle = Platform.OS === 'web'
+    ? ({
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+        cursor: 'pointer',
+      } as any)
+    : {};
+
   return (
     <TouchableOpacity
-      style={[styles.tile, disabled && styles.disabled, style]}
+      style={[
+        styles.tile,
+        webHoverStyle,
+        disabled && styles.disabled,
+        style,
+      ]}
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.75}
@@ -43,16 +59,16 @@ export function ModuleTile({
     >
       <View style={styles.row}>
         {mark ? (
-          <View style={styles.markWrap}>
-            <Text style={styles.mark}>{mark}</Text>
+          <View style={[styles.markWrap, { backgroundColor: accent + '20', borderColor: accent + '40' }]}>
+            <Text style={[styles.mark, { color: accent }]}>{mark}</Text>
           </View>
         ) : null}
         <View style={styles.copy}>
-          <Text style={styles.title}>{title}</Text>
-          {description ? <Text style={styles.description}>{description}</Text> : null}
+          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          {description ? <Text style={styles.description} numberOfLines={2}>{description}</Text> : null}
           {children}
         </View>
-        <Text style={styles.chevron}>→</Text>
+        <Text style={[styles.chevron, { color: accent }]}>›</Text>
       </View>
     </TouchableOpacity>
   );
@@ -60,7 +76,9 @@ export function ModuleTile({
 
 const styles = StyleSheet.create({
   tile: {
-    backgroundColor: colors.surface,
+    backgroundColor: Platform.OS === 'web'
+      ? 'rgba(21, 13, 36, 0.65)'
+      : colors.surface,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
@@ -68,6 +86,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
     ...elevationSoft(),
+    ...(Platform.OS === 'web'
+      ? ({
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        } as any)
+      : {}),
   },
   disabled: {
     opacity: 0.45,
@@ -78,19 +102,16 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   markWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.md,
-    backgroundColor: colors.accentSoft,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   mark: {
     fontFamily: fonts.displaySemi,
     fontSize: fontSize.lg,
-    color: colors.primary,
   },
   copy: {
     flex: 1,
@@ -109,9 +130,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   chevron: {
-    fontFamily: fonts.body,
-    fontSize: fontSize.md,
-    color: colors.primary,
-    opacity: 0.8,
+    fontFamily: fonts.display,
+    fontSize: 22,
+    opacity: 0.7,
   },
 });

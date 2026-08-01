@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { Button } from '@/components/Button';
@@ -26,6 +26,8 @@ import { SceneDebriefModal } from '@/components/SceneDebriefModal';
 import { AgeVerificationModal } from '@/components/AgeVerificationModal';
 import { PWAInstallPromptModal } from '@/components/PWAInstallPromptModal';
 import { AccessibilityModal } from '@/components/AccessibilityModal';
+import { OctopusHost } from '@/components/OctopusHost';
+import { CategoryTabs, CategoryTab } from '@/components/CategoryTabs';
 import {
   colors,
   fonts,
@@ -57,9 +59,26 @@ type ModuleDef = {
   title: string;
   description: string;
   mark: string;
+  category: string;
   route?: string;
   onPress?: () => void;
 };
+
+const ACCENT_COLORS: Record<string, string> = {
+  explore: '#c084fc',
+  scenes: '#f472b6',
+  social: '#38bdf8',
+  ai: '#4ade80',
+  vault: '#fbbf24',
+};
+
+const CATEGORY_TABS: CategoryTab[] = [
+  { key: 'explore', label: 'Explorar', icon: '🔮', accent: ACCENT_COLORS.explore },
+  { key: 'scenes', label: 'Escenas', icon: '🎭', accent: ACCENT_COLORS.scenes },
+  { key: 'social', label: 'Social', icon: '🌐', accent: ACCENT_COLORS.social },
+  { key: 'ai', label: 'IA', icon: '🤖', accent: ACCENT_COLORS.ai },
+  { key: 'vault', label: 'Bóveda', icon: '🔒', accent: ACCENT_COLORS.vault },
+];
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -79,7 +98,8 @@ export default function HomeScreen() {
   const [quickGuestNick, setQuickGuestNick] = useState('');
   const [quickGuestNotes, setQuickGuestNotes] = useState('');
   const [creatingInvite, setCreatingInvite] = useState(false);
-  const [expiryOption, setExpiryOption] = useState<'24h' | '7d' | 'none'>('7d');
+  const [activeTab, setActiveTab] = useState('explore');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [showPolyComparator, setShowPolyComparator] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -291,75 +311,123 @@ export default function HomeScreen() {
 
   const go = (path: string) => () => router.push(path as any);
 
-  const flujoPrincipal: ModuleDef[] = [
-    { title: 'Cuestionario base', description: 'Preferencias privadas y límites', mark: 'Q', route: '/questionnaire' },
-    { title: 'Perfil rápido', description: '10 preguntas · ~2 minutos', mark: '10', route: '/quick-profile' },
-    { title: 'Pass & Play', description: 'Mismo dispositivo, cortina de privacidad', mark: 'P', route: '/pass-and-play' },
-    { title: 'Manual', description: 'Guía de módulos y seguridad', mark: 'M', route: '/manual' },
-    { title: 'Glosario', description: 'Términos y consentimiento', mark: 'G', route: '/glossary' },
-    { title: 'Guía de seguridad', description: 'SSC/RACK y protocolos', mark: 'S', route: '/safety-guide' },
+  const allModules: ModuleDef[] = [
+    // Explorar (explore)
+    { title: 'Cuestionario base', description: 'Preferencias privadas y límites', mark: 'Q', category: 'explore', route: '/questionnaire' },
+    { title: 'Astrología kink', description: 'Sinastría cósmica y horóscopo', mark: '🔮', category: 'explore', route: '/astrology' },
+    { title: 'Arquetipos BDSM', description: 'Descubre tu perfil de roles', mark: '🎭', category: 'explore', route: '/archetypes' },
+    { title: 'Perfil rápido', description: '10 preguntas · ~2 minutos', mark: '10', category: 'explore', route: '/quick-profile' },
+    { title: 'Compás kink', description: 'Mapa 2D de afinidades', mark: '🧭', category: 'explore', route: '/compass' },
+    { title: 'Pass & Play', description: 'Mismo dispositivo, cortina de privacidad', mark: '🎮', category: 'explore', route: '/pass-and-play' },
+    { title: 'Manual', description: 'Guía de módulos y seguridad', mark: '📖', category: 'explore', route: '/manual' },
+    { title: 'Glosario', description: 'Términos y consentimiento', mark: '📚', category: 'explore', route: '/glossary' },
+    { title: 'Guía de seguridad', description: 'SSC/RACK y protocolos', mark: '🛡️', category: 'explore', route: '/safety-guide' },
+
+    // Escenas (scenes)
+    { title: 'Pegging & Dating', description: 'Guía psicológica, técnica y dating', mark: '🍑', category: 'scenes', route: '/pegging' },
+    { title: 'Rituales D/s', description: 'Protocolos y hábitos guiados', mark: '📜', category: 'scenes', route: '/rituals' },
+    { title: 'Contratos Digitales', description: 'Acuerdos D/s formales y firmas', mark: '✒️', category: 'scenes', route: '/contracts' },
+    { title: 'Fantasy Match', description: 'Coincidencias double-blind', mark: '✨', category: 'scenes', route: '/fantasy-match' },
+    { title: 'Negociación en vivo', description: 'Acuerdos y firma de escenas', mark: '🤝', category: 'scenes', route: '/negotiation' },
+    { title: 'Verdad o reto', description: 'Cartas dinámicas para citas', mark: '🔥', category: 'scenes', route: '/truth-or-dare' },
+    { title: 'Calendario', description: 'Escenas y aftercare', mark: '📅', category: 'scenes', route: '/calendar' },
+    { title: 'Playlists', description: 'Ambientes sonoros sensuales', mark: '🎵', category: 'scenes', route: '/playlists' },
+    { title: 'Gear Closet', description: 'Inventario de equipo y juguetes', mark: '⚙️', category: 'scenes', route: '/gear-closet' },
+
+    // Social (social)
+    { title: 'Blog & Escritos', description: 'Diario privado y publicaciones', mark: '✍️', category: 'social', route: '/writings' },
+    { title: 'Dating kink', description: 'Conexiones por afinidad', mark: '💘', category: 'social', route: '/dating' },
+    { title: 'Feed de Comunidad', description: 'Debate y encuestas anónimas', mark: '💬', category: 'social', route: '/kink-feed' },
+    { title: 'Comunidades', description: 'Grupos temáticos y tribus', mark: '👥', category: 'social', route: '/communities' },
+    { title: 'Eventos & Munches', description: 'Reuniones y talleres', mark: '🍸', category: 'social', route: '/events' },
+    { title: 'Cursos', description: 'Kink Academy & clases', mark: '🎓', category: 'social', route: '/courses' },
+    { title: 'Wrapped', description: 'Resumen anual de exploración', mark: '🎁', category: 'social', route: '/wrapped' },
+    { title: 'Reto semanal', description: 'Desafíos con XP y niveles', mark: '🏆', category: 'social', route: '/weekly-challenge' },
+    { title: 'Matriz Poli', description: 'Sinastría de 3+ personas', mark: '💎', category: 'social', route: '/poly-group' },
+    { title: 'Tienda', description: 'Recomendaciones y partners', mark: '🛍️', category: 'social', route: '/store' },
+
+    // IA & Hardware (ai)
+    { title: 'Guiones IA', description: 'Generador de scripts de escenas', mark: '🎬', category: 'ai', route: '/ai-script' },
+    { title: 'Music Sync', description: 'Teledildonics & estimulación BPM', mark: '⚡', category: 'ai', route: '/music-sync' },
+    { title: 'Roleplay IA', description: 'Ensayo confidencial de dinámicas', mark: '🤖', category: 'ai', route: '/ai-roleplay' },
+    { title: 'Escenas IA', description: 'Rutinas personalizadas por IA', mark: '🧠', category: 'ai', route: '/scene-ai' },
+    { title: 'Castidad', description: 'Keyholding y temporizadores', mark: '🔒', category: 'ai', route: '/chastity' },
+    { title: 'Hardware Sync', description: 'QIUI / Lovense Bluetooth', mark: '📡', category: 'ai', route: '/hardware' },
+    { title: 'Economía D/s', description: 'Moneda de tareas y premios', mark: '🪙', category: 'ai', route: '/task-economy' },
+    { title: 'Analítica', description: 'Subspace tracker y gráficos', mark: '📊', category: 'ai', route: '/analytics' },
+    { title: 'Logros', description: 'Insignias de exploración', mark: '🥇', category: 'ai', route: '/achievements' },
+    { title: 'Premium', description: 'Compatikink PRO', mark: '👑', category: 'ai', route: '/premium' },
+
+    // Bóveda (vault)
+    { title: 'Bóveda Privada', description: 'Álbum de fotos cifrado AES-GCM', mark: '🖼️', category: 'vault', route: '/private-album' },
+    { title: 'Cuenta & Bóveda', description: 'Acceso Zero-Knowledge', mark: '🔑', category: 'vault', route: '/auth' },
+    { title: 'Backup Cifrado', description: 'Exportar / importar en JSON', mark: '📦', category: 'vault', onPress: handleBackup },
+    { title: 'Admin', description: 'Requiere bóveda + rol local', mark: '🛡️', category: 'vault', route: '/admin' },
+    { title: 'Instalar App', description: 'PWA en el dispositivo', mark: '📱', category: 'vault', onPress: () => setShowPWAInstallModal(true) },
+    { title: 'Accesibilidad', description: 'Contraste y tipografía', mark: '♿', category: 'vault', onPress: () => setShowA11yModal(true) },
   ];
 
-  const escenas: ModuleDef[] = [
-    { title: 'Pegging & Dating', description: 'Guía y dating de pegging', mark: '🍑', route: '/pegging' },
-    { title: 'Astrología kink', description: 'Sinastría y horóscopo', mark: '🔮', route: '/astrology' },
-    { title: 'Negociación en vivo', description: 'Acuerdos y firma de escenas', mark: 'N', route: '/negotiation' },
-    { title: 'Compás kink', description: 'Mapa de afinidades', mark: 'C', route: '/compass' },
-    { title: 'Arquetipos', description: 'Perfil de roles', mark: 'A', route: '/archetypes' },
-    { title: 'Rituales D/s', description: 'Protocolos guiados', mark: 'R', route: '/rituals' },
-    { title: 'Contratos', description: 'Acuerdos digitales', mark: '§', route: '/contracts' },
-    { title: 'Fantasy Match', description: 'Coincidencias double-blind', mark: 'F', route: '/fantasy-match' },
-    { title: 'Verdad o reto', description: 'Cartas para citas', mark: 'V', route: '/truth-or-dare' },
-    { title: 'Calendario', description: 'Escenas y aftercare', mark: '·', route: '/calendar' },
-    { title: 'Playlists', description: 'Ambientes sonoros', mark: '♪', route: '/playlists' },
-    { title: 'Gear Closet', description: 'Inventario de equipo', mark: '⚙', route: '/gear-closet' },
-  ];
+  const filteredModules = useMemo(() => {
+    return allModules.filter((m) => {
+      const matchesSearch =
+        !searchQuery.trim() ||
+        m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = searchQuery.trim() ? true : m.category === activeTab;
+      return matchesSearch && matchesCategory;
+    });
+  }, [searchQuery, activeTab]);
 
-  const comunidad: ModuleDef[] = [
-    { title: 'Dating kink', description: 'Conexiones por afinidad', mark: 'D', route: '/dating' },
-    { title: 'Feed', description: 'Debate y encuestas', mark: '◈', route: '/kink-feed' },
-    { title: 'Comunidades', description: 'Grupos temáticos', mark: '◉', route: '/communities' },
-    { title: 'Eventos', description: 'Munches y talleres', mark: 'E', route: '/events' },
-    { title: 'Cursos', description: 'Kink Academy', mark: 'K', route: '/courses' },
-    { title: 'Escritos', description: 'Diario y reflexiones', mark: 'W', route: '/writings' },
-    { title: 'Wrapped', description: 'Resumen anual', mark: 'Y', route: '/wrapped' },
-    { title: 'Reto semanal', description: 'Desafíos con XP', mark: '7', route: '/weekly-challenge' },
-    { title: 'Matriz poli', description: '3+ personas', mark: '3', route: '/poly-group' },
-    { title: 'Tienda', description: 'Partners y recomendaciones', mark: '$', route: '/store' },
-  ];
+  const renderCategoryModules = () => (
+    <View style={{ gap: spacing.md, marginTop: spacing.xs }}>
+      {/* Search Bar */}
+      <View style={styles.searchWrap}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar módulos, herramientas o guías..."
+          placeholderTextColor={colors.textDim}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          clearButtonMode="while-editing"
+        />
+        {searchQuery ? (
+          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+            <Text style={styles.clearBtnText}>✕</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
 
-  const escenasIa: ModuleDef[] = [
-    { title: 'Roleplay IA', description: 'Ensayo de dinámicas', mark: 'I', route: '/ai-roleplay' },
-    { title: 'Escenas IA', description: 'Rutinas personalizadas', mark: 'Σ', route: '/scene-ai' },
-    { title: 'Guiones IA', description: 'Diálogos e instrucciones', mark: 'Γ', route: '/ai-script' },
-    { title: 'Music Sync', description: 'Háptica + BPM', mark: '≈', route: '/music-sync' },
-    { title: 'Castidad', description: 'Keyholding seguro', mark: '⌀', route: '/chastity' },
-    { title: 'Hardware', description: 'QIUI / Lovense', mark: 'H', route: '/hardware' },
-    { title: 'Economía D/s', description: 'Tareas y recompensas', mark: '◈', route: '/task-economy' },
-    { title: 'Analítica', description: 'Subspace tracker', mark: 'Δ', route: '/analytics' },
-    { title: 'Logros', description: 'Insignias de exploración', mark: '✦', route: '/achievements' },
-    { title: 'Premium', description: 'Compatikink PRO', mark: 'P', route: '/premium' },
-  ];
+      {/* Category Tabs (only when not searching) */}
+      {!searchQuery.trim() ? (
+        <CategoryTabs
+          tabs={CATEGORY_TABS}
+          activeKey={activeTab}
+          onTabChange={setActiveTab}
+        />
+      ) : (
+        <Text style={styles.searchLabel}>
+          Resultados de búsqueda ({filteredModules.length}):
+        </Text>
+      )}
 
-  const bovedaMods: ModuleDef[] = [
-    { title: 'Cuenta & bóveda', description: 'Acceso Zero-Knowledge', mark: 'B', route: '/auth' },
-    { title: 'Álbum privado', description: 'Fotos cifradas AES-GCM', mark: '◻', route: '/private-album' },
-    { title: 'Backup cifrado', description: 'Exportar / importar', mark: '⇄', onPress: handleBackup },
-    { title: 'Admin', description: 'Requiere bóveda + rol local', mark: '◆', route: '/admin' },
-    { title: 'Instalar app', description: 'PWA en el dispositivo', mark: '↓', onPress: () => setShowPWAInstallModal(true) },
-    { title: 'Accesibilidad', description: 'Contraste y tipografía', mark: 'A', onPress: () => setShowA11yModal(true) },
-  ];
-
-  const renderModuleList = (items: ModuleDef[]) =>
-    items.map((m) => (
-      <ModuleTile
-        key={m.title}
-        title={m.title}
-        description={m.description}
-        mark={m.mark}
-        onPress={m.onPress || (m.route ? go(m.route) : () => {})}
-      />
-    ));
+      {/* Modules Grid */}
+      <View style={styles.moduleGrid}>
+        {filteredModules.map((m) => (
+          <View key={m.title} style={isDesktop ? styles.gridColDesktop : styles.gridColMobile}>
+            <ModuleTile
+              title={m.title}
+              description={m.description}
+              mark={m.mark}
+              accent={ACCENT_COLORS[m.category] || colors.primary}
+              onPress={m.onPress || (m.route ? go(m.route) : () => {})}
+            />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
 
   const webBg =
     Platform.OS === 'web'
@@ -376,7 +444,11 @@ export default function HomeScreen() {
       <Text style={styles.brand} accessibilityRole="header">
         Compatikink
       </Text>
-      <Text style={styles.mark}>Nox</Text>
+      <Text style={styles.mark}>Plataforma de Exploración & Afinidad Cifrada</Text>
+      
+      {/* Nox Host Octopus Avatar */}
+      <OctopusHost />
+
       <Text style={styles.headline}>
         {loggedIn
           ? `Hola, ${profile?.nickname}`
@@ -691,36 +763,12 @@ export default function HomeScreen() {
     );
   };
 
-  const renderModules = () => (
-    <>
-      <Section
-        eyebrow="Flujo"
-        title="Principal"
-        subtitle="Cuestionario, invitación y fundamentos."
-      >
-        {renderModuleList(flujoPrincipal)}
-      </Section>
-      <Section eyebrow="Práctica" title="Escenas" subtitle="Negociación, rituales y herramientas de sesión.">
-        {renderModuleList(escenas)}
-      </Section>
-      <Section eyebrow="Social" title="Comunidad" subtitle="Conexiones, eventos y contenido.">
-        {renderModuleList(comunidad)}
-      </Section>
-      <Section eyebrow="Extendido" title="IA & hardware" subtitle="Exploración asistida y dispositivos.">
-        {renderModuleList(escenasIa)}
-      </Section>
-      <Section eyebrow="Privacidad" title="Bóveda" subtitle="Cifrado local, backup y cuenta.">
-        {renderModuleList(bovedaMods)}
-      </Section>
-    </>
-  );
-
   const renderLanding = () => (
     <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll}>
       {renderHero(false)}
       {renderGuestJoin()}
       {renderLoginPanel()}
-      {renderModules()}
+      {renderCategoryModules()}
       {!isSupabaseConfigured ? (
         <Text style={styles.footnote}>
           Modo local: perfiles y reportes viven cifrados en este dispositivo.
@@ -758,7 +806,7 @@ export default function HomeScreen() {
               </View>
             </Section>
           </View>
-          <View style={styles.desktopCol}>{renderModules()}</View>
+          <View style={styles.desktopCol}>{renderCategoryModules()}</View>
         </View>
       ) : (
         <>
@@ -782,7 +830,7 @@ export default function HomeScreen() {
               <Button title="Borrado de pánico" variant="danger" onPress={handlePanicWipe} />
             </View>
           </Section>
-          {renderModules()}
+          {renderCategoryModules()}
         </>
       )}
 
@@ -1044,6 +1092,54 @@ const styles = StyleSheet.create({
   desktopCol: {
     flex: 1,
     minWidth: 0,
+  },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(21, 13, 36, 0.9)',
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.35)',
+    paddingHorizontal: spacing.md,
+    height: 48,
+    marginBottom: spacing.xs,
+  },
+  searchIcon: {
+    fontSize: 16,
+    marginRight: spacing.xs,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.text,
+    fontFamily: fonts.body,
+    fontSize: fontSize.md,
+  },
+  clearBtn: {
+    padding: spacing.xs,
+  },
+  clearBtnText: {
+    color: colors.textMuted,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  searchLabel: {
+    fontFamily: fonts.bodySemi,
+    fontSize: fontSize.xs,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+    letterSpacing: 0.5,
+  },
+  moduleGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginHorizontal: -spacing.xs,
+  },
+  gridColDesktop: {
+    width: '49%',
+  },
+  gridColMobile: {
+    width: '100%',
   },
   footnote: {
     fontFamily: fonts.body,
