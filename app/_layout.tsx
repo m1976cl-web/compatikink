@@ -6,9 +6,10 @@ import { fontAssets } from '@/constants/fonts';
 import { colors, fonts, gradients } from '@/constants/theme';
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts(fontAssets);
+  const [fontsLoaded, fontError] = useFonts(fontAssets);
 
-  if (!fontsLoaded) {
+  // On Web, never block rendering on font loading to prevent infinite spinner
+  if (!fontsLoaded && !fontError && Platform.OS !== 'web') {
     return (
       <View style={styles.boot}>
         <ActivityIndicator color={colors.primary} size="large" />
