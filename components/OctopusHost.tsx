@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
 
 const MYSTERIOUS_QUOTES = [
@@ -22,7 +22,11 @@ export function OctopusHost() {
     <View style={styles.container}>
       <TouchableOpacity style={styles.octopusAvatarBtn} onPress={handleNextQuote} activeOpacity={0.8}>
         <View style={styles.glowRing}>
-          <Text style={styles.octopusEmoji}>🐙</Text>
+          <Image
+            source={require('@/assets/images/nox_octopus.jpg')}
+            style={styles.octopusImg}
+            resizeMode="cover"
+          />
         </View>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>EL ANFITRIÓN MISTERIOSO</Text>
@@ -70,9 +74,12 @@ const styles = StyleSheet.create({
     shadowColor: colors.neonPink,
     shadowRadius: 10,
     shadowOpacity: 0.6,
+    overflow: 'hidden',
   },
-  octopusEmoji: {
-    fontSize: 44,
+  octopusImg: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
   },
   badge: {
     backgroundColor: colors.primary,

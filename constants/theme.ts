@@ -10,51 +10,51 @@ export const BREAKPOINTS = {
   tablet: 600,
 };
 
-/** Ink / copper palette */
+/** Glossy Black Latex & Neon Purple palette */
 export const colors = {
-  // Depth layers (ink)
-  background: '#0c0a09',
-  backgroundMid: '#14110f',
-  backgroundAlt: '#1a1612',
-  surface: '#1c1814',
-  surfaceLight: '#2a241e',
-  surfaceElevated: '#322b24',
-  border: '#3d342c',
-  borderSubtle: 'rgba(201, 160, 106, 0.18)',
+  // Depth layers (glossy black obsidian)
+  background: '#07050a',
+  backgroundMid: '#0d0814',
+  backgroundAlt: '#120b1c',
+  surface: '#150d24',
+  surfaceLight: '#1d1230',
+  surfaceElevated: '#26173e',
+  border: '#352054',
+  borderSubtle: 'rgba(192, 132, 252, 0.25)',
 
-  // Brand accent — copper / amber (contained)
-  primary: '#c9a06a',
-  primaryDark: '#a67c4a',
-  primaryLight: '#e8d4b0',
-  accent: '#9a6b4f',
-  accentSoft: 'rgba(201, 160, 106, 0.12)',
+  // Brand accent — Glossy Neon Purple & Magenta
+  primary: '#c084fc',
+  primaryDark: '#9333ea',
+  primaryLight: '#e9d5ff',
+  accent: '#f472b6',
+  accentSoft: 'rgba(244, 114, 182, 0.15)',
 
   // Functional
-  success: '#6b9b7a',
-  warning: '#d4a84b',
-  danger: '#c45c5c',
-  info: '#5a8a8a',
+  success: '#4ade80',
+  warning: '#fbbf24',
+  danger: '#f87171',
+  info: '#38bdf8',
 
   // Text
-  text: '#f2ebe3',
-  textMuted: '#a89f94',
-  textDim: '#6e655c',
-  onPrimary: '#0c0a09',
+  text: '#f3e8ff',
+  textMuted: '#c084fc',
+  textDim: '#7e22ce',
+  onPrimary: '#07050a',
 
-  // Legacy aliases (screens not yet migrated) — map neon → copper/teal family
-  neonPurple: '#c9a06a',
-  neonPink: '#9a6b4f',
-  neonCyan: '#5a8a8a',
-  neonGreen: '#6b9b7a',
-  glowPurple: 'rgba(201, 160, 106, 0.28)',
-  glowPink: 'rgba(154, 107, 79, 0.28)',
+  // Legacy aliases
+  neonPurple: '#c084fc',
+  neonPink: '#f472b6',
+  neonCyan: '#38bdf8',
+  neonGreen: '#4ade80',
+  glowPurple: 'rgba(192, 132, 252, 0.35)',
+  glowPink: 'rgba(244, 114, 182, 0.35)',
 };
 
-/** Soft ink gradient stops for shell / ScreenContainer */
+/** Glossy Latex gradient stops for shell / ScreenContainer */
 export const gradients = {
-  ink: ['#0c0a09', '#161210', '#1a1410'] as const,
-  inkRadialHint: 'radial-gradient(ellipse 120% 80% at 50% -20%, rgba(201,160,106,0.08) 0%, transparent 55%), linear-gradient(165deg, #0c0a09 0%, #14110f 45%, #1a1410 100%)',
-  surfaceWash: 'linear-gradient(180deg, rgba(28,24,20,0.92) 0%, rgba(20,17,15,0.98) 100%)',
+  ink: ['#07050a', '#0d0814', '#150d24'] as const,
+  inkRadialHint: 'radial-gradient(ellipse 120% 80% at 50% -20%, rgba(192,132,252,0.18) 0%, transparent 60%), linear-gradient(165deg, #07050a 0%, #0d0814 45%, #150d24 100%)',
+  surfaceWash: 'linear-gradient(180deg, rgba(21,13,36,0.95) 0%, rgba(13,8,20,0.98) 100%)',
 };
 
 export const spacing = {
