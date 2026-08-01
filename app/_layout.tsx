@@ -44,12 +44,23 @@ export default function RootLayout() {
       >
         <Stack.Screen name="index" options={{ title: 'Compatikink', headerShown: false }} />
         <Stack.Screen name="manual" options={{ title: 'Manual de Usuario', headerShown: false }} />
-        <Stack.Screen name="questionnaire" options={{ title: 'Tus preferencias' }} />
-        <Stack.Screen name="invite" options={{ title: 'Invitar' }} />
-        <Stack.Screen name="report" options={{ title: 'Tu reporte' }} />
-        <Stack.Screen name="share" options={{ title: 'Compartir' }} />
-        <Stack.Screen name="guest/[code]" options={{ title: 'Cuestionario' }} />
-        <Stack.Screen name="guest/done" options={{ title: 'Listo', headerBackVisible: false }} />
+        <Stack.Screen name="questionnaire" options={{ title: 'Tus preferencias', headerShown: false }} />
+        <Stack.Screen name="invite" options={{ title: 'Invitar', headerShown: false }} />
+        <Stack.Screen name="report" options={{ title: 'Tu reporte', headerShown: false }} />
+        <Stack.Screen name="share" options={{ title: 'Compartir', headerShown: false }} />
+        <Stack.Screen name="astrology" options={{ title: 'Astrología Kink', headerShown: false }} />
+        <Stack.Screen name="pegging" options={{ title: 'Pegging & Dating', headerShown: false }} />
+        <Stack.Screen name="task-economy" options={{ title: 'Economía D/s', headerShown: false }} />
+        <Stack.Screen name="fantasy-match" options={{ title: 'Match Secreto', headerShown: false }} />
+        <Stack.Screen name="archetypes" options={{ title: 'Quiz Arquetipos', headerShown: false }} />
+        <Stack.Screen name="rituals" options={{ title: 'Ritual Builder', headerShown: false }} />
+        <Stack.Screen name="contracts" options={{ title: 'Contratos Digitales', headerShown: false }} />
+        <Stack.Screen name="private-album" options={{ title: 'Bóveda Privada', headerShown: false }} />
+        <Stack.Screen name="writings" options={{ title: 'Blog & Escritos', headerShown: false }} />
+        <Stack.Screen name="music-sync" options={{ title: 'Music Sync', headerShown: false }} />
+        <Stack.Screen name="ai-script" options={{ title: 'AI Scene Builder', headerShown: false }} />
+        <Stack.Screen name="guest/[code]" options={{ title: 'Cuestionario', headerShown: false }} />
+        <Stack.Screen name="guest/done" options={{ title: 'Listo', headerShown: false }} />
       </Stack>
     </>
   );

@@ -43,13 +43,21 @@ export default function PeggingScreen() {
     return true;
   });
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.push('/');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>← Volver</Text>
+          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>← Volver al Dashboard</Text>
           </TouchableOpacity>
           <Text style={styles.title}>🍑 Módulo Especializado de Pegging</Text>
           <Text style={styles.subtitle}>
