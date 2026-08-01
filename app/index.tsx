@@ -301,6 +301,7 @@ export default function HomeScreen() {
   ];
 
   const escenas: ModuleDef[] = [
+    { title: 'Pegging & Dating', description: 'Guía y dating de pegging', mark: '🍑', route: '/pegging' },
     { title: 'Astrología kink', description: 'Sinastría y horóscopo', mark: '🔮', route: '/astrology' },
     { title: 'Negociación en vivo', description: 'Acuerdos y firma de escenas', mark: 'N', route: '/negotiation' },
     { title: 'Compás kink', description: 'Mapa de afinidades', mark: 'C', route: '/compass' },
