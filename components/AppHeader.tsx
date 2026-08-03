@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { colors, fonts, fontSize, spacing, typography } from '@/constants/theme';
+import { OfficeModeAPI } from '@/lib/officeMode';
 
 interface AppHeaderProps {
   /** When true, shows Compatikink as the dominant brand signal */
@@ -40,7 +41,16 @@ export function AppHeader({
           ) : null}
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
-        {right ? <View style={styles.right}>{right}</View> : null}
+        <View style={styles.rightHeaderRow}>
+          <TouchableOpacity
+            style={styles.officeBtn}
+            onPress={() => OfficeModeAPI.toggle()}
+            accessibilityLabel="Modo Oficina / Pánico (Alt+Shift+X)"
+          >
+            <Text style={styles.officeBtnText}>💼 Excel (Alt+Shift+X)</Text>
+          </TouchableOpacity>
+          {right ? <View style={styles.right}>{right}</View> : null}
+        </View>
       </View>
       <View style={styles.rule} />
     </View>
@@ -88,6 +98,25 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.bodyMuted,
     marginTop: spacing.sm,
+  },
+  rightHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  officeBtn: {
+    backgroundColor: 'rgba(16, 124, 65, 0.15)',
+    borderWidth: 1,
+    borderColor: '#107c41',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  officeBtnText: {
+    color: '#4ade80',
+    fontSize: 10,
+    fontFamily: fonts.bodySemi,
+    fontWeight: '800',
   },
   right: {
     paddingTop: spacing.xs,

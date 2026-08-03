@@ -3,6 +3,8 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { fontAssets } from '@/constants/fonts';
+import { ScreenContainer } from '@/components/ScreenContainer';
+import { OfficeModeModal } from '@/components/OfficeModeModal';
 import { colors, fonts, gradients } from '@/constants/theme';
 
 export default function RootLayout() {
@@ -63,6 +65,7 @@ export default function RootLayout() {
         <Stack.Screen name="guest/[code]" options={{ title: 'Cuestionario', headerShown: false }} />
         <Stack.Screen name="guest/done" options={{ title: 'Listo', headerShown: false }} />
       </Stack>
+      <OfficeModeModal />
     </>
   );
 }
