@@ -59,6 +59,8 @@ export default function QuickProfileScreen() {
   );
   const [step, setStep] = useState<'intro' | 'questions' | 'pin'>('intro');
   const [saving, setSaving] = useState(false);
+  const [hardLimitsInput, setHardLimitsInput] = useState('');
+  const [softLimitsInput, setSoftLimitsInput] = useState('');
 
   const currentActivity = QUICK_PROFILE_ACTIVITIES[currentIndex];
   const currentResponse = responses[currentActivity?.id];
@@ -117,6 +119,8 @@ export default function QuickProfileScreen() {
         role: primaryRole,
         safetyProtocols: selectedProtocols,
         safewords: { green: safewordGreen, yellow: safewordYellow, red: safewordRed },
+        hardLimits: hardLimitsInput ? hardLimitsInput.split(',').map((s) => s.trim()).filter(Boolean) : existing?.hardLimits,
+        softLimits: softLimitsInput ? softLimitsInput.split(',').map((s) => s.trim()).filter(Boolean) : existing?.softLimits,
         fetishBadges: createdBadges,
         verificationBadges: ['Vault Identity'],
         baseResponses: finalResponses,
@@ -270,6 +274,25 @@ export default function QuickProfileScreen() {
                 />
               </View>
             </View>
+
+            {/* Hard & Soft Limits Input */}
+            <Text style={styles.fieldLabel}>🛑 Límites Duros (Inviolables, sep. por coma)</Text>
+            <TextInput
+              style={styles.input}
+              value={hardLimitsInput}
+              onChangeText={setHardLimitsInput}
+              placeholder="Ej: Scat, Sangre, Sin preservativo"
+              placeholderTextColor={colors.textDim}
+            />
+
+            <Text style={styles.fieldLabel}>⚠️ Límites Suaves (Condicionales, sep. por coma)</Text>
+            <TextInput
+              style={styles.input}
+              value={softLimitsInput}
+              onChangeText={setSoftLimitsInput}
+              placeholder="Ej: Ataduras muy apretadas, Humillación verbal"
+              placeholderTextColor={colors.textDim}
+            />
           </View>
 
           <TouchableOpacity

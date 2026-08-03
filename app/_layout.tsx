@@ -59,6 +59,7 @@ export default function RootLayout() {
         <Stack.Screen name="writings" options={{ title: 'Blog & Escritos', headerShown: false }} />
         <Stack.Screen name="music-sync" options={{ title: 'Music Sync', headerShown: false }} />
         <Stack.Screen name="ai-script" options={{ title: 'AI Scene Builder', headerShown: false }} />
+        <Stack.Screen name="partner-journal" options={{ title: 'Vínculos & Diario', headerShown: false }} />
         <Stack.Screen name="guest/[code]" options={{ title: 'Cuestionario', headerShown: false }} />
         <Stack.Screen name="guest/done" options={{ title: 'Listo', headerShown: false }} />
       </Stack>

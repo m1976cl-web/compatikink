@@ -374,7 +374,35 @@ export default function DatingScreen() {
                 </View>
               )}
 
-              {/* Safety Protocols & Safewords */}
+              {/* Limits Section */}
+              {((item.hardLimits && item.hardLimits.length > 0) || (item.softLimits && item.softLimits.length > 0)) && (
+                <View style={styles.limitsBox}>
+                  {item.hardLimits && item.hardLimits.length > 0 && (
+                    <View style={styles.limitsRow}>
+                      <Text style={styles.hardLimitsTitle}>🛑 Límites Duros:</Text>
+                      <View style={styles.limitsChipsGrid}>
+                        {item.hardLimits.map((hl, idx) => (
+                          <View key={idx} style={styles.hardLimitBadge}>
+                            <Text style={styles.hardLimitBadgeText}>{hl}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                  {item.softLimits && item.softLimits.length > 0 && (
+                    <View style={styles.limitsRow}>
+                      <Text style={styles.softLimitsTitle}>⚠️ Límites Suaves:</Text>
+                      <View style={styles.limitsChipsGrid}>
+                        {item.softLimits.map((sl, idx) => (
+                          <View key={idx} style={styles.softLimitBadge}>
+                            <Text style={styles.softLimitBadgeText}>{sl}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
+              )}
               <View style={styles.safetyBox}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <Text style={styles.safetyBoxTitle}>🛡️ Protocolos:</Text>
@@ -725,6 +753,36 @@ const styles = StyleSheet.create({
   badgeIcon: { fontSize: 12 },
   badgeLabel: { fontSize: fontSize.xs, fontWeight: '800' },
 
+  limitsBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderRadius: radii.md,
+    padding: spacing.xs + 2,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    gap: 6,
+  },
+  limitsRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  hardLimitsTitle: { color: colors.danger, fontSize: 11, fontFamily: fonts.bodySemi, fontWeight: '800' },
+  softLimitsTitle: { color: colors.warning, fontSize: 11, fontFamily: fonts.bodySemi, fontWeight: '800' },
+  limitsChipsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, flex: 1 },
+  hardLimitBadge: {
+    backgroundColor: 'rgba(248, 113, 113, 0.18)',
+    borderWidth: 1,
+    borderColor: colors.danger,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  hardLimitBadgeText: { color: colors.danger, fontSize: 10, fontFamily: fonts.bodySemi, fontWeight: '700' },
+  softLimitBadge: {
+    backgroundColor: 'rgba(251, 191, 36, 0.18)',
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  softLimitBadgeText: { color: colors.warning, fontSize: 10, fontFamily: fonts.bodySemi, fontWeight: '700' },
   safetyBox: {
     backgroundColor: 'rgba(16, 185, 129, 0.08)',
     borderRadius: radii.md,

@@ -325,6 +325,7 @@ export default function HomeScreen() {
     { title: 'Guía de seguridad', description: 'SSC/RACK y protocolos', mark: '🛡️', category: 'explore', route: '/safety-guide' },
 
     // Escenas (scenes)
+    { title: 'Vínculos & Diario', description: 'Bitácora de parejas, retos, XP y diplomas', mark: '🔗', category: 'scenes', route: '/partner-journal' },
     { title: 'Pegging & Dating', description: 'Guía psicológica, técnica y dating', mark: '🍑', category: 'scenes', route: '/pegging' },
     { title: 'Rituales D/s', description: 'Protocolos y hábitos guiados', mark: '📜', category: 'scenes', route: '/rituals' },
     { title: 'Contratos Digitales', description: 'Acuerdos D/s formales y firmas', mark: '✒️', category: 'scenes', route: '/contracts' },

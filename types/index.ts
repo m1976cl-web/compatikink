@@ -138,6 +138,10 @@ export interface UserProfile {
   };
   /** Configured auto-lock timeout option ('1m' | '5m' | '15m' | 'never'). */
   autoLockTimeout?: '1m' | '5m' | '15m' | 'never';
+  /** Hard limits / Límites duros inviolables */
+  hardLimits?: string[];
+  /** Soft limits / Límites suaves o condicionales */
+  softLimits?: string[];
   /** Explicit local admin role; required together with an unlocked vault for /admin. */
   isLocalAdmin?: boolean;
   pronouns?: string;
