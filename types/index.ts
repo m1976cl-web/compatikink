@@ -83,6 +83,14 @@ export interface UserProfile {
   /** Sealed ProfileSecrets (notes, baseResponses, session ids) when vault is active. */
   secretsCipher?: string;
   vaultVersion?: number;
+  /** Duress PIN (PIN de coacción / pánico) metadata. */
+  duressMeta?: {
+    saltB64: string;
+    verifierB64: string;
+    action: 'decoy' | 'wipe';
+  };
+  /** Configured auto-lock timeout option ('1m' | '5m' | '15m' | 'never'). */
+  autoLockTimeout?: '1m' | '5m' | '15m' | 'never';
   /** Explicit local admin role; required together with an unlocked vault for /admin. */
   isLocalAdmin?: boolean;
   pronouns?: string;

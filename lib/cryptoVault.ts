@@ -495,10 +495,178 @@ export async function migratePlaintextBlobsOnUnlock(): Promise<number> {
   return migrated;
 }
 
-/**
- * Unlock vault from profile vault meta (or migrate legacy plaintext pin).
- * Caller persists updated profile fields after migration.
- */
+// ─── Auto-Lock Manager (Inactivity & Tab Switch) ───────────────────────────
+
+export type AutoLockTimeout = '1m' | '5m' | '15m' | 'never';
+
+class AutoLockManagerStore {
+  private timeoutMs: number = 5 * 60 * 1000; // default 5m
+  private timer: ReturnType<typeof setTimeout> | null = null;
+  private enabled: boolean = true;
+
+  constructor() {
+    this.initDOMListeners();
+  }
+
+  setTimeoutOption(opt: AutoLockTimeout) {
+    switch (opt) {
+      case '1m':
+        this.timeoutMs = 1 * 60 * 1000;
+        this.enabled = true;
+        break;
+      case '5m':
+        this.timeoutMs = 5 * 60 * 1000;
+        this.enabled = true;
+        break;
+      case '15m':
+        this.timeoutMs = 15 * 60 * 1000;
+        this.enabled = true;
+        break;
+      case 'never':
+        this.enabled = false;
+        break;
+    }
+    this.resetTimer();
+  }
+
+  resetTimer() {
+    if (this.timer) clearTimeout(this.timer);
+    if (!this.enabled || !VaultSession.isUnlocked()) return;
+    this.timer = setTimeout(() => {
+      if (VaultSession.isUnlocked()) {
+        console.warn('Auto-lock triggered by inactivity.');
+        VaultSession.lock();
+      }
+    }, this.timeoutMs);
+  }
+
+  private initDOMListeners() {
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      const reset = () => this.resetTimer();
+      ['mousemove', 'keydown', 'touchstart', 'scroll'].forEach((ev) => {
+        try {
+          window.addEventListener(ev, reset, { passive: true });
+        } catch {
+          /* ignore */
+        }
+      });
+      if (typeof document !== 'undefined' && document.addEventListener) {
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden && this.enabled && VaultSession.isUnlocked()) {
+            VaultSession.lock();
+          }
+        });
+      }
+    }
+  }
+}
+
+export const AutoLockManager = new AutoLockManagerStore();
+
+// ─── PIN Rate Limiting & Lockout ──────────────────────────────────────────
+
+export interface LockoutStatus {
+  isLockedOut: boolean;
+  remainingSeconds: number;
+  attemptsLeft: number;
+}
+
+const PIN_ATTEMPTS_PREFIX = 'ck_pin_attempts_';
+
+export async function getPinLockoutStatus(nickname: string): Promise<LockoutStatus> {
+  const key = PIN_ATTEMPTS_PREFIX + nickname.toLowerCase();
+  const raw = await AsyncStorage.getItem(key);
+  if (!raw) return { isLockedOut: false, remainingSeconds: 0, attemptsLeft: 5 };
+
+  try {
+    const data = JSON.parse(raw) as { count: number; lockedUntil: number };
+    const now = Date.now();
+    if (data.lockedUntil && now < data.lockedUntil) {
+      const remaining = Math.ceil((data.lockedUntil - now) / 1000);
+      return { isLockedOut: true, remainingSeconds: remaining, attemptsLeft: 0 };
+    }
+    const attemptsLeft = Math.max(0, 5 - (data.count % 5));
+    return { isLockedOut: false, remainingSeconds: 0, attemptsLeft };
+  } catch {
+    return { isLockedOut: false, remainingSeconds: 0, attemptsLeft: 5 };
+  }
+}
+
+export async function recordFailedPinAttempt(nickname: string): Promise<LockoutStatus> {
+  const key = PIN_ATTEMPTS_PREFIX + nickname.toLowerCase();
+  const raw = await AsyncStorage.getItem(key);
+  let count = 1;
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      count = (parsed.count || 0) + 1;
+    } catch {
+      count = 1;
+    }
+  }
+
+  let lockoutDurationMs = 0;
+  if (count >= 10) {
+    lockoutDurationMs = 15 * 60 * 1000; // 15 minutes lockout
+  } else if (count >= 5) {
+    lockoutDurationMs = 60 * 1000; // 60 seconds lockout
+  } else if (count >= 3) {
+    lockoutDurationMs = 5 * 1000; // 5 seconds lockout
+  }
+
+  const lockedUntil = lockoutDurationMs > 0 ? Date.now() + lockoutDurationMs : 0;
+  await AsyncStorage.setItem(key, JSON.stringify({ count, lockedUntil }));
+
+  const remaining = Math.ceil(lockoutDurationMs / 1000);
+  return {
+    isLockedOut: lockoutDurationMs > 0,
+    remainingSeconds: remaining,
+    attemptsLeft: Math.max(0, 5 - (count % 5)),
+  };
+}
+
+export async function clearPinLockoutAttempts(nickname: string): Promise<void> {
+  const key = PIN_ATTEMPTS_PREFIX + nickname.toLowerCase();
+  await AsyncStorage.removeItem(key);
+}
+
+// ─── Duress PIN / Panic PIN Support ───────────────────────────────────────
+
+export interface DuressMeta {
+  saltB64: string;
+  verifierB64: string;
+  action: 'decoy' | 'wipe';
+}
+
+export async function createDuressMeta(
+  duressPin: string,
+  action: 'decoy' | 'wipe' = 'decoy'
+): Promise<DuressMeta> {
+  const { meta } = await createVaultMeta(duressPin);
+  return {
+    saltB64: meta.saltB64,
+    verifierB64: meta.verifierB64,
+    action,
+  };
+}
+
+export async function verifyDuressPin(
+  pin: string,
+  duressMeta: DuressMeta
+): Promise<boolean> {
+  const vaultMeta: VaultMeta = {
+    saltB64: duressMeta.saltB64,
+    verifierB64: duressMeta.verifierB64,
+    kdf: 'PBKDF2-SHA-256',
+    iterations: PBKDF2_ITERATIONS,
+    version: VAULT_VERSION,
+  };
+  const key = await verifyPinAgainstMeta(pin, vaultMeta);
+  return key !== null;
+}
+
+// ─── Vault session unlock with Security Hooks ─────────────────────────────
+
 export async function unlockVaultForProfile(
   nickname: string,
   pin: string,
@@ -506,24 +674,72 @@ export async function unlockVaultForProfile(
     pinSalt?: string;
     pinVerifier?: string;
     vaultMeta?: VaultMeta;
+    duressMeta?: DuressMeta;
     pin?: string;
   }
-): Promise<{ key: CryptoKey; meta: VaultMeta; migratedFromLegacyPin: boolean }> {
+): Promise<{ key: CryptoKey; meta: VaultMeta; isDuress: boolean; duressAction?: 'decoy' | 'wipe' }> {
+  // Check lockout
+  const lockout = await getPinLockoutStatus(nickname);
+  if (lockout.isLockedOut) {
+    throw new Error(
+      `Demasiados intentos fallidos. Intenta nuevamente en ${lockout.remainingSeconds} segundos.`
+    );
+  }
+
+  // 1. Check if Duress PIN entered
+  if (profile.duressMeta) {
+    const isDuress = await verifyDuressPin(pin, profile.duressMeta);
+    if (isDuress) {
+      await clearPinLockoutAttempts(nickname);
+      // Unlock with a decoy key derived from the duress PIN
+      const decoyKey = await deriveVaultKey(pin, base64ToBytes(profile.duressMeta.saltB64));
+      await VaultSession.unlockWithKey(nickname + '_decoy', decoyKey);
+      return {
+        key: decoyKey,
+        meta: {
+          saltB64: profile.duressMeta.saltB64,
+          verifierB64: profile.duressMeta.verifierB64,
+          kdf: 'PBKDF2-SHA-256',
+          iterations: PBKDF2_ITERATIONS,
+          version: VAULT_VERSION,
+        },
+        isDuress: true,
+        duressAction: profile.duressMeta.action,
+      };
+    }
+  }
+
+  // 2. Check standard Vault Meta
   const existing = vaultMetaFromProfile(profile);
   if (existing) {
     const key = await verifyPinAgainstMeta(pin, existing);
-    if (!key) throw new Error('PIN incorrecto.');
+    if (!key) {
+      const lockRes = await recordFailedPinAttempt(nickname);
+      if (lockRes.isLockedOut) {
+        throw new Error(
+          `PIN incorrecto. Bloqueo de seguridad activado por ${lockRes.remainingSeconds}s.`
+        );
+      }
+      throw new Error(`PIN incorrecto. Te quedan ${lockRes.attemptsLeft} intentos.`);
+    }
+    await clearPinLockoutAttempts(nickname);
     await VaultSession.unlockWithKey(nickname, key);
+    AutoLockManager.resetTimer();
     await migratePlaintextBlobsOnUnlock();
-    return { key, meta: existing, migratedFromLegacyPin: false };
+    return { key, meta: existing, isDuress: false };
   }
 
   if (profile.pin != null) {
-    if (profile.pin !== pin) throw new Error('PIN incorrecto.');
+    if (profile.pin !== pin) {
+      await recordFailedPinAttempt(nickname);
+      throw new Error('PIN incorrecto.');
+    }
+    await clearPinLockoutAttempts(nickname);
     const { meta, key } = await createVaultMeta(pin);
     await VaultSession.unlockWithKey(nickname, key);
+    AutoLockManager.resetTimer();
     await migratePlaintextBlobsOnUnlock();
-    return { key, meta, migratedFromLegacyPin: true };
+    return { key, meta, isDuress: false };
   }
 
   throw new Error('Este perfil no tiene bóveda configurada. Crea un PIN de seguridad.');
@@ -535,6 +751,7 @@ export async function setupVaultForNewProfile(
 ): Promise<VaultMeta> {
   const { meta, key } = await createVaultMeta(pin);
   await VaultSession.unlockWithKey(nickname, key);
+  AutoLockManager.resetTimer();
   await migratePlaintextBlobsOnUnlock();
   return meta;
 }

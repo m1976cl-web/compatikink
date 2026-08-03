@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -22,17 +22,90 @@ import {
 } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import { saveProfile } from '@/lib/storage';
+import {
+  saveProfile,
+  getCurrentProfile,
+  getSecurityAuditLogs,
+  addSecurityAuditLog,
+  SecurityAuditLogItem,
+} from '@/lib/storage';
+import {
+  AutoLockManager,
+  AutoLockTimeout,
+  createDuressMeta,
+  VaultSession,
+} from '@/lib/cryptoVault';
 
 export default function AuthScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
 
-  const [mode, setMode] = useState<'signin' | 'signup' | 'magic'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup' | 'security' | 'magic'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Security Settings States
+  const [autoLockOpt, setAutoLockOpt] = useState<AutoLockTimeout>('5m');
+  const [duressPinInput, setDuressPinInput] = useState('');
+  const [duressActionInput, setDuressActionInput] = useState<'decoy' | 'wipe'>('decoy');
+  const [auditLogs, setAuditLogs] = useState<SecurityAuditLogItem[]>([]);
+  const [currentNick, setCurrentNick] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadSecurityData();
+  }, []);
+
+  const loadSecurityData = async () => {
+    const prof = await getCurrentProfile();
+    if (prof) {
+      setCurrentNick(prof.nickname);
+      if (prof.autoLockTimeout) setAutoLockOpt(prof.autoLockTimeout);
+      const logs = await getSecurityAuditLogs(prof.nickname);
+      setAuditLogs(logs);
+    }
+  };
+
+  const handleSetAutoLock = async (opt: AutoLockTimeout) => {
+    setAutoLockOpt(opt);
+    AutoLockManager.setTimeoutOption(opt);
+    const prof = await getCurrentProfile();
+    if (prof) {
+      await saveProfile({ ...prof, autoLockTimeout: opt });
+      await addSecurityAuditLog(prof.nickname, 'autolock_changed', `Tiempo de auto-bloqueo: ${opt}`);
+      Alert.alert('Configuración guardada ⏱️', `Auto-bloqueo configurado a ${opt}.`);
+      await loadSecurityData();
+    }
+  };
+
+  const handleSaveDuressPin = async () => {
+    if (!duressPinInput.trim() || duressPinInput.length < 4) {
+      Alert.alert('PIN inválido', 'El PIN de coacción debe tener al menos 4 caracteres.');
+      return;
+    }
+    const prof = await getCurrentProfile();
+    if (!prof) {
+      Alert.alert('Inicia sesión primero', 'Debes iniciar sesión con tu perfil para configurar un PIN de coacción.');
+      return;
+    }
+
+    try {
+      const duressMeta = await createDuressMeta(duressPinInput.trim(), duressActionInput);
+      await saveProfile({ ...prof, duressMeta });
+      await addSecurityAuditLog(prof.nickname, 'pin_changed', `Configurado PIN de Coacción (${duressActionInput})`);
+      setDuressPinInput('');
+      Alert.alert(
+        'PIN de Coacción Guardado 🚨',
+        `Si alguien te fuerza a desbloquear tu bóveda e ingresas este PIN, la app ejecutará la acción: ${
+          duressActionInput === 'decoy' ? 'Mostrar perfil señuelo vacío' : 'Borrado silencioso de pánico'
+        }.`
+      );
+      await loadSecurityData();
+    } catch {
+      Alert.alert('Error', 'No se pudo guardar el PIN de coacción.');
+    }
+  };
 
   const handleSignIn = async () => {
     if (!email.trim() || !password.trim()) {
@@ -148,8 +221,8 @@ export default function AuthScreen() {
 
         <AppHeader
           brand
-          title="Cuenta y bóveda"
-          subtitle="Clave AES-GCM-256 derivada con PBKDF2-SHA-256 (~310k). El servidor solo ve ciphertext."
+          title="Cuenta & Bóveda de Seguridad"
+          subtitle="Cifrado Zero-Knowledge AES-GCM-256 + PBKDF2. El servidor solo almacena ciphertext inviolable."
         />
 
         <View style={styles.tabsRow}>
@@ -157,6 +230,7 @@ export default function AuthScreen() {
             [
               { id: 'signin' as const, label: 'Entrar' },
               { id: 'signup' as const, label: 'Crear' },
+              { id: 'security' as const, label: 'Seguridad' },
               { id: 'magic' as const, label: 'Magic link' },
             ] as const
           ).map((t) => (
@@ -184,57 +258,158 @@ export default function AuthScreen() {
             </>
           ) : null}
 
-          <Text style={styles.fieldLabel}>Correo</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="usuario@ejemplo.com"
-            placeholderTextColor={colors.textDim}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+          {mode === 'security' ? (
+            <View style={styles.securityBox}>
+              <Text style={styles.sectionTitle}>⏱️ Auto-Bloqueo de Bóveda por Inactividad</Text>
+              <Text style={styles.sectionDesc}>
+                Bloquea automáticamente la clave en RAM si no hay interacción o si cambias de pestaña.
+              </Text>
 
-          {mode !== 'magic' ? (
-            <>
-              <Text style={styles.fieldLabel}>Contraseña</Text>
+              <View style={styles.chipRow}>
+                {(
+                  [
+                    { label: '1 min', value: '1m' as const },
+                    { label: '5 min', value: '5m' as const },
+                    { label: '15 min', value: '15m' as const },
+                    { label: 'Nunca', value: 'never' as const },
+                  ] as const
+                ).map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[styles.chip, autoLockOpt === opt.value && styles.chipActive]}
+                    onPress={() => handleSetAutoLock(opt.value)}
+                  >
+                    <Text style={[styles.chipText, autoLockOpt === opt.value && styles.chipTextActive]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.divider} />
+
+              <Text style={styles.sectionTitle}>🚨 PIN de Coacción / Pánico (Duress PIN)</Text>
+              <Text style={styles.sectionDesc}>
+                Si alguien te fuerza a desbloquear tu dispositivo, ingresa este PIN alternativo para engañar al atacante o borrar tus datos en silencio.
+              </Text>
+
+              <Text style={styles.fieldLabel}>PIN de Coacción Alternativo</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Ej: 9999"
                 placeholderTextColor={colors.textDim}
-                value={password}
-                onChangeText={setPassword}
+                value={duressPinInput}
+                onChangeText={setDuressPinInput}
+                keyboardType="numeric"
                 secureTextEntry
               />
+
+              <Text style={styles.fieldLabel}>Acción al ingresar PIN de Coacción</Text>
+              <View style={styles.chipRow}>
+                <TouchableOpacity
+                  style={[styles.chip, duressActionInput === 'decoy' && styles.chipActive]}
+                  onPress={() => setDuressActionInput('decoy')}
+                >
+                  <Text style={[styles.chipText, duressActionInput === 'decoy' && styles.chipTextActive]}>
+                    🎭 Perfil Señuelo (Decoy)
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.chip, duressActionInput === 'wipe' && styles.chipActiveDanger]}
+                  onPress={() => setDuressActionInput('wipe')}
+                >
+                  <Text style={[styles.chipText, duressActionInput === 'wipe' && { color: colors.danger }]}>
+                    🚨 Borrado de Pánico
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Button title="Guardar PIN de Coacción" onPress={handleSaveDuressPin} style={{ marginTop: 8 }} />
+
+              <View style={styles.divider} />
+
+              <Text style={styles.sectionTitle}>📊 Registro Cifrado de Auditoría de Seguridad</Text>
+              {auditLogs.length === 0 ? (
+                <Text style={styles.emptyLogsText}>Sin eventos de seguridad registrados.</Text>
+              ) : (
+                <View style={styles.logsList}>
+                  {auditLogs.map((log) => (
+                    <View key={log.id} style={styles.logItem}>
+                      <View style={styles.logHeader}>
+                        <Text style={styles.logTag}>
+                          {log.event === 'unlock_success'
+                            ? '✅ Desbloqueo'
+                            : log.event === 'unlock_failed'
+                            ? '❌ Intento Fallido'
+                            : log.event === 'duress_triggered'
+                            ? '🚨 Coacción Activada'
+                            : '⚙️ Configuración'}
+                        </Text>
+                        <Text style={styles.logTime}>
+                          {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                      </View>
+                      {log.details ? <Text style={styles.logDetails}>{log.details}</Text> : null}
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          ) : (
+            <>
+              <Text style={styles.fieldLabel}>Correo</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="usuario@ejemplo.com"
+                placeholderTextColor={colors.textDim}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+
+              {mode !== 'magic' ? (
+                <>
+                  <Text style={styles.fieldLabel}>Contraseña</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Mínimo 6 caracteres"
+                    placeholderTextColor={colors.textDim}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                  />
+                </>
+              ) : null}
+
+              <Text style={styles.privacyNote}>
+                Bóveda Zero-Knowledge: las respuestas sensibles se cifran en el dispositivo antes de
+                guardarse. PBKDF2 + AES-GCM — no Argon2 (WebCrypto).
+              </Text>
+
+              {mode === 'signin' ? (
+                <Button
+                  title={loading ? 'Entrando…' : 'Entrar a mi bóveda'}
+                  onPress={handleSignIn}
+                  disabled={loading}
+                />
+              ) : null}
+              {mode === 'signup' ? (
+                <Button
+                  title={loading ? 'Creando…' : 'Registrar y crear bóveda'}
+                  onPress={handleSignUp}
+                  disabled={loading}
+                />
+              ) : null}
+              {mode === 'magic' ? (
+                <Button
+                  title={loading ? 'Enviando…' : 'Enviar enlace mágico'}
+                  onPress={handleMagicLink}
+                  disabled={loading}
+                />
+              ) : null}
             </>
-          ) : null}
-
-          <Text style={styles.privacyNote}>
-            Bóveda Zero-Knowledge: las respuestas sensibles se cifran en el dispositivo antes de
-            guardarse. PBKDF2 + AES-GCM — no Argon2 (WebCrypto).
-          </Text>
-
-          {mode === 'signin' ? (
-            <Button
-              title={loading ? 'Entrando…' : 'Entrar a mi bóveda'}
-              onPress={handleSignIn}
-              disabled={loading}
-            />
-          ) : null}
-          {mode === 'signup' ? (
-            <Button
-              title={loading ? 'Creando…' : 'Registrar y crear bóveda'}
-              onPress={handleSignUp}
-              disabled={loading}
-            />
-          ) : null}
-          {mode === 'magic' ? (
-            <Button
-              title={loading ? 'Enviando…' : 'Enviar enlace mágico'}
-              onPress={handleMagicLink}
-              disabled={loading}
-            />
-          ) : null}
+          )}
 
           <Button title="Continuar en modo local" variant="ghost" onPress={() => router.replace('/')} />
         </View>
@@ -250,7 +425,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
     paddingTop: spacing.md,
   },
-  containerDesktop: { maxWidth: 520, alignSelf: 'center', width: '100%' },
+  containerDesktop: { maxWidth: 580, alignSelf: 'center', width: '100%' },
   backBtn: { alignSelf: 'flex-start', marginBottom: spacing.sm },
   backBtnText: {
     fontFamily: fonts.bodySemi,
@@ -299,4 +474,68 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
+  securityBox: { gap: spacing.sm },
+  sectionTitle: {
+    color: colors.text,
+    fontFamily: fonts.bodySemi,
+    fontSize: fontSize.md,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  sectionDesc: {
+    color: colors.textMuted,
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  chip: {
+    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chipActive: {
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.primary,
+  },
+  chipActiveDanger: {
+    backgroundColor: 'rgba(248, 113, 113, 0.15)',
+    borderColor: colors.danger,
+  },
+  chipText: {
+    color: colors.textMuted,
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+  },
+  chipTextActive: {
+    color: colors.primary,
+    fontFamily: fonts.bodySemi,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.md,
+  },
+  emptyLogsText: {
+    color: colors.textDim,
+    fontSize: fontSize.xs,
+    fontStyle: 'italic',
+  },
+  logsList: { gap: 6, marginTop: 4 },
+  logItem: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.sm,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    gap: 2,
+  },
+  logHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  logTag: { color: colors.text, fontSize: fontSize.xs, fontFamily: fonts.bodySemi },
+  logTime: { color: colors.textDim, fontSize: 10 },
+  logDetails: { color: colors.textMuted, fontSize: 11, fontFamily: fonts.body },
 });

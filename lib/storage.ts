@@ -415,6 +415,48 @@ export async function registerProfile(profile: UserProfile): Promise<UserProfile
   return cleanProfile;
 }
 
+export interface SecurityAuditLogItem {
+  id: string;
+  timestamp: string;
+  event: 'unlock_success' | 'unlock_failed' | 'duress_triggered' | 'pin_changed' | 'autolock_changed';
+  details?: string;
+  userAgent?: string;
+}
+
+const AUDIT_LOG_PREFIX = 'ck_security_audit_';
+
+export async function addSecurityAuditLog(
+  nickname: string,
+  event: SecurityAuditLogItem['event'],
+  details?: string
+): Promise<void> {
+  try {
+    const key = AUDIT_LOG_PREFIX + nickname.toLowerCase();
+    const existing = await readJsonStorage<SecurityAuditLogItem[]>(key, []);
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : 'Mobile App';
+    const newItem: SecurityAuditLogItem = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      timestamp: new Date().toISOString(),
+      event,
+      details,
+      userAgent: ua.slice(0, 60),
+    };
+    const updated = [newItem, ...existing].slice(0, 50); // Keep last 50 events
+    await writeJsonStorage(key, updated);
+  } catch (err) {
+    console.warn('Could not write security audit log:', err);
+  }
+}
+
+export async function getSecurityAuditLogs(nickname: string): Promise<SecurityAuditLogItem[]> {
+  try {
+    const key = AUDIT_LOG_PREFIX + nickname.toLowerCase();
+    return await readJsonStorage<SecurityAuditLogItem[]>(key, []);
+  } catch {
+    return [];
+  }
+}
+
 export async function loginProfile(nickname: string, pin: string): Promise<UserProfile | null> {
   const profile = await getProfile(nickname);
   if (!profile) return null;
@@ -425,28 +467,50 @@ export async function loginProfile(nickname: string, pin: string): Promise<UserP
   if (!hasVault) {
     // Legacy profile without PIN — allow device-local access, no vault key
     await setCurrentProfile(profile.nickname);
+    await addSecurityAuditLog(nickname, 'unlock_success', 'Sin PIN (Perfil local)');
     return profile;
   }
 
   try {
-    const { meta, migratedFromLegacyPin } = await unlockVaultForProfile(nickname, pin, profile);
+    const res = await unlockVaultForProfile(nickname, pin, profile);
+    
+    // Check if Duress PIN triggered
+    if (res.isDuress) {
+      await addSecurityAuditLog(nickname, 'duress_triggered', `Acción de coacción: ${res.duressAction}`);
+      if (res.duressAction === 'wipe') {
+        // Silent Panic Wipe
+        await panicWipeData();
+        return null;
+      }
+      // Decoy Profile Mode: return clean dummy profile
+      const decoyProfile: UserProfile = {
+        nickname: profile.nickname,
+        notes: 'Espacio personal señuelo',
+        baseResponses: [],
+        experienceLevel: 'beginner',
+      };
+      await setCurrentProfile(decoyProfile.nickname);
+      return decoyProfile;
+    }
+
     let updated = profile;
-    if (migratedFromLegacyPin || !profile.pinSalt) {
+    if (!profile.pinSalt) {
       updated = sanitizeProfileForPersist({
         ...profile,
         pin: undefined,
-        pinSalt: meta.saltB64,
-        pinVerifier: meta.verifierB64,
+        pinSalt: res.meta.saltB64,
+        pinVerifier: res.meta.verifierB64,
         vaultVersion: VAULT_VERSION,
       });
       await saveProfile(updated);
     }
     await setCurrentProfile(updated.nickname);
-    // Re-seal any inline secrets now that vault is unlocked
     await saveProfile(updated);
+    await addSecurityAuditLog(nickname, 'unlock_success', 'Desbloqueo con PIN de Bóveda');
     return updated;
-  } catch {
-    return null;
+  } catch (err: any) {
+    await addSecurityAuditLog(nickname, 'unlock_failed', err?.message || 'PIN incorrecto');
+    throw err;
   }
 }
 
