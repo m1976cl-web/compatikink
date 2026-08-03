@@ -7,25 +7,26 @@ import {
   View,
   TextInput,
   Alert,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { VaultLockGate } from '@/components/VaultLockGate';
 import { useResponsive } from '@/hooks/useResponsive';
-import { getCurrentProfile, createLocalSession, saveGuestProfile, getDatingMessages, sendDatingMessage, DatingMessage } from '@/lib/storage';
+import { getCurrentProfile, createLocalSession, saveGuestProfile, getDatingMessages, sendDatingMessage, DatingMessage, saveProfile } from '@/lib/storage';
 import { generateReport } from '@/lib/compatibility';
-import { UserProfile, EXPERIENCE_LABELS } from '@/types';
+import { UserProfile, EXPERIENCE_LABELS, FetishBadge } from '@/types';
 import { COMMUNITY_PROFILES, CommunityProfile } from '@/data/communityProfiles';
-import { Modal } from 'react-native';
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
+import { calculateRoleComplementarityScore } from '@/lib/vault';
 
 export default function DatingScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [minScoreFilter, setMinScoreFilter] = useState<number>(0);
-  const [roleFilter, setRoleFilter] = useState<'all' | 'give' | 'receive' | 'both'>('all');
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [fetlifeRoleFilter, setFetlifeRoleFilter] = useState<string>('all');
   const [userFetlifeHandle, setUserFetlifeHandle] = useState('');
@@ -37,30 +38,41 @@ export default function DatingScreen() {
     (async () => {
       const p = await getCurrentProfile();
       setProfile(p);
+      if (p?.fetlifeHandle) {
+        setUserFetlifeHandle(p.fetlifeHandle);
+      }
     })();
   }, []);
 
-  // Compute compatibility score for each community profile against user's baseResponses
+  // Compute compatibility score for each community profile
   const rankedProfiles = useMemo(() => {
     const myResponses = profile?.baseResponses ?? [];
-    if (myResponses.length === 0) {
-      return COMMUNITY_PROFILES.map((p) => ({
-        profile: p,
-        score: 75,
-        mutualMatches: p.topKinks,
-      }));
-    }
+    const myRole = profile?.role || 'Switch';
 
     return COMMUNITY_PROFILES.map((p) => {
-      const report = generateReport('dating_sim', myResponses, p.baseResponses, profile ?? undefined, p);
-      const mutualNames = report.items
-        .filter((i) => i.section === 'mutual_match' || i.section === 'explore_together')
-        .map((i) => i.activityName);
+      let baseScore = 75;
+      let mutualNames: string[] = p.topKinks;
+
+      if (myResponses.length > 0) {
+        const report = generateReport('dating_sim', myResponses, p.baseResponses, profile ?? undefined, p);
+        baseScore = report.compatibilityScore;
+        const filteredMatches = report.items
+          .filter((i) => i.section === 'mutual_match' || i.section === 'explore_together')
+          .map((i) => i.activityName);
+        if (filteredMatches.length > 0) {
+          mutualNames = filteredMatches;
+        }
+      }
+
+      // Calculate role complementarity score
+      const roleScore = calculateRoleComplementarityScore(myRole, p.role || 'Switch');
+      const combinedScore = Math.round(baseScore * 0.6 + roleScore * 0.4);
 
       return {
         profile: p,
-        score: report.compatibilityScore,
-        mutualMatches: mutualNames.length > 0 ? mutualNames : p.topKinks,
+        score: combinedScore,
+        roleScore,
+        mutualMatches: mutualNames,
       };
     }).sort((a, b) => b.score - a.score);
   }, [profile]);
@@ -69,9 +81,15 @@ export default function DatingScreen() {
     return rankedProfiles.filter(({ profile: p, score }) => {
       if (score < minScoreFilter) return false;
 
+      if (selectedRoleFilter !== 'all') {
+        const pRole = (p.role || '').toLowerCase();
+        const target = selectedRoleFilter.toLowerCase();
+        if (!pRole.includes(target)) return false;
+      }
+
       if (fetlifeRoleFilter !== 'all') {
         const q = fetlifeRoleFilter.toLowerCase();
-        const matchesRole = p.bio.toLowerCase().includes(q) || p.topKinks.some((k) => k.toLowerCase().includes(q));
+        const matchesRole = (p.bio || '').toLowerCase().includes(q) || p.topKinks.some((k) => k.toLowerCase().includes(q));
         if (!matchesRole) return false;
       }
 
@@ -80,11 +98,12 @@ export default function DatingScreen() {
         const matchesName = p.nickname.toLowerCase().includes(q);
         const matchesBio = p.bio.toLowerCase().includes(q);
         const matchesKinks = p.topKinks.some((k) => k.toLowerCase().includes(q));
-        if (!matchesName && !matchesBio && !matchesKinks) return false;
+        const matchesBadges = (p.fetishBadges || []).some((b) => b.label.toLowerCase().includes(q));
+        if (!matchesName && !matchesBio && !matchesKinks && !matchesBadges) return false;
       }
       return true;
     });
-  }, [rankedProfiles, minScoreFilter, fetlifeRoleFilter, searchQuery]);
+  }, [rankedProfiles, minScoreFilter, selectedRoleFilter, fetlifeRoleFilter, searchQuery]);
 
   const handleStartSessionWithProfile = async (target: CommunityProfile) => {
     if (!profile || !profile.baseResponses || profile.baseResponses.length === 0) {
@@ -100,10 +119,7 @@ export default function DatingScreen() {
     }
 
     try {
-      // Create a local session with initiator profile and target guest profile
       const session = await createLocalSession(profile.nickname, profile.baseResponses, profile);
-      
-      // Inject guest responses into session directly for instant report viewing
       const { saveLocalSessions, loadLocalSessions } = await import('@/lib/storage');
       const sessions = await loadLocalSessions();
       if (sessions[session.id]) {
@@ -128,27 +144,50 @@ export default function DatingScreen() {
     }
   };
 
+  const handleLinkFetlife = async () => {
+    if (!userFetlifeHandle.trim()) {
+      Alert.alert('Ingresa tu Usuario', 'Escribe tu usuario o enlace de FetLife.');
+      return;
+    }
+
+    if (profile) {
+      const updated: UserProfile = {
+        ...profile,
+        fetlifeHandle: userFetlifeHandle.trim(),
+        verificationBadges: Array.from(new Set([...(profile.verificationBadges || []), 'FetLife Verified'])),
+      };
+      await saveProfile(updated);
+      setProfile(updated);
+    }
+
+    Alert.alert(
+      'Perfil FetLife vinculado ✓',
+      `Se ha verificado el perfil ${userFetlifeHandle}. Tu insignia 'FetLife Verified' ya está activa en tu perfil.`
+    );
+  };
+
   return (
-    <ScreenContainer title="Conexiones" hideHeader>
+    <ScreenContainer title="Conexiones Fetish & Dating" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Conexiones</Text>
+          <Text style={styles.title}>Fetish Social & Dating Suite</Text>
           <Text style={styles.subtitle}>
-            Buscador por roles, compatibilidad y mensajería directa cifrada en dispositivo
+            Buscador por roles (Dom/Sub/Switch), insignias fetichistas, protocolos SSC/RACK y mensajería cifrada
           </Text>
         </View>
 
         {/* FetLife profile linker */}
         <View style={styles.fetlifeCard}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ fontSize: 20 }}>🗝️</Text>
             <View style={{ flex: 1 }}>
-              <Text style={styles.fetlifeCardTitle}>Integración FetLife</Text>
+              <Text style={styles.fetlifeCardTitle}>Integración & Verificación FetLife</Text>
               <Text style={styles.fetlifeCardDesc}>
-                FetLife no permite filtrar por roles complejos o compatibilidad. Vincula tu usuario de FetLife para verificar tu perfil.
+                Vincular tu perfil de FetLife otorga la insignia verificada en tus conexiones y permite filtrar por roles avanzados.
               </Text>
             </View>
           </View>
@@ -161,33 +200,48 @@ export default function DatingScreen() {
               value={userFetlifeHandle}
               onChangeText={setUserFetlifeHandle}
             />
-            <TouchableOpacity
-              style={styles.fetlifeVerifyBtn}
-              onPress={() => {
-                if (!userFetlifeHandle.trim()) {
-                  Alert.alert('Ingresa tu Usuario', 'Escribe tu usuario o enlace de FetLife.');
-                  return;
-                }
-                Alert.alert('Perfil FetLife vinculado', `Se ha verificado el perfil ${userFetlifeHandle}. Tus conexiones podrán ver tu insignia verificada.`);
-              }}
-            >
+            <TouchableOpacity style={styles.fetlifeVerifyBtn} onPress={handleLinkFetlife}>
               <Text style={styles.fetlifeVerifyBtnText}>Vincular FetLife</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* FetLife Advanced Role Search Bar */}
+        {/* Dom / Sub / Switch Role Filter Chips */}
         <View style={styles.roleFilterSection}>
-          <Text style={styles.filterSectionTitle}>🔍 Buscador Avanzado por Roles & Fetiches FetLife:</Text>
+          <Text style={styles.filterSectionTitle}>🏷️ Filtrar por Rol Principal:</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.roleScroll}>
             {[
-              { id: 'all', label: '🌐 Todos los Roles' },
-              { id: 'shibari', label: '🪢 Shibari / Rope Top/Bottom' },
-              { id: 'bondage', label: '🔒 Bondage & Restricción' },
-              { id: 'impacto', label: '⚡ Impacto & Spanking' },
-              { id: 'keyholder', label: '🗝️ Keyholder / Castidad' },
-              { id: 'sensorial', label: '🕯️ Sensorial & Cera' },
-              { id: 'afectivo', label: '🪷 Aftercare & Afectivo' },
+              { id: 'all', label: '🌐 Todos' },
+              { id: 'dom', label: '⚡ Dom / Top / Master' },
+              { id: 'sub', label: '🪢 Sub / Bottom / Slave' },
+              { id: 'switch', label: '🔄 Switch / Versátil' },
+              { id: 'brat', label: '😜 Brat' },
+            ].map((rf) => (
+              <TouchableOpacity
+                key={rf.id}
+                style={[styles.roleChip, selectedRoleFilter === rf.id && styles.roleChipActive]}
+                onPress={() => setSelectedRoleFilter(rf.id)}
+              >
+                <Text style={[styles.roleChipText, selectedRoleFilter === rf.id && styles.roleChipTextActive]}>
+                  {rf.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* FetLife Advanced Category Filter Bar */}
+        <View style={styles.roleFilterSection}>
+          <Text style={styles.filterSectionTitle}>🔍 Fetiche o Interés Específico:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.roleScroll}>
+            {[
+              { id: 'all', label: 'Todos los Kinks' },
+              { id: 'shibari', label: '🪢 Shibari / Rope' },
+              { id: 'bondage', label: '🔒 Bondage' },
+              { id: 'impacto', label: '⚡ Impact Play' },
+              { id: 'keyholder', label: '🗝️ Castidad' },
+              { id: 'sensorial', label: '🕯️ Cera & Hielo' },
+              { id: 'afectivo', label: '🪷 Aftercare' },
             ].map((rf) => (
               <TouchableOpacity
                 key={rf.id}
@@ -205,9 +259,9 @@ export default function DatingScreen() {
         {/* User Status Warning Banner if questionnaire not done */}
         {(!profile?.baseResponses || profile.baseResponses.length === 0) && (
           <View style={styles.warningBanner}>
-            <Text style={styles.warningTitle}>⚠️ Cuestionario Incompleto</Text>
+            <Text style={styles.warningTitle}>⚠️ Cuestionario Base Incompleto</Text>
             <Text style={styles.warningText}>
-              Responde tu cuestionario base para calcular el % de compatibilidad exacto con cada perfil.
+              Responde tu cuestionario para calcular el % de compatibilidad exacto y activar la matriz de complementariedad de roles.
             </Text>
             <TouchableOpacity style={styles.warningBtn} onPress={() => router.push('/questionnaire')}>
               <Text style={styles.warningBtnText}>Responder Cuestionario 📋</Text>
@@ -220,16 +274,16 @@ export default function DatingScreen() {
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por nick, ubicación o kink (ej: Shibari, D/s, Cera)..."
+            placeholder="Buscar por nick, ubicación, insignia o fetiche (ej: Shibari, D/s, Cera)..."
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
 
-        {/* Filters Row */}
+        {/* Match Percentage Filter Row */}
         <View style={styles.filterRow}>
-          <Text style={styles.filterLabel}>Filtrar por Match:</Text>
+          <Text style={styles.filterLabel}>Filtrar por Afinidad:</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChips}>
             {[
               { label: 'Todos', min: 0 },
@@ -255,22 +309,32 @@ export default function DatingScreen() {
 
         {/* Feed List */}
         <ScrollView contentContainerStyle={styles.feed} showsVerticalScrollIndicator={false}>
-          {filtered.map(({ profile: item, score, mutualMatches }) => (
+          {filtered.map(({ profile: item, score, roleScore, mutualMatches }) => (
             <View key={item.id} style={styles.profileCard}>
               {/* Top Row: Avatar, Info & Match Score */}
               <View style={styles.cardHeaderRow}>
                 <Text style={styles.avatarEmoji}>{item.avatarEmoji}</Text>
                 <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <Text style={styles.nickname}>{item.nickname}</Text>
                     <Text style={styles.ageText}>{item.age}y</Text>
+
+                    {/* Verification Badges */}
+                    {item.verificationBadges?.map((v, idx) => (
+                      <View key={idx} style={styles.verifBadge}>
+                        <Text style={styles.verifBadgeText}>✓ {v}</Text>
+                      </View>
+                    ))}
                   </View>
                   <Text style={styles.metaText}>
                     {item.pronouns ? `${item.pronouns} · ` : ''}{item.location}
                   </Text>
-                  <Text style={styles.expBadge}>
-                    {EXPERIENCE_LABELS[item.experienceLevel ?? 'intermediate']}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                    <Text style={styles.roleTagText}>🎭 Rol: {item.role || 'Switch'}</Text>
+                    <Text style={styles.expBadge}>
+                      {EXPERIENCE_LABELS[item.experienceLevel ?? 'intermediate']}
+                    </Text>
+                  </View>
                 </View>
 
                 {/* Score Pill */}
@@ -281,16 +345,59 @@ export default function DatingScreen() {
                   ]}
                 >
                   <Text style={styles.scoreNumber}>{score}%</Text>
-                  <Text style={styles.scoreText}>Match</Text>
+                  <Text style={styles.scoreText}>Match Global</Text>
+                  <Text style={styles.roleSubScore}>Roles: {roleScore}%</Text>
                 </View>
               </View>
 
               {/* Bio */}
               <Text style={styles.bioText}>{item.bio}</Text>
 
+              {/* Glowing Fetish & Role Badges Matrix */}
+              {item.fetishBadges && item.fetishBadges.length > 0 && (
+                <View style={styles.badgeMatrixSection}>
+                  <Text style={styles.badgeMatrixTitle}>✨ Insignias Visuales Cifradas:</Text>
+                  <View style={styles.badgeChipsGrid}>
+                    {item.fetishBadges.map((badge: FetishBadge) => (
+                      <View
+                        key={badge.id}
+                        style={[
+                          styles.visualBadgeChip,
+                          { borderColor: badge.color, backgroundColor: `${badge.color}15` },
+                        ]}
+                      >
+                        <Text style={styles.badgeIcon}>{badge.icon || '🏷️'}</Text>
+                        <Text style={[styles.badgeLabel, { color: badge.color }]}>{badge.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Safety Protocols & Safewords */}
+              <View style={styles.safetyBox}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <Text style={styles.safetyBoxTitle}>🛡️ Protocolos:</Text>
+                  {(item.safetyProtocols || ['SSC']).map((prot, idx) => (
+                    <View key={idx} style={styles.protocolChip}>
+                      <Text style={styles.protocolText}>{prot}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {item.safewords && (
+                  <View style={styles.safewordsRow}>
+                    <Text style={styles.safewordsLabel}>Semáforo:</Text>
+                    <Text style={[styles.swItem, { color: colors.success }]}>🟢 {item.safewords.green || 'Verde'}</Text>
+                    <Text style={[styles.swItem, { color: colors.warning }]}>🟡 {item.safewords.yellow || 'Amarillo'}</Text>
+                    <Text style={[styles.swItem, { color: colors.danger }]}>🔴 {item.safewords.red || 'Rojo'}</Text>
+                  </View>
+                )}
+              </View>
+
               {/* Mutual Kinks / Top Matches */}
               <View style={styles.kinksSection}>
-                <Text style={styles.kinksLabel}>🔥 Intereses en común / Favoritos:</Text>
+                <Text style={styles.kinksLabel}>🔥 Intereses principales / Coincidencias:</Text>
                 <View style={styles.kinkChipsRow}>
                   {mutualMatches.slice(0, 4).map((kink, idx) => (
                     <View key={idx} style={styles.kinkChip}>
@@ -321,7 +428,7 @@ export default function DatingScreen() {
                     }
                   }}
                 >
-                  <Text style={styles.chatBtnText}>Enviar mensaje</Text>
+                  <Text style={styles.chatBtnText}>💬 Enviar mensaje directo cifrado</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -349,7 +456,7 @@ export default function DatingScreen() {
                 <View style={styles.chatModalHeader}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.chatModalTitle}>{messagingTarget.nickname}</Text>
-                    <Text style={styles.chatModalSub}>Mensajería directa (bóveda)</Text>
+                    <Text style={styles.chatModalSub}>Mensajería directa cifrada en bóveda (AES-GCM-256)</Text>
                   </View>
                   <TouchableOpacity onPress={() => setMessagingTarget(null)} style={styles.closeX}>
                     <Text style={styles.closeXText}>✕</Text>
@@ -357,8 +464,8 @@ export default function DatingScreen() {
                 </View>
 
                 <VaultLockGate
-                  title="Mensajes cifrados"
-                  subtitle="Desbloquea la bóveda para leer y enviar DMs almacenados en este dispositivo."
+                  title="Mensajes Cifrados"
+                  subtitle="Desbloquea la bóveda para leer y enviar DMs almacenados en tu dispositivo."
                   onUnlock={async () => {
                     if (!messagingTarget) return;
                     const msgs = await getDatingMessages(messagingTarget.id);
@@ -369,7 +476,7 @@ export default function DatingScreen() {
                     {chatMessages.length === 0 ? (
                       <View style={styles.chatEmptyState}>
                         <Text style={styles.chatEmptyText}>
-                          Inicia la conversación con {messagingTarget.nickname}. Propón una escena o consulta safewords.
+                          Inicia la conversación con {messagingTarget.nickname}. Propón una escena, acuerda safewords o comparte detalles confidenciales.
                         </Text>
                       </View>
                     ) : (
@@ -425,16 +532,13 @@ export default function DatingScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   container: {
     flex: 1,
     paddingHorizontal: spacing.md,
+    backgroundColor: '#0a0612',
   },
   containerDesktop: {
-    maxWidth: 760,
+    maxWidth: 800,
     alignSelf: 'center',
     width: '100%',
   },
@@ -444,9 +548,56 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.neonPurple, fontSize: fontSize.sm },
   title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
   subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
+
+  fetlifeCard: {
+    backgroundColor: 'rgba(192, 132, 252, 0.08)',
+    borderRadius: 18,
+    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.neonPurple,
+    gap: spacing.sm,
+    marginVertical: spacing.xs,
+  },
+  fetlifeCardTitle: { color: colors.neonPurple, fontSize: fontSize.sm, fontWeight: '900' },
+  fetlifeCardDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 16 },
+  fetlifeInputRow: { flexDirection: 'row', gap: spacing.xs },
+  fetlifeInput: {
+    flex: 1,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    color: colors.text,
+    fontSize: fontSize.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  fetlifeVerifyBtn: {
+    backgroundColor: colors.neonPurple,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: radii.md,
+    justifyContent: 'center',
+  },
+  fetlifeVerifyBtnText: { color: '#000', fontSize: fontSize.xs, fontWeight: '900' },
+
+  roleFilterSection: { gap: 6, marginVertical: spacing.xs },
+  filterSectionTitle: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  roleScroll: { gap: 6 },
+  roleChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  roleChipActive: { backgroundColor: colors.neonPurple, borderColor: colors.neonPurple },
+  roleChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  roleChipTextActive: { color: '#000' },
 
   warningBanner: {
     backgroundColor: 'rgba(251, 191, 36, 0.1)',
@@ -500,8 +651,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   filterChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.neonRose,
+    borderColor: colors.neonRose,
   },
   filterChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
   filterChipTextActive: { color: '#fff' },
@@ -509,12 +660,16 @@ const styles = StyleSheet.create({
   feed: { gap: spacing.md, paddingTop: spacing.xs },
 
   profileCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#120b22',
     borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: 1.5,
-    borderColor: colors.borderSubtle,
+    borderColor: 'rgba(192, 132, 252, 0.3)',
     gap: spacing.sm,
+    shadowColor: '#c084fc',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -522,10 +677,21 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   avatarEmoji: { fontSize: 44 },
-  nickname: { color: colors.primary, fontSize: fontSize.lg, fontWeight: '900' },
+  nickname: { color: colors.neonPurple, fontSize: fontSize.lg, fontWeight: '900' },
   ageText: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '600' },
   metaText: { color: colors.textMuted, fontSize: fontSize.xs },
-  expBadge: { color: colors.accent, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', marginTop: 2 },
+  roleTagText: { color: colors.neonRose, fontSize: fontSize.xs, fontWeight: '700' },
+  expBadge: { color: colors.neonEmerald, fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
+
+  verifBadge: {
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  verifBadgeText: { color: '#38bdf8', fontSize: 9, fontWeight: '800' },
 
   scorePill: {
     alignItems: 'center',
@@ -535,35 +701,71 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     borderWidth: 1.5,
   },
-  scoreHigh: { backgroundColor: 'rgba(74, 222, 128, 0.15)', borderColor: colors.success },
-  scoreMed: { backgroundColor: 'rgba(59, 130, 246, 0.15)', borderColor: colors.info },
+  scoreHigh: { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: colors.neonEmerald },
+  scoreMed: { backgroundColor: 'rgba(192, 132, 252, 0.15)', borderColor: colors.neonPurple },
   scoreLow: { backgroundColor: 'rgba(251, 191, 36, 0.15)', borderColor: colors.warning },
   scoreNumber: { color: colors.text, fontSize: fontSize.lg, fontWeight: '900' },
   scoreText: { color: colors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
+  roleSubScore: { color: colors.neonRose, fontSize: 8, fontWeight: '700', marginTop: 2 },
 
   bioText: { color: colors.text, fontSize: fontSize.sm, lineHeight: 20 },
+
+  badgeMatrixSection: { gap: 6, marginVertical: 2 },
+  badgeMatrixTitle: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  badgeChipsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  visualBadgeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radii.md,
+    borderWidth: 1.5,
+  },
+  badgeIcon: { fontSize: 12 },
+  badgeLabel: { fontSize: fontSize.xs, fontWeight: '800' },
+
+  safetyBox: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderRadius: radii.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+    gap: 6,
+  },
+  safetyBoxTitle: { color: colors.neonEmerald, fontSize: fontSize.xs, fontWeight: '800' },
+  protocolChip: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  protocolText: { color: colors.neonEmerald, fontSize: 10, fontWeight: '900' },
+  safewordsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  safewordsLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  swItem: { fontSize: fontSize.xs, fontWeight: '700' },
 
   kinksSection: { gap: 4 },
   kinksLabel: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
   kinkChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   kinkChip: {
-    backgroundColor: colors.accentSoft,
+    backgroundColor: 'rgba(192, 132, 252, 0.1)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderColor: 'rgba(192, 132, 252, 0.3)',
   },
-  kinkChipText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '600' },
+  kinkChipText: { color: colors.neonPurple, fontSize: fontSize.xs, fontWeight: '600' },
 
   actionsRow: { marginTop: 4, gap: spacing.xs },
   connectBtn: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.neonPurple,
     paddingVertical: spacing.md,
     borderRadius: radii.lg,
     alignItems: 'center',
   },
-  connectBtnText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '800' },
+  connectBtnText: { color: '#000', fontSize: fontSize.sm, fontWeight: '900' },
   chatBtn: {
     backgroundColor: colors.surfaceLight,
     paddingVertical: spacing.sm,
@@ -580,20 +782,20 @@ const styles = StyleSheet.create({
   // Direct Messaging Modal Styles
   chatOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.88)',
+    backgroundColor: 'rgba(0, 0, 0, 0.92)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.md,
   },
   chatModalCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#120b22',
     borderRadius: 24,
     padding: spacing.lg,
     width: '100%',
-    maxWidth: 480,
+    maxWidth: 520,
     height: '75%',
     borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderColor: colors.neonPurple,
     gap: spacing.sm,
   },
   chatModalHeader: {
@@ -604,11 +806,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  chatModalTitle: { color: colors.primary, fontSize: fontSize.md, fontWeight: '800' },
+  chatModalTitle: { color: colors.neonPurple, fontSize: fontSize.md, fontWeight: '800' },
   chatModalSub: { color: colors.textMuted, fontSize: fontSize.xs },
-  closeX: {
-    padding: 6,
-  },
+  closeX: { padding: 6 },
   closeXText: { color: colors.textMuted, fontSize: 16, fontWeight: '700' },
   chatList: { gap: spacing.sm, paddingVertical: spacing.xs },
   chatEmptyState: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.xs },
@@ -621,7 +821,7 @@ const styles = StyleSheet.create({
   },
   chatBubbleMe: {
     alignSelf: 'flex-end',
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.neonPurple,
     borderBottomRightRadius: 4,
   },
   chatBubbleOther: {
@@ -631,8 +831,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  chatSender: { color: colors.primaryLight, fontSize: 10, fontWeight: '700' },
-  chatText: { color: colors.text, fontSize: fontSize.sm, lineHeight: 18 },
+  chatSender: { color: '#000', fontSize: 10, fontWeight: '900' },
+  chatText: { color: '#fff', fontSize: fontSize.sm, lineHeight: 18 },
   chatInputRow: {
     flexDirection: 'row',
     gap: spacing.xs,
@@ -653,59 +853,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   sendBtn: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.neonRose,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     borderRadius: radii.md,
   },
   sendBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
-
-  // FetLife Integration Styles
-  fetlifeCard: {
-    backgroundColor: colors.accentSoft,
-    borderRadius: 18,
-    padding: spacing.md,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    gap: spacing.sm,
-    marginVertical: spacing.xs,
-  },
-  fetlifeCardTitle: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '900' },
-  fetlifeCardDesc: { color: colors.text, fontSize: fontSize.xs, lineHeight: 16 },
-
-  fetlifeInputRow: { flexDirection: 'row', gap: spacing.xs },
-  fetlifeInput: {
-    flex: 1,
-    backgroundColor: colors.surfaceLight,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 8,
-    color: colors.text,
-    fontSize: fontSize.xs,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  fetlifeVerifyBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 8,
-    borderRadius: radii.md,
-    justifyContent: 'center',
-  },
-  fetlifeVerifyBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
-
-  roleFilterSection: { gap: 6, marginVertical: spacing.xs },
-  filterSectionTitle: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
-  roleScroll: { gap: 6 },
-  roleChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  roleChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  roleChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
-  roleChipTextActive: { color: '#fff' },
 });

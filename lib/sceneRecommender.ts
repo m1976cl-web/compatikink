@@ -17,8 +17,8 @@ export interface SceneRecommendation {
 export async function generateAISceneRecommendations(): Promise<SceneRecommendation[]> {
   const profile = await getCurrentProfile();
   const wishlist = await getWishlist();
-
-  const userWishlistActivities = ACTIVITIES.filter((a) => wishlist.includes(a.id));
+  const wishlistActivityIds = wishlist.map((w: any) => (typeof w === 'string' ? w : w.activityId));
+  const userWishlistActivities = ACTIVITIES.filter((a) => wishlistActivityIds.includes(a.id));
   const wishlistNames = userWishlistActivities.map((a) => a.name);
 
   return [

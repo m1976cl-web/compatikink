@@ -177,7 +177,7 @@ async function testPlaintextMigration() {
   await resetStore();
   await AsyncStorage.setItem('dating_direct_messages', JSON.stringify({ chat: 'hi' }));
   const legacy = await unlockVaultForProfile('bob', '9991', { pin: '9991' });
-  assert(legacy.migratedFromLegacyPin === true, 'legacy plaintext pin migrates to vault meta');
+  assert((legacy as any).migratedFromLegacyPin === true, 'legacy plaintext pin migrates to vault meta');
   const dm = await AsyncStorage.getItem('dating_direct_messages');
   assert(!!dm && isSealedBlob(dm), 'DM blob sealed on legacy unlock');
   assert(

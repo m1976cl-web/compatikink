@@ -11,14 +11,12 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
-import { Activity, ActivityResponse, ExperienceLevel, Rating, RolePreference } from '@/types';
+import { Activity, ActivityResponse, ExperienceLevel, Rating, RolePreference, UserProfile, FetishBadge } from '@/types';
 import { QUICK_PROFILE_ACTIVITIES } from '@/data/quickProfile';
-import { createSession } from '@/lib/sessions';
 import { saveProfile, getCurrentProfile, setCurrentProfile, getProfile } from '@/lib/storage';
 import { PronounsPicker } from '@/components/PronounsPicker';
 import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { AppHeader } from '@/components/AppHeader';
-import { Button } from '@/components/Button';
 
 const RATING_OPTIONS: { label: string; value: Rating; color: string }[] = [
   { label: 'Límite duro', value: 'hard_limit', color: colors.danger },
@@ -35,6 +33,8 @@ const ROLE_OPTIONS: { label: string; value: RolePreference }[] = [
   { label: 'Flexible', value: 'flexible' },
 ];
 
+const PRIMARY_ROLE_OPTIONS = ['Dom', 'Sub', 'Switch', 'Top', 'Bottom', 'Master', 'Slave', 'Rigger', 'Brat'];
+
 const defaultResponse = (id: string): ActivityResponse => ({
   activityId: id,
   rating: 'not_interested',
@@ -47,6 +47,11 @@ export default function QuickProfileScreen() {
   const [nickname, setNickname] = useState('');
   const [pronouns, setPronouns] = useState('');
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | undefined>(undefined);
+  const [primaryRole, setPrimaryRole] = useState<string>('Switch');
+  const [selectedProtocols, setSelectedProtocols] = useState<('SSC' | 'RACK' | 'PRICK')[]>(['SSC']);
+  const [safewordGreen, setSafewordGreen] = useState('Verde');
+  const [safewordYellow, setSafewordYellow] = useState('Amarillo');
+  const [safewordRed, setSafewordRed] = useState('Rojo');
   const [pin, setPin] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, ActivityResponse>>(
@@ -60,9 +65,14 @@ export default function QuickProfileScreen() {
   const isLast = currentIndex === QUICK_PROFILE_ACTIVITIES.length - 1;
   const progress = (currentIndex + 1) / QUICK_PROFILE_ACTIVITIES.length;
 
+  const toggleProtocol = (proto: 'SSC' | 'RACK' | 'PRICK') => {
+    setSelectedProtocols((prev) =>
+      prev.includes(proto) ? prev.filter((p) => p !== proto) : [...prev, proto]
+    );
+  };
+
   const setRating = (rating: Rating) => {
     setResponses((prev) => ({ ...prev, [currentActivity.id]: { ...prev[currentActivity.id], rating } }));
-    // Auto-advance after short delay
     setTimeout(() => {
       if (!isLast) {
         setCurrentIndex((i) => i + 1);
@@ -95,62 +105,67 @@ export default function QuickProfileScreen() {
       const existing = await getProfile(cleanNick);
       const pinValue = pin.trim();
 
+      const createdBadges: FetishBadge[] = [
+        { id: `role-${primaryRole}`, label: primaryRole, category: 'role', color: '#c084fc', icon: '🎭' },
+        { id: 'safety-ssc', label: selectedProtocols.join('/'), category: 'safety', color: '#10b981', icon: '🛡️' },
+      ];
+
+      const profilePayload: Partial<UserProfile> = {
+        nickname: cleanNick,
+        pronouns: pronouns || existing?.pronouns || undefined,
+        experienceLevel: experienceLevel || existing?.experienceLevel,
+        role: primaryRole,
+        safetyProtocols: selectedProtocols,
+        safewords: { green: safewordGreen, yellow: safewordYellow, red: safewordRed },
+        fetishBadges: createdBadges,
+        verificationBadges: ['Vault Identity'],
+        baseResponses: finalResponses,
+      };
+
       if (!existing && pinValue.length >= 4) {
         const { registerProfile } = await import('@/lib/storage');
         await registerProfile({
-          nickname: cleanNick,
+          ...profilePayload,
           pin: pinValue,
-          pronouns: pronouns || undefined,
-          experienceLevel: experienceLevel || undefined,
-          baseResponses: finalResponses,
           createdSessionIds: [],
           receivedSessionIds: [],
-        });
+        } as any);
       } else if (existing && pinValue.length >= 4 && !existing.pinSalt) {
         const { setupVaultForNewProfile, VAULT_VERSION } = await import('@/lib/cryptoVault');
         const meta = await setupVaultForNewProfile(cleanNick, pinValue);
         await saveProfile({
           ...existing,
+          ...profilePayload,
           pin: undefined,
           pinSalt: meta.saltB64,
           pinVerifier: meta.verifierB64,
           vaultVersion: VAULT_VERSION,
-          pronouns: pronouns || existing.pronouns,
-          experienceLevel: experienceLevel || existing.experienceLevel,
-          baseResponses: finalResponses,
         });
         await setCurrentProfile(cleanNick);
       } else {
         await saveProfile({
-          nickname: cleanNick,
-          pronouns: pronouns || existing?.pronouns || undefined,
-          experienceLevel: experienceLevel || existing?.experienceLevel,
-          pinSalt: existing?.pinSalt,
-          pinVerifier: existing?.pinVerifier,
-          vaultVersion: existing?.vaultVersion,
-          baseResponses: finalResponses,
+          ...(existing || {}),
+          ...profilePayload,
           createdSessionIds: existing?.createdSessionIds ?? [],
           receivedSessionIds: existing?.receivedSessionIds ?? [],
         } as any);
         await setCurrentProfile(cleanNick);
       }
 
-      // Mark onboarding as seen
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       await AsyncStorage.setItem('onboarding_done', 'true');
 
       Alert.alert(
         '¡Perfil Creado! 🎉',
-        `¡Bienvenido/a, ${cleanNick}! Tu perfil rápido está listo. Puedes ampliar tus respuestas cuando quieras desde el Dashboard.`,
+        `¡Bienvenido/a, ${cleanNick}! Tu perfil con insignias y protocolos de seguridad está listo.`,
         [{ text: 'Continuar', onPress: () => router.replace('/') }]
       );
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'No se pudo guardar el perfil.');
     } finally {
       setSaving(false);
     }
   };
-
 
   if (step === 'intro') {
     return (
@@ -159,13 +174,13 @@ export default function QuickProfileScreen() {
           <View style={styles.heroSection}>
             <AppHeader
               brand
-              title="Perfil rápido"
-              subtitle="Solo 10 preguntas clave. En menos de 2 minutos tendrás tu perfil listo para invitar."
+              title="Perfil Rápido con Insignias"
+              subtitle="Configura tu nick, rol principal (Dom/Sub/Switch), protocolos SSC/RACK y 10 preguntas clave."
             />
             <View style={styles.pillRow}>
               <View style={styles.pill}><Text style={styles.pillText}>~2 minutos</Text></View>
-              <View style={styles.pill}><Text style={styles.pillText}>Privado</Text></View>
-              <View style={styles.pill}><Text style={styles.pillText}>Ampliable luego</Text></View>
+              <View style={styles.pill}><Text style={styles.pillText}>Bóveda Cifrada</Text></View>
+              <View style={styles.pill}><Text style={styles.pillText}>Insignias Fetish</Text></View>
             </View>
           </View>
 
@@ -185,6 +200,76 @@ export default function QuickProfileScreen() {
 
             <Text style={styles.fieldLabel}>Nivel de experiencia en kink</Text>
             <ExperiencePicker value={experienceLevel} onChange={setExperienceLevel} />
+
+            {/* Primary Role Selector */}
+            <Text style={styles.fieldLabel}>Rol Principal BDSM / Kink</Text>
+            <View style={styles.rolePickerGrid}>
+              {PRIMARY_ROLE_OPTIONS.map((r) => (
+                <TouchableOpacity
+                  key={r}
+                  style={[styles.rolePickerChip, primaryRole === r && styles.rolePickerChipActive]}
+                  onPress={() => setPrimaryRole(r)}
+                >
+                  <Text style={[styles.rolePickerChipText, primaryRole === r && styles.rolePickerChipTextActive]}>
+                    {r}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Safety Protocols Selector */}
+            <Text style={styles.fieldLabel}>Protocolos de Seguridad (SSC / RACK / PRICK)</Text>
+            <View style={styles.protoRow}>
+              {(['SSC', 'RACK', 'PRICK'] as const).map((proto) => {
+                const isSel = selectedProtocols.includes(proto);
+                return (
+                  <TouchableOpacity
+                    key={proto}
+                    style={[styles.protoChip, isSel && styles.protoChipActive]}
+                    onPress={() => toggleProtocol(proto)}
+                  >
+                    <Text style={[styles.protoChipText, isSel && styles.protoChipTextActive]}>
+                      {proto}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Safewords Input */}
+            <Text style={styles.fieldLabel}>Palabras de Seguridad (Semáforo)</Text>
+            <View style={styles.safewordsInputGrid}>
+              <View style={styles.swInputBox}>
+                <Text style={{ color: colors.success, fontSize: 11, fontWeight: '700' }}>🟢 Verde</Text>
+                <TextInput
+                  style={styles.swInput}
+                  value={safewordGreen}
+                  onChangeText={setSafewordGreen}
+                  placeholder="Verde / Sigue"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
+              <View style={styles.swInputBox}>
+                <Text style={{ color: colors.warning, fontSize: 11, fontWeight: '700' }}>🟡 Amarillo</Text>
+                <TextInput
+                  style={styles.swInput}
+                  value={safewordYellow}
+                  onChangeText={setSafewordYellow}
+                  placeholder="Amarillo / Calma"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
+              <View style={styles.swInputBox}>
+                <Text style={{ color: colors.danger, fontSize: 11, fontWeight: '700' }}>🔴 Rojo</Text>
+                <TextInput
+                  style={styles.swInput}
+                  value={safewordRed}
+                  onChangeText={setSafewordRed}
+                  placeholder="Rojo / Detener"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -297,9 +382,9 @@ export default function QuickProfileScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.heroSection}>
           <Text style={styles.heroEmoji}>🔐</Text>
-          <Text style={styles.heroTitle}>Protege tu Perfil</Text>
+          <Text style={styles.heroTitle}>Protege tu Perfil en Bóveda</Text>
           <Text style={styles.heroDesc}>
-            Añade un PIN de 4 dígitos para guardar tu perfil de forma segura y poder recuperarlo después.
+            Añade un PIN de 4 dígitos para derivar tu clave de bóveda AES-GCM-256 local.
           </Text>
         </View>
 
@@ -316,7 +401,7 @@ export default function QuickProfileScreen() {
             maxLength={8}
             autoFocus
           />
-          <Text style={styles.pinHint}>Si no quieres PIN, déjalo vacío. Solo podrás usar este dispositivo.</Text>
+          <Text style={styles.pinHint}>Tu PIN se usa para derivar la clave criptográfica. No se almacena en plano.</Text>
         </View>
 
         <TouchableOpacity
@@ -325,7 +410,7 @@ export default function QuickProfileScreen() {
           disabled={saving}
         >
           <Text style={styles.primaryBtnText}>
-            {saving ? 'Guardando...' : '¡Crear mi Perfil y Entrar! 🚀'}
+            {saving ? 'Guardando...' : '¡Crear mi Perfil Cifrado! 🚀'}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -385,6 +470,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     ...typography.label,
+    marginTop: 4,
   },
   input: {
     backgroundColor: colors.backgroundMid,
@@ -396,6 +482,45 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: fontSize.md,
   },
+  rolePickerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  rolePickerChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  rolePickerChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  rolePickerChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  rolePickerChipTextActive: { color: '#000', fontWeight: '900' },
+
+  protoRow: { flexDirection: 'row', gap: 8 },
+  protoChip: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  protoChipActive: { backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: colors.neonEmerald },
+  protoChipText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '800' },
+  protoChipTextActive: { color: colors.neonEmerald },
+
+  safewordsInputGrid: { flexDirection: 'row', gap: 6 },
+  swInputBox: { flex: 1, gap: 2 },
+  swInput: {
+    backgroundColor: colors.backgroundMid,
+    borderRadius: radii.md,
+    padding: 6,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+    fontSize: fontSize.xs,
+  },
+
   pinInput: {
     fontSize: 24,
     textAlign: 'center',
@@ -436,16 +561,13 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     textDecorationLine: 'underline',
   },
-  // Question flow
   questionContainer: {
     flex: 1,
     padding: spacing.lg,
     gap: spacing.md,
     justifyContent: 'center',
   },
-  progressSection: {
-    gap: spacing.xs,
-  },
+  progressSection: { gap: spacing.xs },
   progressBarBg: {
     height: 5,
     backgroundColor: colors.surfaceLight,
@@ -503,7 +625,6 @@ const styles = StyleSheet.create({
     minWidth: '18%',
     flex: 1,
   },
-  ratingEmoji: { fontSize: 20, marginBottom: 2 },
   ratingLabel: {
     color: colors.textMuted,
     fontSize: 10,

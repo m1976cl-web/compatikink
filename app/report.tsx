@@ -455,8 +455,8 @@ export default function ReportScreen() {
         <SceneRouletteModal
           visible={showRouletteModal}
           onClose={() => setShowRouletteModal(false)}
-          items={report.items}
-          onPlanScene={(selectedItem) => {
+          report={report}
+          onSelectForPlanning={(selectedItem: ReportItem) => {
             setShowRouletteModal(false);
             setPlanningItem(selectedItem);
           }}

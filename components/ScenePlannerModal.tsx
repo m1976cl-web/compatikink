@@ -412,6 +412,18 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '600',
   },
+  optionChip: {
+    backgroundColor: colors.surfaceLight,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  optionText: {
+    color: colors.textMuted,
+    fontSize: 11,
+  },
   saveBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,

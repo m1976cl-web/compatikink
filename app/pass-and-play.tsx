@@ -73,7 +73,7 @@ export default function PassAndPlayScreen() {
           await saveLocalSessions(allSessions);
         }
 
-        await saveGuestProfile(session.id, { nickname: p2Name });
+        await saveGuestProfile(session.id, { nickname: p2Name, notes: '' });
 
         Alert.alert('¡Cuestionario Presencial Completado! 🎉', 'Generando reporte de compatibilidad en pantalla...');
         router.replace({ pathname: '/report', params: { token: session.initiatorToken } });
@@ -152,7 +152,7 @@ export default function PassAndPlayScreen() {
 
         {/* Step 3: Privacy Curtain between P1 and P2 */}
         {step === 'curtain' && (
-          <View style={[styles.card, { alignItems: 'center', textAlign: 'center', paddingVertical: spacing.xl }]}>
+          <View style={[styles.card, { alignItems: 'center', paddingVertical: spacing.xl }]}>
             <Text style={{ fontSize: 56 }}>🙈📱</Text>
             <Text style={styles.cardTitle}>¡Turno de Persona 1 Finalizado!</Text>
             <Text style={styles.curtainDesc}>

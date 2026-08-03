@@ -37,7 +37,7 @@ export function SceneTimerModal({
   const [checkInPromptVisible, setCheckInPromptVisible] = useState(false);
   const [voiceListening, setVoiceListening] = useState(false);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (visible && isRunning) {

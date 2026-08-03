@@ -41,8 +41,10 @@ export const colors = {
   textDim: '#7e22ce',
   onPrimary: '#07050a',
 
-  // Legacy aliases
+  // Legacy & Neon aliases
   neonPurple: '#c084fc',
+  neonRose: '#f43f5e',
+  neonEmerald: '#10b981',
   neonPink: '#f472b6',
   neonCyan: '#38bdf8',
   neonGreen: '#4ade80',

@@ -70,6 +70,53 @@ export interface ActivityResponse {
   privateNote?: string;
 }
 
+export type BadgeCategory = 'role' | 'fetish' | 'safety' | 'verification';
+
+export interface FetishBadge {
+  id: string;
+  label: string;
+  category: BadgeCategory;
+  color: string;
+  icon?: string;
+  description?: string;
+}
+
+export type EventType = 'munch' | 'workshop' | 'play_party' | 'online';
+
+export interface EventItem {
+  id: string;
+  title: string;
+  type?: 'Munch Social' | 'Taller Shibari' | 'Charla Consentimiento' | 'Encuentro Online' | string;
+  eventType: EventType;
+  date: string;
+  time: string;
+  location: string;
+  confidentialLocation: boolean;
+  venueAddressEncrypted?: string;
+  isDiscreetRSVP?: boolean;
+  etiquetteAgreed?: boolean;
+  description: string;
+  attendeesCount: number;
+  isRSVP: boolean;
+  hostNickname?: string;
+}
+
+export interface FeedPost {
+  id: string;
+  author: string;
+  isVerified: boolean;
+  timeAgo: string;
+  category: 'Encuesta' | 'Debate' | 'Consejo' | 'Aftercare' | string;
+  content: string;
+  likes: number;
+  pollOptions?: { option: string; votes: number }[];
+  userVotedIdx?: number;
+  isAnonymous?: boolean;
+  roleTag?: string;
+  kinkCategoryTag?: string;
+  anonymousSignature?: string;
+}
+
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export interface UserProfile {
@@ -99,6 +146,15 @@ export interface UserProfile {
   baseResponses?: ActivityResponse[];
   createdSessionIds?: string[];
   receivedSessionIds?: string[];
+  fetishBadges?: FetishBadge[];
+  safetyProtocols?: ('SSC' | 'RACK' | 'PRICK')[];
+  safewords?: { green?: string; yellow?: string; red?: string };
+  verificationBadges?: string[];
+  role?: 'Dom' | 'Sub' | 'Switch' | 'Top' | 'Bottom' | 'Master' | 'Slave' | 'Rigger' | string;
+  fetlifeHandle?: string;
+  bio?: string;
+  location?: string;
+  avatarUrl?: string;
 }
 
 export type SessionStatus = 'draft' | 'waiting' | 'complete';

@@ -20,7 +20,14 @@ interface Props {
   isWishlisted?: boolean;
 }
 
-export function ReportCard({ item, showInitiatorOnly = true, onPlanScene, hasAgreement }: Props) {
+export function ReportCard({
+  item,
+  showInitiatorOnly = true,
+  onPlanScene,
+  hasAgreement,
+  onToggleWishlist,
+  isWishlisted,
+}: Props) {
   if (item.section === 'initiator_only' && !showInitiatorOnly) {
     return null;
   }
