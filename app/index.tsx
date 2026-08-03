@@ -346,6 +346,7 @@ export default function HomeScreen() {
     { title: 'Wrapped', description: 'Resumen anual de exploración', mark: '🎁', category: 'social', route: '/wrapped' },
     { title: 'Reto semanal', description: 'Desafíos con XP y niveles', mark: '🏆', category: 'social', route: '/weekly-challenge' },
     { title: 'Matriz Poli', description: 'Sinastría de 3+ personas', mark: '💎', category: 'social', route: '/poly-group' },
+    { title: 'Página Azul 💙', description: 'Promociona tu OnlyFans & Fansly', mark: '📸', category: 'social', route: '/blue-pages' },
     { title: 'Tienda', description: 'Recomendaciones y partners', mark: '🛍️', category: 'social', route: '/store' },
 
     // IA & Hardware (ai)
