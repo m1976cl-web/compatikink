@@ -284,6 +284,13 @@ export default function PartnerJournalScreen() {
                       <Text style={styles.xpText}>⭐ Nivel {link.level} ({link.totalXp} XP de Afinidad)</Text>
                       <Text style={styles.dateText}>Desde {new Date(link.linkedSince).toLocaleDateString()}</Text>
                     </View>
+
+                    <TouchableOpacity
+                      style={styles.chatLinkBtn}
+                      onPress={() => router.push({ pathname: '/partner-chat', params: { linkId: link.id } })}
+                    >
+                      <Text style={styles.chatLinkBtnText}>Abrir Chat E2EE Efímero 💬🔒</Text>
+                    </TouchableOpacity>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -668,6 +675,16 @@ const styles = StyleSheet.create({
   xpRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
   xpText: { color: '#fbbf24', fontSize: fontSize.xs, fontWeight: '800' },
   dateText: { color: colors.textDim, fontSize: 10 },
+  chatLinkBtn: {
+    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radii.md,
+    paddingVertical: 6,
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  chatLinkBtnText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
 
   journalCard: {
     backgroundColor: colors.surface,
