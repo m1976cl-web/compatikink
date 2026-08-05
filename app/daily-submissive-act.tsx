@@ -38,6 +38,7 @@ export default function DailySubmissiveActScreen() {
   // Completion Form Drawer
   const [isCompleting, setIsCompleting] = useState(false);
   const [reflectionNote, setReflectionNote] = useState('');
+  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -79,10 +80,27 @@ export default function DailySubmissiveActScreen() {
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Un Acto de Sumisión Diario 🎲🖤</Text>
-          <Text style={styles.subtitle}>
-            Inspirado en onesubmissiveact.com: Una tarea diaria de disciplina, servicio y sintonía D/s
-          </Text>
+          <TouchableOpacity onPress={() => setShowInfo(!showInfo)} style={styles.historyInfoToggle}>
+            <Text style={styles.subtitle}>
+              Inspirado en onesubmissiveact.com: Una tarea diaria de disciplina, servicio y sintonía D/s <Text style={{ color: colors.primary }}>[👁️ {showInfo ? 'Ocultar historia' : 'Ver historia del sitio original'}]</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        {showInfo && (
+          <View style={styles.infoModalBox}>
+            <Text style={styles.infoModalTitle}>🌐 Historia de onesubmissiveact.com</Text>
+            <Text style={styles.infoModalText}>
+              <Text style={{ fontWeight: 'bold' }}>OneSubmissiveAct.com</Text> fue un sitio web de culto en la comunidad BDSM y Kink internacional enfocado en interacciones online sex-positive a distancia.
+            </Text>
+            <Text style={styles.infoModalText}>
+              • <Text style={{ fontWeight: 'bold' }}>Mecánica principal:</Text> Permitía a los Dominantes crear enlaces con tareas/actos de sumisión personalizados o aleatorios y enviárselos a su submisivo/a con temporizador y confirmación.
+            </Text>
+            <Text style={styles.infoModalText}>
+              • <Text style={{ fontWeight: 'bold' }}>Estado actual:</Text> El dominio dejó de funcionar hace varios años. En <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Compatikink</Text> hemos revivido y evolucionado su concepto dentro de este módulo con cifrado local, filtrado de intensidad y registro de rachas.
+            </Text>
+          </View>
+        )}
 
         {/* Streak Hero Banner */}
         {state && (
@@ -302,4 +320,17 @@ const styles = StyleSheet.create({
   histLogXp: { color: '#fbbf24', fontSize: 10, fontWeight: '800' },
   histLogNote: { color: colors.textMuted, fontSize: 10, fontStyle: 'italic' },
   histLogDate: { color: colors.textDim, fontSize: 8 },
+
+  historyInfoToggle: { marginTop: 2 },
+  infoModalBox: {
+    backgroundColor: 'rgba(19, 9, 36, 0.95)',
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    marginVertical: spacing.xs,
+    gap: 6,
+  },
+  infoModalTitle: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '800' },
+  infoModalText: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
 });
