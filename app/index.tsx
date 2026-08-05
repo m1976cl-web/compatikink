@@ -323,6 +323,7 @@ export default function HomeScreen() {
     { title: 'Manual', description: 'Guía de módulos y seguridad', mark: '📖', category: 'explore', route: '/manual' },
     { title: 'Glosario', description: 'Términos y consentimiento', mark: '📚', category: 'explore', route: '/glossary' },
     { title: 'Guía de seguridad', description: 'SSC/RACK y protocolos', mark: '🛡️', category: 'explore', route: '/safety-guide' },
+    { title: 'Panel Admin', description: 'Gestión maestro de perfiles', mark: '👑', category: 'explore', route: '/admin-dashboard' },
 
     // Escenas (scenes)
     { title: 'Kit de Inicio BDSM', description: 'Guiones de escena, rutinas D/s y 7 días', mark: '🚀', category: 'scenes', route: '/quick-start-bundle' },
