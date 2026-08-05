@@ -69,6 +69,7 @@ export default function RootLayout() {
         <Stack.Screen name="live-scene" options={{ title: 'Modo Escena en Vivo', headerShown: false }} />
         <Stack.Screen name="kink-roulette" options={{ title: 'Ruleta Kink', headerShown: false }} />
         <Stack.Screen name="admin-dashboard" options={{ title: 'Panel de Administración', headerShown: false }} />
+        <Stack.Screen name="security-audit" options={{ title: 'Auditoría PenTest', headerShown: false }} />
         <Stack.Screen name="blue-pages" options={{ title: 'Promociona tu Página Azul', headerShown: false }} />
         <Stack.Screen name="guest/[code]" options={{ title: 'Cuestionario', headerShown: false }} />
         <Stack.Screen name="guest/done" options={{ title: 'Listo', headerShown: false }} />

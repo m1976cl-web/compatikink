@@ -324,6 +324,7 @@ export default function HomeScreen() {
     { title: 'Glosario', description: 'Términos y consentimiento', mark: '📚', category: 'explore', route: '/glossary' },
     { title: 'Guía de seguridad', description: 'SSC/RACK y protocolos', mark: '🛡️', category: 'explore', route: '/safety-guide' },
     { title: 'Panel Admin', description: 'Gestión maestro de perfiles', mark: '👑', category: 'explore', route: '/admin-dashboard' },
+    { title: 'Auditoría PenTest', description: 'Diagnóstico de seguridad (Exclusivo Admin)', mark: '🛡️', category: 'explore', route: '/security-audit' },
 
     // Escenas (scenes)
     { title: 'Escena en Vivo', description: 'Monitor inmersivo con safeword por voz y Aftercare', mark: '⚡', category: 'scenes', route: '/live-scene' },

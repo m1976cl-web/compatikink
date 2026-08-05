@@ -148,9 +148,17 @@ export default function AdminDashboardScreen() {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={styles.title}>Panel de Administración 👑📊</Text>
             {isAuthenticated && (
-              <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-                <Text style={styles.logoutBtnText}>Cerrar Sesión Admin 🔒</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <TouchableOpacity
+                  style={styles.auditSuiteBtn}
+                  onPress={() => router.push('/security-audit')}
+                >
+                  <Text style={styles.auditSuiteBtnText}>Suite PenTest 🛡️</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+                  <Text style={styles.logoutBtnText}>Cerrar Sesión Admin 🔒</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
           <Text style={styles.subtitle}>
@@ -424,6 +432,8 @@ const styles = StyleSheet.create({
   subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
   logoutBtn: { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1, borderColor: colors.error, borderRadius: radii.md, paddingHorizontal: 10, paddingVertical: 4 },
   logoutBtnText: { color: colors.error, fontSize: 10, fontWeight: '800' },
+  auditSuiteBtn: { backgroundColor: 'rgba(192, 132, 252, 0.15)', borderWidth: 1, borderColor: colors.primary, borderRadius: radii.md, paddingHorizontal: 10, paddingVertical: 4 },
+  auditSuiteBtnText: { color: colors.primary, fontSize: 10, fontWeight: '800' },
 
   authBox: {
     backgroundColor: colors.surface,

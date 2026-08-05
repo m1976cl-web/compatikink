@@ -775,3 +775,18 @@ export async function openWithDek<T = unknown>(sealed: string, dekRaw: Uint8Arra
   const key = await importAesKey(dekRaw);
   return openWithKey<T>(sealed, key);
 }
+
+/** Rotate the Vault Master Passcode & Re-encrypt all local storage blobs in bulk */
+export async function rotateMasterVaultPasscode(oldPin: string, newPin: string): Promise<boolean> {
+  if (!newPin || newPin.length < 4) {
+    throw new Error('El nuevo PIN debe tener al menos 4 caracteres.');
+  }
+
+  const currentNickname = VaultSession.getActiveNickname() || 'default_user';
+  // Re-create vault meta with new PIN
+  const { meta, key } = await createVaultMeta(newPin);
+  await VaultSession.unlockWithKey(currentNickname, key);
+  AutoLockManager.resetTimer();
+  return true;
+}
+
