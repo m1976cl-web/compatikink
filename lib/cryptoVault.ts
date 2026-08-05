@@ -782,7 +782,11 @@ export async function rotateMasterVaultPasscode(oldPin: string, newPin: string):
     throw new Error('El nuevo PIN debe tener al menos 4 caracteres.');
   }
 
-  const currentNickname = VaultSession.getActiveNickname() || 'default_user';
+  if (!VaultSession.isUnlocked()) {
+    throw new Error('La bóveda debe estar desbloqueada para rotar el PIN.');
+  }
+
+  const currentNickname = VaultSession.getNickname() || 'default_user';
   // Re-create vault meta with new PIN
   const { meta, key } = await createVaultMeta(newPin);
   await VaultSession.unlockWithKey(currentNickname, key);

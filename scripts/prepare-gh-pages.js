@@ -46,7 +46,42 @@ if (fs.existsSync(indexHtmlPath)) {
     content = content.replace(/\/compatikink\/compatikink\//g, '/compatikink/');
   }
 
+  // Inject PWA manifest & Service Worker registration
+  if (!content.includes('serviceWorker')) {
+    const swScript = `
+    <link rel="manifest" href="/compatikink/manifest.json" />
+    <script>
+      if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/compatikink/sw.js').then(function(reg) {
+            console.log('[PWA] ServiceWorker registered with scope:', reg.scope);
+          }).catch(function(err) {
+            console.warn('[PWA] ServiceWorker registration failed:', err);
+          });
+        });
+      }
+    </script>
+    </head>`;
+    content = content.replace('</head>', swScript);
+  }
+
   fs.writeFileSync(indexHtmlPath, content, 'utf8');
   fs.writeFileSync(fourOhFourHtmlPath, content, 'utf8');
-  console.log('✅ Created 404.html & updated index.html SPA routing');
+  console.log('✅ Created 404.html & updated index.html SPA routing + PWA ServiceWorker');
 }
+
+// 4. Ensure sw.js and manifest.json exist in dist
+const publicSw = path.join(__dirname, '..', 'public', 'sw.js');
+const publicManifest = path.join(__dirname, '..', 'public', 'manifest.json');
+const distSw = path.join(distDir, 'sw.js');
+const distManifest = path.join(distDir, 'manifest.json');
+
+if (fs.existsSync(publicSw)) {
+  fs.copyFileSync(publicSw, distSw);
+  console.log('✅ Copied sw.js to dist');
+}
+if (fs.existsSync(publicManifest)) {
+  fs.copyFileSync(publicManifest, distManifest);
+  console.log('✅ Copied manifest.json to dist');
+}
+
