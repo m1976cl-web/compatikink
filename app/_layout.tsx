@@ -64,6 +64,7 @@ export default function RootLayout() {
         <Stack.Screen name="partner-journal" options={{ title: 'Vínculos & Diario', headerShown: false }} />
         <Stack.Screen name="partner-chat" options={{ title: 'Chat E2EE Efímero', headerShown: false }} />
         <Stack.Screen name="quick-start-bundle" options={{ title: 'Kit de Inicio BDSM', headerShown: false }} />
+        <Stack.Screen name="shibari-guide" options={{ title: 'Guía de Shibari', headerShown: false }} />
         <Stack.Screen name="daily-submissive-act" options={{ title: 'Acto de Sumisión Diario', headerShown: false }} />
         <Stack.Screen name="admin-dashboard" options={{ title: 'Panel de Administración', headerShown: false }} />
         <Stack.Screen name="blue-pages" options={{ title: 'Promociona tu Página Azul', headerShown: false }} />
