@@ -325,6 +325,7 @@ export default function HomeScreen() {
     { title: 'Guía de seguridad', description: 'SSC/RACK y protocolos', mark: '🛡️', category: 'explore', route: '/safety-guide' },
 
     // Escenas (scenes)
+    { title: 'Kit de Inicio BDSM', description: 'Guiones de escena, rutinas D/s y 7 días', mark: '🚀', category: 'scenes', route: '/quick-start-bundle' },
     { title: 'Vínculos & Diario', description: 'Bitácora de parejas, retos, XP y diplomas', mark: '🔗', category: 'scenes', route: '/partner-journal' },
     { title: 'Chat E2EE Efímero', description: 'Mensajería cifrada de pareja y retos', mark: '💬', category: 'scenes', route: '/partner-chat' },
     { title: 'Pegging & Dating', description: 'Guía psicológica, técnica y dating', mark: '🍑', category: 'scenes', route: '/pegging' },

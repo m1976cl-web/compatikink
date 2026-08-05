@@ -63,6 +63,7 @@ export default function RootLayout() {
         <Stack.Screen name="ai-script" options={{ title: 'AI Scene Builder', headerShown: false }} />
         <Stack.Screen name="partner-journal" options={{ title: 'Vínculos & Diario', headerShown: false }} />
         <Stack.Screen name="partner-chat" options={{ title: 'Chat E2EE Efímero', headerShown: false }} />
+        <Stack.Screen name="quick-start-bundle" options={{ title: 'Kit de Inicio BDSM', headerShown: false }} />
         <Stack.Screen name="blue-pages" options={{ title: 'Promociona tu Página Azul', headerShown: false }} />
         <Stack.Screen name="guest/[code]" options={{ title: 'Cuestionario', headerShown: false }} />
         <Stack.Screen name="guest/done" options={{ title: 'Listo', headerShown: false }} />
