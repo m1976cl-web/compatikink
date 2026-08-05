@@ -69,7 +69,7 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
   { title: 'Dating kink',          description: 'Conexiones por afinidad',              mark: '💘', category: 'social', route: '/dating'            },
   { title: 'Feed de Comunidad',    description: 'Debate y encuestas anónimas',          mark: '💬', category: 'social', route: '/kink-feed'         },
   { title: 'Comunidades',          description: 'Grupos temáticos y tribus',            mark: '👥', category: 'social', route: '/communities'       },
-  { title: 'Eventos & Munches',    description: 'Reuniones y talleres',                 mark: '🍸', category: 'social', route: '/events'            },
+  { title: 'Eventos & Munches',    description: 'Reuniones y talleres confidenciales con RSVP cifrado', mark: '🍸', category: 'social', route: '/events-munches' },
   { title: 'Cursos',               description: 'Kink Academy & clases',                mark: '🎓', category: 'social', route: '/courses'           },
   { title: 'Wrapped',              description: 'Resumen anual de exploración',         mark: '🎁', category: 'social', route: '/wrapped'           },
   { title: 'Reto semanal',         description: 'Desafíos con XP y niveles',           mark: '🏆', category: 'social', route: '/weekly-challenge'  },

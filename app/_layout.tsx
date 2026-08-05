@@ -7,6 +7,8 @@ import { fontAssets } from '@/constants/fonts';
 import { OfficeModeModal } from '@/components/OfficeModeModal';
 import { colors, fonts, gradients } from '@/constants/theme';
 
+import { ThemeProvider } from '@/lib/themeContext';
+
 /**
  * Fallback minimalista mostrado mientras se carga una pantalla en diferido (#18).
  * Visible < 200ms en la mayoría de dispositivos.
@@ -34,7 +36,7 @@ export default function RootLayout() {
       : styles.content;
 
   return (
-    <>
+    <ThemeProvider>
       <StatusBar style="light" />
       <Suspense fallback={<LazyFallback />}>
         <Stack
@@ -75,6 +77,7 @@ export default function RootLayout() {
           <Stack.Screen name="daily-submissive-act" options={{ title: 'Acto de Sumisión Diario',   headerShown: false }} />
           <Stack.Screen name="live-scene"           options={{ title: 'Modo Escena en Vivo',       headerShown: false }} />
           <Stack.Screen name="kink-roulette"        options={{ title: 'Ruleta Kink',               headerShown: false }} />
+          <Stack.Screen name="events-munches"       options={{ title: 'Munches & Eventos',         headerShown: false }} />
           <Stack.Screen name="admin-dashboard"      options={{ title: 'Panel de Administración',   headerShown: false }} />
           <Stack.Screen name="security-audit"       options={{ title: 'Auditoría PenTest',         headerShown: false }} />
           <Stack.Screen name="blue-pages"           options={{ title: 'Promociona tu Página Azul', headerShown: false }} />
@@ -83,7 +86,7 @@ export default function RootLayout() {
         </Stack>
       </Suspense>
       <OfficeModeModal />
-    </>
+    </ThemeProvider>
   );
 }
 
