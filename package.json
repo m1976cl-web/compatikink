@@ -7,7 +7,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "lint": "expo lint",
-    "test:vault": "npx tsx -r ./tests/vault.preload.cjs tests/vault.verify.ts",
+    "test:vault": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault.verify.ts",
+    "test:vault:rotation": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault.rotation.test.ts",
+    "test:vault:all": "pnpm run test:vault && pnpm run test:vault:rotation",
     "build:web": "expo export --platform web && node scripts/prepare-gh-pages.js",
     "predeploy": "npm run build:web",
     "deploy": "gh-pages -d dist --dotfiles"
@@ -43,6 +45,7 @@
     "@types/react": "~19.0.10",
     "@types/uuid": "^10.0.0",
     "gh-pages": "^6.3.0",
+    "tsx": "^4.23.5",
     "typescript": "~5.8.3"
   },
   "private": true
