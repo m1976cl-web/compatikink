@@ -66,6 +66,8 @@ export default function RootLayout() {
         <Stack.Screen name="quick-start-bundle" options={{ title: 'Kit de Inicio BDSM', headerShown: false }} />
         <Stack.Screen name="shibari-guide" options={{ title: 'Guía de Shibari', headerShown: false }} />
         <Stack.Screen name="daily-submissive-act" options={{ title: 'Acto de Sumisión Diario', headerShown: false }} />
+        <Stack.Screen name="live-scene" options={{ title: 'Modo Escena en Vivo', headerShown: false }} />
+        <Stack.Screen name="kink-roulette" options={{ title: 'Ruleta Kink', headerShown: false }} />
         <Stack.Screen name="admin-dashboard" options={{ title: 'Panel de Administración', headerShown: false }} />
         <Stack.Screen name="blue-pages" options={{ title: 'Promociona tu Página Azul', headerShown: false }} />
         <Stack.Screen name="guest/[code]" options={{ title: 'Cuestionario', headerShown: false }} />
