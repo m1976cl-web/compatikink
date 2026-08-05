@@ -25,6 +25,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { Button }                 from '@/components/Button';
 import { ModuleTile }             from '@/components/ModuleTile';
@@ -75,6 +76,7 @@ export default function HomeScreen() {
   // ── Login form state ──────────────────────────────────────────────────────────
   const [loginNick, setLoginNick] = useState('');
   const [loginPin,  setLoginPin]  = useState('');
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
 
   // ── UI state ──────────────────────────────────────────────────────────────────
   const [activeTab,          setActiveTab]          = useState('explore');
@@ -97,6 +99,23 @@ export default function HomeScreen() {
   const guestSectionY  = useRef(0);
 
   useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const completed = await AsyncStorage.getItem('compatikink_onboarding_complete_v1');
+        if (!completed) {
+          router.replace('/onboarding' as any);
+        } else {
+          setOnboardingChecked(true);
+        }
+      } catch (e) {
+        setOnboardingChecked(true);
+      }
+    };
+    checkOnboarding();
+  }, [router]);
+
+  useEffect(() => {
+    if (!onboardingChecked) return;
     loadHomeData();
     const unsub = VaultLockGateAPI.subscribe((snap) => setVaultOpen(snap.unlocked));
     Animated.parallel([
@@ -104,7 +123,7 @@ export default function HomeScreen() {
       Animated.timing(heroSlide, { toValue: 0, duration: 520, useNativeDriver: true }),
     ]).start();
     return unsub;
-  }, []);
+  }, [onboardingChecked]);
 
   // ── Backup ────────────────────────────────────────────────────────────────────
   const handleBackup = () => {
@@ -431,6 +450,8 @@ export default function HomeScreen() {
       <CommunityTrendsModal visible={showTrendsModal} onClose={() => setShowTrendsModal(false)} />
     </ScrollView>
   );
+
+  if (!onboardingChecked) return null;
 
   return (
     <SafeAreaView style={[styles.safe, webBg as any]} edges={['bottom']}>

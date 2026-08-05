@@ -13,7 +13,7 @@ import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { EventItem, EventType } from '@/types';
-import { encryptEventVenueKey, decryptEventVenueKey } from '@/lib/vault';
+import { encryptEventVenueKey, decryptEventVenueKey } from '@/lib/vaultUnified';
 
 const INITIAL_EVENTS_DATA: EventItem[] = [
   {

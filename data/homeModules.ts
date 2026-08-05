@@ -88,4 +88,7 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
   { title: 'Analítica',            description: 'Subspace tracker y gráficos',          mark: '📊', category: 'ai', route: '/analytics'    },
   { title: 'Logros',               description: 'Insignias de exploración',             mark: '🥇', category: 'ai', route: '/achievements' },
   { title: 'Premium',              description: 'Compatikink PRO',                      mark: '👑', category: 'ai', route: '/premium'      },
+
+  // Bóveda / Vault
+  { title: 'Backup Cifrado',       description: 'Exportar e importar tu bóveda completa', mark: '💾', category: 'vault', route: '/backup' },
 ];

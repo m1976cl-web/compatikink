@@ -1,10 +1,7 @@
 /**
- * vault.ts — Capa de compatibilidad.
- *
- * Toda la lógica fue consolidada en lib/vaultUnified.ts.
- * Este archivo re-exporta todo para mantener compatibilidad
- * con los imports existentes en app/dating.tsx, app/events.tsx,
- * app/kink-feed.tsx y cualquier otro módulo.
+ * @deprecated — Este archivo era un wrapper de compatibilidad.
+ * Todos los consumidores fueron migrados a importar desde '@/lib/vaultUnified'.
+ * Mantenido temporalmente para referencia; se puede eliminar de forma segura.
  */
 export {
   VaultLockGateAPI,

@@ -19,7 +19,7 @@ import { generateReport } from '@/lib/compatibility';
 import { UserProfile, EXPERIENCE_LABELS, FetishBadge } from '@/types';
 import { COMMUNITY_PROFILES, CommunityProfile } from '@/data/communityProfiles';
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
-import { calculateRoleComplementarityScore } from '@/lib/vault';
+import { calculateRoleComplementarityScore } from '@/lib/vaultUnified';
 
 export default function DatingScreen() {
   const router = useRouter();

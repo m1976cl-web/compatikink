@@ -13,7 +13,7 @@ import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { FeedPost } from '@/types';
-import { generateAnonymousSignature } from '@/lib/vault';
+import { generateAnonymousSignature } from '@/lib/vaultUnified';
 
 const INITIAL_POSTS: FeedPost[] = [
   {

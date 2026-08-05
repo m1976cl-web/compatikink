@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
-import { isAdminAuthenticated, verifyAdminPasscode } from '@/lib/adminVault';
+import { isAdminAuthenticated, verifyAdminPasscode } from '@/lib/vaultUnified';
 import { runSecurityPenTest, SecurityDiagnosticReport } from '@/lib/securityAudit';
 import { rotateMasterVaultPasscode } from '@/lib/cryptoVault';
 

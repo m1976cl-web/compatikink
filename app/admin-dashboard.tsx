@@ -25,7 +25,7 @@ import {
   toggleProfileStatus,
   getAdminMetrics,
   exportSystemAuditReport,
-} from '@/lib/adminVault';
+} from '@/lib/vaultUnified';
 
 export default function AdminDashboardScreen() {
   const router = useRouter();

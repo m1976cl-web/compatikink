@@ -54,6 +54,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index"                options={{ title: 'Compatikink',               headerShown: false }} />
+          <Stack.Screen name="onboarding"           options={{ title: 'Bienvenida',                headerShown: false }} />
           <Stack.Screen name="manual"               options={{ title: 'Manual de Usuario',         headerShown: false }} />
           <Stack.Screen name="questionnaire"        options={{ title: 'Tus preferencias',          headerShown: false }} />
           <Stack.Screen name="invite"               options={{ title: 'Invitar',                   headerShown: false }} />
@@ -81,6 +82,7 @@ export default function RootLayout() {
           <Stack.Screen name="admin-dashboard"      options={{ title: 'Panel de Administración',   headerShown: false }} />
           <Stack.Screen name="security-audit"       options={{ title: 'Auditoría PenTest',         headerShown: false }} />
           <Stack.Screen name="blue-pages"           options={{ title: 'Promociona tu Página Azul', headerShown: false }} />
+          <Stack.Screen name="backup"               options={{ title: 'Backup Cifrado',            headerShown: false }} />
           <Stack.Screen name="guest/[code]"         options={{ title: 'Cuestionario',              headerShown: false }} />
           <Stack.Screen name="guest/done"           options={{ title: 'Listo',                     headerShown: false }} />
         </Stack>
