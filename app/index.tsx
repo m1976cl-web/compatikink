@@ -46,6 +46,7 @@ import { SessionsPanel }          from '@/components/SessionsPanel';
 import { colors, fonts, fontSize, gradients, radii, spacing, typography } from '@/constants/theme';
 import { useResponsive }          from '@/hooks/useResponsive';
 import { useHomeData }            from '@/hooks/useHomeData';
+import { useHomeStore }           from '@/lib/stores/useHomeStore';
 import { useQuickInvite }         from '@/hooks/useQuickInvite';
 import { STATIC_MODULES, ACCENT_COLORS, CATEGORY_TABS } from '@/data/homeModules';
 
@@ -79,8 +80,11 @@ export default function HomeScreen() {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
 
   // ── UI state ──────────────────────────────────────────────────────────────────
-  const [activeTab,          setActiveTab]          = useState('explore');
-  const [searchQuery,        setSearchQuery]        = useState('');
+  const activeTab = useHomeStore((s) => s.activeTab);
+  const setActiveTab = useHomeStore((s) => s.setActiveTab);
+  const searchQuery = useHomeStore((s) => s.searchQuery);
+  const setSearchQuery = useHomeStore((s) => s.setSearchQuery);
+
   const [guestCode,          setGuestCode]          = useState('');
   const [showRegisterModal,  setShowRegisterModal]  = useState(false);
   const [showPolyComparator, setShowPolyComparator] = useState(false);
@@ -231,9 +235,10 @@ export default function HomeScreen() {
         <Text style={styles.searchLabel}>Resultados de búsqueda ({filteredModules.length}):</Text>
       )}
       <View style={styles.moduleGrid}>
-        {filteredModules.map((m) => (
+        {filteredModules.map((m, index) => (
           <View key={m.title} style={isDesktop ? styles.gridColDesktop : styles.gridColMobile}>
             <ModuleTile
+              index={index}
               title={m.title}
               description={m.description}
               mark={m.mark}

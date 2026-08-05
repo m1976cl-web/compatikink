@@ -59,6 +59,7 @@ export interface VaultSessionSnapshot {
   unlocked: boolean;
   nickname: string | null;
   unlockedAt: number | null;
+  isDecoy: boolean;
 }
 
 type VaultListener = (snapshot: VaultSessionSnapshot) => void;
@@ -313,6 +314,7 @@ class VaultSessionStore {
   private key: CryptoKey | null = null;
   private nickname: string | null = null;
   private unlockedAt: number | null = null;
+  private isDecoy: boolean = false;
   private listeners = new Set<VaultListener>();
 
   getSnapshot(): VaultSessionSnapshot {
@@ -320,11 +322,16 @@ class VaultSessionStore {
       unlocked: this.key !== null,
       nickname: this.nickname,
       unlockedAt: this.unlockedAt,
+      isDecoy: this.isDecoy,
     };
   }
 
   isUnlocked(): boolean {
     return this.key !== null;
+  }
+
+  isDecoyMode(): boolean {
+    return this.isDecoy && this.key !== null;
   }
 
   getNickname(): string | null {
@@ -362,10 +369,11 @@ class VaultSessionStore {
     }
   }
 
-  async unlockWithKey(nickname: string, key: CryptoKey): Promise<void> {
+  async unlockWithKey(nickname: string, key: CryptoKey, isDecoy: boolean = false): Promise<void> {
     this.key = key;
     this.nickname = nickname;
     this.unlockedAt = Date.now();
+    this.isDecoy = isDecoy;
     this.emit();
   }
 
@@ -373,6 +381,7 @@ class VaultSessionStore {
     this.key = null;
     this.nickname = null;
     this.unlockedAt = null;
+    this.isDecoy = false;
     this.emit();
   }
 
@@ -390,6 +399,7 @@ export const VaultSession = new VaultSessionStore();
 /** API surface intended for VaultLockGate / UI shell. */
 export const VaultLockGateAPI = {
   isUnlocked: () => VaultSession.isUnlocked(),
+  isDecoyMode: () => VaultSession.isDecoyMode(),
   getNickname: () => VaultSession.getNickname(),
   getSnapshot: () => VaultSession.getSnapshot(),
   subscribe: (listener: VaultListener) => VaultSession.subscribe(listener),
@@ -414,14 +424,32 @@ export function isSensitiveStorageKey(key: string): boolean {
   return SENSITIVE_KEY_PREFIXES.some((p) => key.startsWith(p));
 }
 
+/** Static Harmless Decoy Payloads for Sensitive Storage Keys */
+export function getStaticDecoyValueForKey(key: string): string {
+  if (key === 'user_wishlist_items' || key === 'custom_activities_list' || key === 'private_album_photos_v1' || key === 'user_gear_inventory') {
+    return JSON.stringify([]);
+  }
+  if (key === 'local_sessions' || key === 'dating_direct_messages') {
+    return JSON.stringify({});
+  }
+  if (key.startsWith('scene_agreements_') || key.startsWith('scene_debriefs_')) {
+    return JSON.stringify([]);
+  }
+  return JSON.stringify([]);
+}
+
 /**
  * Write a value: if vault unlocked and key is sensitive, seal as ck1 blob.
+ * If vault in Decoy Mode, block writes to disk to prevent corrupting real Master blobs.
  * If vault locked and key is sensitive, refuse (unless writing already-sealed).
  */
 export async function writeStorageValue(key: string, value: string): Promise<void> {
   if (!isSensitiveStorageKey(key)) {
     await AsyncStorage.setItem(key, value);
     return;
+  }
+  if (VaultSession.isDecoyMode()) {
+    return; // Decoy mode write protection
   }
   if (isSealedBlob(value)) {
     await AsyncStorage.setItem(key, value);
@@ -439,10 +467,14 @@ export async function writeStorageValue(key: string, value: string): Promise<voi
 }
 
 /**
- * Read a value: if sealed and vault unlocked, open; if sealed and locked, throw;
+ * Read a value: if in Decoy mode and key is sensitive, return static empty payload without AES decryption.
+ * If sealed and vault unlocked, open; if sealed and locked, throw;
  * if plaintext, return as-is (legacy).
  */
 export async function readStorageValue(key: string): Promise<string | null> {
+  if (VaultSession.isDecoyMode() && isSensitiveStorageKey(key)) {
+    return getStaticDecoyValueForKey(key);
+  }
   const raw = await AsyncStorage.getItem(key);
   if (raw == null) return null;
   if (!isSealedBlob(raw)) return raw;
@@ -650,6 +682,25 @@ export async function createDuressMeta(
   };
 }
 
+export async function setupCanaryPin(
+  primaryPin: string,
+  canaryPin: string,
+  action: 'decoy' | 'wipe' = 'decoy'
+): Promise<DuressMeta> {
+  const trimmedCanary = canaryPin.trim();
+  const trimmedPrimary = primaryPin.trim();
+
+  if (trimmedCanary.length < 4) {
+    throw new Error('El PIN Canario debe tener al menos 4 dígitos.');
+  }
+
+  if (trimmedPrimary && trimmedCanary === trimmedPrimary) {
+    throw new Error('El PIN Canario no puede ser idéntico al PIN Principal.');
+  }
+
+  return createDuressMeta(trimmedCanary, action);
+}
+
 export async function verifyDuressPin(
   pin: string,
   duressMeta: DuressMeta
@@ -691,9 +742,9 @@ export async function unlockVaultForProfile(
     const isDuress = await verifyDuressPin(pin, profile.duressMeta);
     if (isDuress) {
       await clearPinLockoutAttempts(nickname);
-      // Unlock with a decoy key derived from the duress PIN
+      // Unlock with a decoy key derived from the duress PIN, marking VaultSession isDecoy = true
       const decoyKey = await deriveVaultKey(pin, base64ToBytes(profile.duressMeta.saltB64));
-      await VaultSession.unlockWithKey(nickname + '_decoy', decoyKey);
+      await VaultSession.unlockWithKey(nickname + '_decoy', decoyKey, true);
       return {
         key: decoyKey,
         meta: {

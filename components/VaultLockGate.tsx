@@ -35,6 +35,7 @@ import {
   type VaultSessionSnapshot,
 } from '@/lib/cryptoVault';
 import { getCurrentProfile, getProfile } from '@/lib/storage';
+import { triggerHaptic } from '@/lib/haptics';
 
 export interface VaultLockGateProps {
   unlocked?: boolean;
@@ -54,6 +55,7 @@ function useShake() {
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const trigger = () => {
+    triggerHaptic.error();
     shakeAnim.setValue(0);
     Animated.sequence([
       Animated.timing(shakeAnim, { toValue: 10, duration: 60, useNativeDriver: true }),
@@ -201,6 +203,7 @@ export function VaultLockGate({
         return;
       }
       // ── Burst al desbloquear ──────────────────────────────────────────────
+      triggerHaptic.success();
       setUnlockBurst(true);
       Animated.timing(containerOpacity, {
         toValue: 0,

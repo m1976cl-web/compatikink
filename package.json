@@ -9,7 +9,8 @@
     "lint": "expo lint",
     "test:vault": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault.verify.ts",
     "test:vault:rotation": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault.rotation.test.ts",
-    "test:vault:all": "pnpm run test:vault && pnpm run test:vault:rotation",
+    "test:vault:canary": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault.canary.test.ts",
+    "test:vault:all": "pnpm run test:vault && pnpm run test:vault:rotation && pnpm run test:vault:canary",
     "build:web": "expo export --platform web && node scripts/prepare-gh-pages.js",
     "predeploy": "npm run build:web",
     "deploy": "gh-pages -d dist --dotfiles"
@@ -25,6 +26,7 @@
     "expo-clipboard": "~7.1.4",
     "expo-constants": "~17.1.6",
     "expo-font": "~13.3.2",
+    "expo-haptics": "~14.0.1",
     "expo-linking": "~7.1.5",
     "expo-router": "~5.0.7",
     "expo-secure-store": "~14.2.3",
@@ -38,7 +40,8 @@
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.10.0",
     "react-native-web": "^0.20.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",

@@ -14,6 +14,7 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { EventItem, EventType } from '@/types';
 import { encryptEventVenueKey, decryptEventVenueKey } from '@/lib/vaultUnified';
+import { triggerHaptic } from '@/lib/haptics';
 
 const INITIAL_EVENTS_DATA: EventItem[] = [
   {
@@ -104,6 +105,7 @@ export default function EventsScreen() {
   const handleOpenRSVPModal = (ev: EventItem) => {
     if (ev.isRSVP) {
       // Cancel RSVP directly
+      triggerHaptic.light();
       setEvents((prev) =>
         prev.map((e) => (e.id === ev.id ? { ...e, isRSVP: false, attendeesCount: e.attendeesCount - 1 } : e))
       );
@@ -111,6 +113,7 @@ export default function EventsScreen() {
       return;
     }
 
+    triggerHaptic.selection();
     setSelectedEventForRSVP(ev);
     setAgreedVanillaDress(false);
     setAgreedNoTouch(false);
@@ -122,6 +125,7 @@ export default function EventsScreen() {
     if (!selectedEventForRSVP) return;
 
     if (selectedEventForRSVP.eventType === 'munch' && (!agreedVanillaDress || !agreedNoTouch || !agreedNoPhotos)) {
+      triggerHaptic.warning();
       Alert.alert('Etiqueta Requerida', 'Debes aceptar las 3 reglas de etiqueta del Munch para continuar.');
       return;
     }
@@ -158,6 +162,7 @@ export default function EventsScreen() {
     const evTitle = selectedEventForRSVP.title;
     setSelectedEventForRSVP(null);
 
+    triggerHaptic.success();
     Alert.alert(
       '🎟️ ¡Asistencia Confirmada (Double-Blind Release)!',
       `Tu RSVP ${isDiscreetOption ? 'discreto (solo visible para el host)' : 'público'} ha sido guardado.\n\n📍 Ubicación Desbloqueada:\n${decryptedVenue}`

@@ -23,6 +23,8 @@ import {
   TrafficLight,
 } from '@/lib/liveSceneManager';
 
+import { triggerHaptic } from '@/lib/haptics';
+
 export default function LiveSceneScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
@@ -108,16 +110,19 @@ export default function LiveSceneScreen() {
   };
 
   const handleStartScene = () => {
+    triggerHaptic.medium();
     const s = startLiveSceneSession();
     setSession(s);
   };
 
   const handleSetLight = (light: TrafficLight) => {
+    triggerHaptic.selection();
     const s = setTrafficLightStatus(light);
     setSession({ ...s });
   };
 
   const handleTriggerEmergency = () => {
+    triggerHaptic.error();
     const s = triggerEmergencySafeword();
     setSession({ ...s });
     Alert.alert('🚨 PALABRA DE SEGURIDAD ROJA 🚨', '¡DETENER ESCENA INMEDIATAMENTE! Usa las tijeras de rescate si es necesario.');
@@ -330,7 +335,7 @@ const styles = StyleSheet.create({
   statusLiveBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.surface, borderRadius: radii.md, padding: spacing.sm, borderWidth: 1, borderColor: colors.borderSubtle },
   liveTimerText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
   voiceBtn: { backgroundColor: colors.surfaceLight, borderRadius: radii.sm, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: colors.border },
-  voiceBtnActive: { backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: colors.error },
+  voiceBtnActive: { backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: colors.danger },
   voiceBtnText: { color: colors.text, fontSize: 10, fontWeight: '800' },
   transcriptBox: { backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 6, padding: spacing.xs, alignItems: 'center' },
   transcriptText: { color: colors.primary, fontSize: 10, fontStyle: 'italic' },
@@ -339,15 +344,15 @@ const styles = StyleSheet.create({
   lightBtn: { flex: 1, borderRadius: radii.xl, justifyContent: 'center', alignItems: 'center', gap: 4, borderWidth: 2 },
   lightGreen: { backgroundColor: 'rgba(74, 222, 128, 0.15)', borderColor: colors.success },
   lightYellow: { backgroundColor: 'rgba(251, 191, 36, 0.15)', borderColor: '#fbbf24' },
-  lightRed: { backgroundColor: 'rgba(239, 68, 68, 0.25)', borderColor: colors.error },
+  lightRed: { backgroundColor: 'rgba(239, 68, 68, 0.25)', borderColor: colors.danger },
   lightBtnSelected: { borderWidth: 4 },
   lightBtnEmoji: { fontSize: 32 },
   lightBtnText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '900' },
 
-  emergencyBox: { backgroundColor: 'rgba(239, 68, 68, 0.3)', borderRadius: radii.xl, padding: spacing.md, borderWidth: 2, borderColor: colors.error, gap: 4 },
-  emergencyTitle: { color: colors.error, fontSize: fontSize.md, fontWeight: '900' },
+  emergencyBox: { backgroundColor: 'rgba(239, 68, 68, 0.3)', borderRadius: radii.xl, padding: spacing.md, borderWidth: 2, borderColor: colors.danger, gap: 4 },
+  emergencyTitle: { color: colors.danger, fontSize: fontSize.md, fontWeight: '900' },
   emergencyDesc: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
-  aftercareTriggerBtn: { backgroundColor: colors.error, borderRadius: radii.md, paddingVertical: 10, alignItems: 'center', marginTop: 4 },
+  aftercareTriggerBtn: { backgroundColor: colors.danger, borderRadius: radii.md, paddingVertical: 10, alignItems: 'center', marginTop: 4 },
   aftercareTriggerBtnText: { color: '#ffffff', fontSize: fontSize.xs, fontWeight: '900' },
 
   endSceneBtn: { backgroundColor: colors.surfaceLight, borderRadius: radii.lg, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border },

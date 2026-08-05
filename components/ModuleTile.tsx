@@ -1,13 +1,15 @@
-import { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
 import { colors, elevationSoft, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import { triggerHaptic } from '@/lib/haptics';
 
 interface ModuleTileProps {
   title: string;
@@ -20,11 +22,12 @@ interface ModuleTileProps {
   disabled?: boolean;
   style?: ViewStyle;
   children?: ReactNode;
+  /** Stagger index for entrance animation delay */
+  index?: number;
 }
 
 /**
- * Interactive module card with glassmorphism latex effect.
- * Uses accent color for the mark badge and hover border glow.
+ * Interactive module card with glassmorphism latex effect, hover glow, press scaling, and tactile haptic feedback.
  */
 export function ModuleTile({
   title,
@@ -35,42 +38,111 @@ export function ModuleTile({
   disabled = false,
   style,
   children,
+  index = 0,
 }: ModuleTileProps) {
-  const webHoverStyle = Platform.OS === 'web'
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateYAnim = useRef(new Animated.Value(16)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Staggered entrance
+  useEffect(() => {
+    const delay = Math.min(index * 40, 400);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 350,
+        delay,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: 0,
+        duration: 350,
+        delay,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [index]);
+
+  const handlePressIn = () => {
+    if (disabled) return;
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      friction: 5,
+      tension: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    if (disabled) return;
+    Animated.spring(scaleAnim, {
+      toValue: isHovered ? 1.015 : 1,
+      friction: 5,
+      tension: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePress = () => {
+    if (disabled) return;
+    triggerHaptic.light();
+    onPress();
+  };
+
+  const webHoverStyle = Platform.OS === 'web' && isHovered
     ? ({
-        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+        borderColor: accent || '#c084fc',
+        boxShadow: `0 0 20px ${accent ? accent + '55' : 'rgba(192, 132, 252, 0.45)'}, 0 0 8px ${accent || '#c084fc'}`,
         cursor: 'pointer',
       } as any)
     : {};
 
   return (
-    <TouchableOpacity
+    <Animated.View
       style={[
-        styles.tile,
-        webHoverStyle,
-        disabled && styles.disabled,
-        style,
+        {
+          opacity: fadeAnim,
+          transform: [
+            { translateY: translateYAnim },
+            { scale: scaleAnim },
+          ],
+        },
       ]}
-      onPress={onPress}
-      disabled={disabled}
-      activeOpacity={0.75}
-      accessibilityRole="button"
-      accessibilityLabel={title}
     >
-      <View style={styles.row}>
-        {mark ? (
-          <View style={[styles.markWrap, { backgroundColor: accent + '20', borderColor: accent + '40' }]}>
-            <Text style={[styles.mark, { color: accent }]}>{mark}</Text>
+      <Pressable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onHoverIn={() => setIsHovered(true)}
+        onHoverOut={() => setIsHovered(false)}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        style={[
+          styles.tile,
+          disabled && styles.disabled,
+          webHoverStyle,
+          style,
+        ]}
+      >
+        <View style={styles.row}>
+          {mark ? (
+            <View style={[styles.markWrap, { backgroundColor: accent + '20', borderColor: accent + '40' }]}>
+              <Text style={[styles.mark, { color: accent }]}>{mark}</Text>
+            </View>
+          ) : null}
+          <View style={styles.copy}>
+            <Text style={styles.title} numberOfLines={1}>{title}</Text>
+            {description ? <Text style={styles.description} numberOfLines={2}>{description}</Text> : null}
+            {children}
           </View>
-        ) : null}
-        <View style={styles.copy}>
-          <Text style={styles.title} numberOfLines={1}>{title}</Text>
-          {description ? <Text style={styles.description} numberOfLines={2}>{description}</Text> : null}
-          {children}
+          <Text style={[styles.chevron, { color: accent }]}>›</Text>
         </View>
-        <Text style={[styles.chevron, { color: accent }]}>›</Text>
-      </View>
-    </TouchableOpacity>
+      </Pressable>
+    </Animated.View>
   );
 }
 

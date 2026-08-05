@@ -20,6 +20,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { useTheme } from '@/lib/themeContext';
 import { FETISH_EVENTS, FetishEvent, EventType } from '@/data/eventsData';
 import { readStorageValue, writeStorageValue } from '@/lib/cryptoVault';
+import { triggerHaptic } from '@/lib/haptics';
 
 const RSVP_STORAGE_KEY = 'fetish_events_rsvp_sealed_v1';
 
@@ -50,15 +51,18 @@ export default function EventsMunchesScreen() {
   const handleToggleRSVP = async (eventId: string, status: 'going' | 'interested') => {
     const current = rsvpMap[eventId];
     const newStatus = current === status ? 'none' : status;
-    const updated = { ...rsvpMap, [eventId]: newStatus };
-    setRsvpMap(updated);
+    setRsvpMap((prev) => ({ ...prev, [eventId]: newStatus }));
+    const updated: Record<string, 'none' | 'going' | 'interested'> = { ...rsvpMap, [eventId]: newStatus };
     await writeStorageValue(RSVP_STORAGE_KEY, JSON.stringify(updated));
 
     if (newStatus !== 'none') {
+      triggerHaptic.success();
       Alert.alert(
         'RSVP Guardado Cifrado 🔐',
         `Tu asistencia (${newStatus === 'going' ? 'Asistiré' : 'Me Interesa'}) ha sido cifrada localmente en tu bóveda. Nadie más puede ver tus eventos.`
       );
+    } else {
+      triggerHaptic.light();
     }
   };
 

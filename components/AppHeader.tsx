@@ -1,7 +1,9 @@
 import { ReactNode } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, Platform } from 'react-native';
 import { colors, fonts, fontSize, spacing, typography } from '@/constants/theme';
 import { OfficeModeAPI } from '@/lib/officeMode';
+import { GlobalSearchAPI } from '@/lib/globalSearch';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 interface AppHeaderProps {
   /** When true, shows Compatikink as the dominant brand signal */
@@ -22,6 +24,8 @@ export function AppHeader({
   right,
   style,
 }: AppHeaderProps) {
+  const { isOnline } = useNetworkStatus();
+
   return (
     <View style={[styles.wrap, style]}>
       <View style={styles.row}>
@@ -42,12 +46,30 @@ export function AppHeader({
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
         <View style={styles.rightHeaderRow}>
+          {/* Global Search Button */}
+          <TouchableOpacity
+            style={styles.searchBtn}
+            onPress={() => GlobalSearchAPI.open()}
+            accessibilityLabel="Buscar globalmente (Cmd+K)"
+          >
+            <Text style={styles.searchBtnText}>🔍 (⌘K)</Text>
+          </TouchableOpacity>
+
+          {/* Network Status Badge */}
+          <View style={[styles.netBadge, isOnline ? styles.netOnline : styles.netOffline]}>
+            <View style={[styles.netDot, isOnline ? styles.netDotOnline : styles.netDotOffline]} />
+            <Text style={[styles.netBadgeText, isOnline ? styles.netTextOnline : styles.netTextOffline]}>
+              {isOnline ? 'Online' : 'Offline'}
+            </Text>
+          </View>
+
+          {/* Office Mode Button */}
           <TouchableOpacity
             style={styles.officeBtn}
             onPress={() => OfficeModeAPI.toggle()}
             accessibilityLabel="Modo Oficina / Pánico (Alt+Shift+X)"
           >
-            <Text style={styles.officeBtnText}>💼 Excel (Alt+Shift+X)</Text>
+            <Text style={styles.officeBtnText}>💼 Excel</Text>
           </TouchableOpacity>
           {right ? <View style={styles.right}>{right}</View> : null}
         </View>
@@ -103,6 +125,61 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  searchBtn: {
+    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+    borderWidth: 1,
+    borderColor: '#c084fc',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  searchBtnText: {
+    color: '#c084fc',
+    fontSize: 10,
+    fontFamily: fonts.bodySemi,
+    fontWeight: '800',
+  },
+  netBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderWidth: 1,
+    gap: 4,
+  },
+  netOnline: {
+    backgroundColor: 'rgba(74, 222, 128, 0.12)',
+    borderColor: '#4ade80',
+  },
+  netOffline: {
+    backgroundColor: 'rgba(248, 113, 113, 0.15)',
+    borderColor: '#f87171',
+  },
+  netDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  netDotOnline: {
+    backgroundColor: '#4ade80',
+  },
+  netDotOffline: {
+    backgroundColor: '#f87171',
+  },
+  netBadgeText: {
+    fontSize: 10,
+    fontFamily: fonts.bodySemi,
+    fontWeight: '800',
+  },
+  netTextOnline: {
+    color: '#4ade80',
+  },
+  netTextOffline: {
+    color: '#f87171',
   },
   officeBtn: {
     backgroundColor: 'rgba(16, 124, 65, 0.15)',
