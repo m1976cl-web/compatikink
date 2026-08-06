@@ -1,66 +1,47 @@
--- CompatKink — Schema Supabase (Zero-Knowledge sessions)
--- Ejecutar en SQL Editor de tu proyecto Supabase
+-- CompatKink — Schema Supabase (Zero-Knowledge sessions & Hardened Security)
 --
--- Payloads sensibles van SOLO como ciphertext (text). El servidor no puede leer
--- respuestas/perfiles. Acceso anon vía RPC con invite_code / initiator_token;
--- sin policies using (true) de lectura amplia.
+-- Exclusivamente almacena ciphertext (ck1:... AES-GCM-256).
+-- RLS estricto habilitado en todas las tablas + Rate-Limiting + Expiración a 48h.
 
 create extension if not exists pgcrypto;
 
+-- ─── TABLA PRINCIPAL DE SESIONES DE COMPATIBILIDAD ─────────────────────────
 create table if not exists sessions (
   id uuid primary key default gen_random_uuid(),
   invite_code text unique not null,
   initiator_token text unique not null,
-  -- Opaque DEK wrap for guest (AES-GCM sealed with invite secret). Not the raw DEK.
   dek_wrap_invite text not null,
-  -- Optional nickname labels for UX (non-sensitive); keep minimal
   initiator_nickname text,
   guest_nickname text,
-  -- Ciphertext-only payloads (ck1:… AES-GCM under session DEK)
   initiator_ciphertext text not null,
   guest_ciphertext text,
   status text not null default 'waiting' check (status in ('draft', 'waiting', 'complete')),
+  expires_at timestamptz not null default (now() + interval '48 hours'),
   created_at timestamptz not null default now(),
   completed_at timestamptz
 );
-
--- Migrate from legacy plaintext columns if they exist (idempotent best-effort)
-do $$
-begin
-  if exists (
-    select 1 from information_schema.columns
-    where table_name = 'sessions' and column_name = 'initiator_responses'
-  ) and not exists (
-    select 1 from information_schema.columns
-    where table_name = 'sessions' and column_name = 'initiator_ciphertext'
-  ) then
-    alter table sessions add column if not exists dek_wrap_invite text;
-    alter table sessions add column if not exists initiator_ciphertext text;
-    alter table sessions add column if not exists guest_ciphertext text;
-    -- Legacy rows cannot be recovered as ZK; mark ciphertext placeholder
-    update sessions
-      set initiator_ciphertext = coalesce(initiator_ciphertext, '{"legacy":true}'),
-          dek_wrap_invite = coalesce(dek_wrap_invite, 'legacy')
-      where initiator_ciphertext is null;
-    alter table sessions alter column initiator_ciphertext set not null;
-    alter table sessions alter column dek_wrap_invite set not null;
-  end if;
-end $$;
 
 create index if not exists sessions_invite_code_idx on sessions (invite_code);
 create index if not exists sessions_initiator_token_idx on sessions (initiator_token);
 
 alter table sessions enable row level security;
-
--- Revoke broad table access; clients use SECURITY DEFINER RPCs below
 revoke all on table sessions from anon, authenticated;
 grant usage on schema public to anon, authenticated;
 
-drop policy if exists "Anyone can create sessions" on sessions;
-drop policy if exists "Read session by invite code" on sessions;
-drop policy if exists "Guest can submit responses" on sessions;
+-- ─── TABLA DE INTENTOS / RATE-LIMITING ──────────────────────────────────────
+create table if not exists invite_attempts (
+  id uuid primary key default gen_random_uuid(),
+  invite_code text not null,
+  client_ip text not null,
+  attempted_at timestamptz not null default now()
+);
 
--- Narrow insert: only ciphertext columns (no plaintext response columns)
+create index if not exists invite_attempts_code_ip_idx on invite_attempts (invite_code, client_ip, attempted_at);
+
+alter table invite_attempts enable row level security;
+revoke all on table invite_attempts from anon, authenticated;
+
+-- ─── POLÍTICAS DE ROW LEVEL SECURITY (RLS) ─────────────────────────────────
 create policy "insert_ciphertext_session"
   on sessions for insert
   to anon, authenticated
@@ -73,14 +54,12 @@ create policy "insert_ciphertext_session"
     and length(initiator_token) >= 16
   );
 
--- SELECT only when the request proves invite_code OR initiator_token via
--- set_config in the same transaction (used by RPCs). Direct table SELECT denied
--- for anon because no matching claim → using (false) effectively.
 create policy "select_via_session_claim"
   on sessions for select
   to anon, authenticated
   using (
-    invite_code = nullif(current_setting('request.compatikink.invite_code', true), '')
+    (invite_code = nullif(current_setting('request.compatikink.invite_code', true), '')
+     and expires_at > now())
     or initiator_token = nullif(current_setting('request.compatikink.initiator_token', true), '')
   );
 
@@ -89,6 +68,7 @@ create policy "guest_update_ciphertext"
   to anon, authenticated
   using (
     status = 'waiting'
+    and expires_at > now()
     and invite_code = nullif(current_setting('request.compatikink.invite_code', true), '')
   )
   with check (
@@ -98,8 +78,9 @@ create policy "guest_update_ciphertext"
 
 grant insert, select, update on table sessions to anon, authenticated;
 
--- ─── RPCs (preferred client API) ────────────────────────────────────────────
+-- ─── RPCs CON SEGURIDAD ENDURECIDA ──────────────────────────────────────────
 
+-- 1. Crear sesión Zero-Knowledge
 create or replace function create_zk_session(
   p_invite_code text,
   p_initiator_token text,
@@ -128,14 +109,16 @@ begin
     dek_wrap_invite,
     initiator_ciphertext,
     initiator_nickname,
-    status
+    status,
+    expires_at
   ) values (
     upper(p_invite_code),
     p_initiator_token,
     p_dek_wrap_invite,
     p_initiator_ciphertext,
     p_initiator_nickname,
-    'waiting'
+    'waiting',
+    now() + interval '48 hours'
   )
   returning * into row;
 
@@ -143,7 +126,11 @@ begin
 end;
 $$;
 
-create or replace function get_session_by_invite(p_invite_code text)
+-- 2. Canjear código de invitación con Rate-Limiting (Máx 5 intentos en 15 min)
+create or replace function get_session_by_invite(
+  p_invite_code text,
+  p_client_ip text default '0.0.0.0'
+)
 returns sessions
 language plpgsql
 security definer
@@ -151,13 +138,38 @@ set search_path = public
 as $$
 declare
   row sessions;
+  recent_attempts int;
 begin
+  -- Control de Fuerza Bruta: Rate Limiting por IP/Código
+  select count(*) into recent_attempts
+  from invite_attempts
+  where (invite_code = upper(p_invite_code) or client_ip = p_client_ip)
+    and attempted_at > now() - interval '15 minutes';
+
+  if recent_attempts >= 5 then
+    raise exception 'demasiados intentos fallidos. Intenta nuevamente en 15 minutos.';
+  end if;
+
+  -- Registrar intento
+  insert into invite_attempts (invite_code, client_ip)
+  values (upper(p_invite_code), p_client_ip);
+
   perform set_config('request.compatikink.invite_code', upper(p_invite_code), true);
-  select * into row from sessions where invite_code = upper(p_invite_code);
+
+  select * into row 
+  from sessions 
+  where invite_code = upper(p_invite_code)
+    and expires_at > now();
+
+  if row.id is null then
+    raise exception 'código de invitación inválido o expirado';
+  end if;
+
   return row;
 end;
 $$;
 
+-- 3. Obtener sesión por token de iniciador
 create or replace function get_session_by_initiator_token(p_token text)
 returns sessions
 language plpgsql
@@ -173,6 +185,7 @@ begin
 end;
 $$;
 
+-- 4. Enviar respuestas cifradas del invitado
 create or replace function submit_guest_ciphertext(
   p_invite_code text,
   p_guest_ciphertext text,
@@ -200,17 +213,33 @@ begin
     completed_at = now()
   where invite_code = upper(p_invite_code)
     and status = 'waiting'
+    and expires_at > now()
   returning * into row;
 
   if row.id is null then
-    raise exception 'session not found or already complete';
+    raise exception 'session not found, expired, or already complete';
   end if;
 
   return row;
 end;
 $$;
 
+-- 5. Borrado irrecuperable de datos (Derecho al olvido P0.4)
+create or replace function purge_user_session_by_token(p_token text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform set_config('request.compatikink.initiator_token', p_token, true);
+  delete from sessions where initiator_token = p_token;
+  return true;
+end;
+$$;
+
 grant execute on function create_zk_session(text, text, text, text, text) to anon, authenticated;
-grant execute on function get_session_by_invite(text) to anon, authenticated;
+grant execute on function get_session_by_invite(text, text) to anon, authenticated;
 grant execute on function get_session_by_initiator_token(text) to anon, authenticated;
 grant execute on function submit_guest_ciphertext(text, text, text) to anon, authenticated;
+grant execute on function purge_user_session_by_token(text) to anon, authenticated;

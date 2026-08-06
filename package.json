@@ -10,7 +10,9 @@
     "test:vault": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault.verify.ts",
     "test:vault:rotation": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault.rotation.test.ts",
     "test:vault:canary": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault.canary.test.ts",
-    "test:vault:all": "pnpm run test:vault && pnpm run test:vault:rotation && pnpm run test:vault:canary",
+    "test:compatibility": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/compatibility.test.ts",
+    "test:integration": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/integration.flow.test.ts",
+    "test:vault:all": "pnpm run test:vault && pnpm run test:vault:rotation && pnpm run test:vault:canary && pnpm run test:compatibility && pnpm run test:integration",
     "build:web": "expo export --platform web && node scripts/prepare-gh-pages.js",
     "predeploy": "npm run build:web",
     "deploy": "gh-pages -d dist --dotfiles"

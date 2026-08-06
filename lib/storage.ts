@@ -818,3 +818,37 @@ export async function importUserDataJSON(jsonString: string, passphrase?: string
   }
   return count;
 }
+
+/**
+ * P0.4 — Borrado Real de Datos ("Derecho al Olvido")
+ * Elimina irrecuperablemente todos los datos locales de AsyncStorage/SecureStore
+ * y notifica a Supabase para eliminar registros remotos asociados al token.
+ */
+export async function purgeAllUserData(): Promise<void> {
+  try {
+    const token = await getInitiatorToken();
+    if (token) {
+      const { supabase, isSupabaseConfigured } = await import('./supabase');
+      if (isSupabaseConfigured && supabase) {
+        await supabase.rpc('purge_user_session_by_token', { p_token: token });
+      }
+    }
+  } catch {
+    // Best-effort remote wipe ignore
+  }
+
+  // Clear SecureStore
+  if (Platform.OS !== 'web') {
+    try {
+      await SecureStore.deleteItemAsync(TOKEN_KEY);
+    } catch {}
+  }
+
+  // Clear all local storage keys
+  await AsyncStorage.clear();
+
+  // Reset RAM vault session
+  const { VaultLockGateAPI } = await import('./cryptoVault');
+  VaultLockGateAPI.lock();
+}
+

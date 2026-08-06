@@ -9,6 +9,7 @@ import {
   Dimensions,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,10 +30,16 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const [step, setStep] = useState(0);
 
-  // Step 1 State
+  // Step 0: Age Gate Verification P0.5
+  const [birthYear, setBirthYear] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+
+  // Step 1 State: Role Selection
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
-  // Step 2 State
+  // Step 2 State: PIN Creation
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
 
@@ -42,7 +49,7 @@ export default function OnboardingScreen() {
   const lockBounceAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (step === 1) {
+    if (step === 2) {
       Animated.loop(
         Animated.sequence([
           Animated.timing(lockBounceAnim, { toValue: 1.1, duration: 800, useNativeDriver: true }),
@@ -68,8 +75,45 @@ export default function OnboardingScreen() {
     });
   };
 
+  const validateAge = (): boolean => {
+    const y = parseInt(birthYear);
+    const m = parseInt(birthMonth);
+    const d = parseInt(birthDay);
+
+    if (!y || !m || !d || y < 1920 || m < 1 || m > 12 || d < 1 || d > 31) {
+      Alert.alert('Fecha inválida', 'Ingresa una fecha de nacimiento válida (AAAA-MM-DD).');
+      return false;
+    }
+
+    const birthDate = new Date(y, m - 1, d);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const mDiff = today.getMonth() - birthDate.getMonth();
+    if (mDiff < 0 || (mDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    if (age < 18) {
+      Alert.alert(
+        'Acceso Restringido 🔞',
+        'CompatKink es una plataforma exclusiva para personas mayores de 18 años.'
+      );
+      return false;
+    }
+
+    if (!ageConfirmed) {
+      Alert.alert('Confirmación requerida', 'Debes confirmar que eres mayor de 18 años para continuar.');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleNext = () => {
-    if (step < 2) {
+    if (step === 0) {
+      if (!validateAge()) return;
+    }
+    if (step < 3) {
       animateTransition(step + 1);
     }
   };
@@ -82,8 +126,78 @@ export default function OnboardingScreen() {
 
   const handleComplete = async (route: string) => {
     await AsyncStorage.setItem('compatikink_onboarding_complete_v1', 'true');
+    await AsyncStorage.setItem('compatikink_age_verified_v1', 'true');
     router.replace(route as any);
   };
+
+  // Step 0: Verification Gate P0.5
+  const renderStep0 = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>Verificación de Edad 🔞</Text>
+      <Text style={styles.stepSubtitle}>
+        CompatKink procesa datos de contenido íntimo y requiere que confirmes tu mayoría de edad (18+ años).
+      </Text>
+
+      <View style={styles.dobRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.label}>Día (DD)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="01"
+            placeholderTextColor={colors.textDim}
+            keyboardType="numeric"
+            maxLength={2}
+            value={birthDay}
+            onChangeText={setBirthDay}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.label}>Mes (MM)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="08"
+            placeholderTextColor={colors.textDim}
+            keyboardType="numeric"
+            maxLength={2}
+            value={birthMonth}
+            onChangeText={setBirthMonth}
+          />
+        </View>
+        <View style={{ flex: 1.5 }}>
+          <Text style={styles.label}>Año (AAAA)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="2000"
+            placeholderTextColor={colors.textDim}
+            keyboardType="numeric"
+            maxLength={4}
+            value={birthYear}
+            onChangeText={setBirthYear}
+          />
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={styles.checkboxRow}
+        onPress={() => setAgeConfirmed(!ageConfirmed)}
+        activeOpacity={0.8}
+      >
+        <View style={[styles.checkbox, ageConfirmed && styles.checkboxChecked]}>
+          {ageConfirmed && <Text style={styles.checkmark}>✓</Text>}
+        </View>
+        <Text style={styles.checkboxText}>
+          Confirmo bajo protesta de decir verdad que tengo 18 años o más y acepto la{' '}
+          <Text
+            style={{ color: colors.primary, textDecorationLine: 'underline' }}
+            onPress={() => router.push('/privacy-policy')}
+          >
+            Política de Privacidad
+          </Text>
+          .
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
@@ -150,78 +264,67 @@ export default function OnboardingScreen() {
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>Tu Primer Paso</Text>
-      <Text style={styles.stepSubtitle}>Estás listo para comenzar. ¿Qué deseas hacer primero?</Text>
-
-      <View style={styles.ctaCardsContainer}>
-        <TouchableOpacity style={styles.ctaCard} onPress={() => handleComplete('/questionnaire')}>
-          <View style={styles.ctaHeader}>
-            <Text style={styles.ctaEmoji}>📝</Text>
-          </View>
+      <Text style={styles.stepSubtitle}>Elige cómo deseas comenzar en CompatKink.</Text>
+      <View style={styles.ctaGrid}>
+        <TouchableOpacity
+          style={styles.ctaCard}
+          onPress={() => handleComplete('/questionnaire')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.ctaEmoji}>📋</Text>
           <Text style={styles.ctaTitle}>Cuestionario Base</Text>
-          <Text style={styles.ctaDesc}>Define tus límites y preferencias detalladas.</Text>
-          <View style={styles.ctaFooter}>
-            <Text style={styles.ctaActionText}>Empezar ➔</Text>
-          </View>
+          <Text style={styles.ctaDesc}>Responde tus preferencias íntimas y límites.</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.ctaCard} onPress={() => handleComplete('/quick-profile')}>
-          <View style={styles.ctaHeader}>
-            <Text style={styles.ctaEmoji}>⚡</Text>
-          </View>
+        <TouchableOpacity
+          style={styles.ctaCard}
+          onPress={() => handleComplete('/quick-profile')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.ctaEmoji}>⚡</Text>
           <Text style={styles.ctaTitle}>Perfil Rápido (2 min)</Text>
-          <Text style={styles.ctaDesc}>Crea un perfil básico para explorar rápidamente.</Text>
-          <View style={styles.ctaFooter}>
-            <Text style={styles.ctaActionText}>Crear ➔</Text>
-          </View>
+          <Text style={styles.ctaDesc}>Configura lo básico y genera una invitación inmediata.</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.ctaCard} onPress={() => handleComplete('/manual')}>
-          <View style={styles.ctaHeader}>
-            <Text style={styles.ctaEmoji}>📖</Text>
-          </View>
+        <TouchableOpacity
+          style={styles.ctaCard}
+          onPress={() => handleComplete('/manual')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.ctaEmoji}>📖</Text>
           <Text style={styles.ctaTitle}>Explorar Manual</Text>
-          <Text style={styles.ctaDesc}>Lee la guía de uso de Compatikink.</Text>
-          <View style={styles.ctaFooter}>
-            <Text style={styles.ctaActionText}>Leer ➔</Text>
-          </View>
+          <Text style={styles.ctaDesc}>Consulta la guía educacional BDSM y normas de seguridad.</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <ScreenContainer title="" hideHeader style={styles.container}>
-      <View style={styles.contentWrapper}>
-        <Animated.View style={[styles.animatedSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          {step === 0 && renderStep1()}
-          {step === 1 && renderStep2()}
-          {step === 2 && renderStep3()}
-        </Animated.View>
-      </View>
-
-      <View style={styles.footer}>
+    <ScreenContainer title="Bienvenido a CompatKink" hideHeader>
+      <View style={styles.container}>
         <View style={styles.dotsContainer}>
-          {[0, 1, 2].map((i) => (
+          {[0, 1, 2, 3].map((i) => (
             <View key={i} style={[styles.dot, step === i && styles.dotActive]} />
           ))}
         </View>
 
-        <View style={styles.navButtons}>
-          <TouchableOpacity
-            style={[styles.navBtn, step === 0 && styles.navBtnHidden]}
-            onPress={handlePrev}
-            disabled={step === 0}
-          >
-            <Text style={styles.navBtnText}>Anterior</Text>
-          </TouchableOpacity>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            {step === 0 && renderStep0()}
+            {step === 1 && renderStep1()}
+            {step === 2 && renderStep2()}
+            {step === 3 && renderStep3()}
+          </Animated.View>
+        </ScrollView>
 
-          {step < 2 ? (
-            <TouchableOpacity style={styles.navBtnPrimary} onPress={handleNext}>
-              <Text style={styles.navBtnPrimaryText}>Siguiente</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.navBtnPlaceholder} />
-          )}
+        <View style={styles.footer}>
+          {step > 0 ? (
+            <Button title="Anterior" onPress={handlePrev} variant="secondary" style={styles.navBtn} />
+          ) : <View style={{ flex: 1 }} />}
+
+          {step < 3 ? (
+            <Button title="Siguiente" onPress={handleNext} variant="primary" style={styles.navBtn} />
+          ) : null}
         </View>
       </View>
     </ScreenContainer>
@@ -230,35 +333,90 @@ export default function OnboardingScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 0,
-    paddingTop: 0,
-  },
-  contentWrapper: {
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
   },
-  animatedSection: {
-    width: '100%',
-    maxWidth: 600,
-    alignSelf: 'center',
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginVertical: spacing.md,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.surfaceLight,
+  },
+  dotActive: {
+    width: 24,
+    backgroundColor: colors.primary,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingBottom: spacing.xl,
   },
   stepContainer: {
     alignItems: 'center',
     width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
   },
   stepTitle: {
     fontFamily: fonts.displaySemi,
-    fontSize: fontSize.hero,
+    fontSize: fontSize.xxl,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   stepSubtitle: {
-    ...typography.bodyMuted,
+    fontFamily: fonts.body,
+    fontSize: fontSize.md,
+    color: colors.textMuted,
     textAlign: 'center',
-    marginBottom: spacing.xl,
-    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
+    lineHeight: 22,
+  },
+  dobRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    width: '100%',
+    marginBottom: spacing.md,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginVertical: spacing.xs,
+    paddingHorizontal: spacing.xs,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkmark: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  checkboxText: {
+    flex: 1,
+    color: colors.text,
+    fontSize: fontSize.xs,
+    lineHeight: 18,
   },
   rolesGrid: {
     flexDirection: 'row',
@@ -268,171 +426,97 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   roleCard: {
+    width: '45%',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    width: Platform.OS === 'web' && width > 600 ? '45%' : '100%',
+    borderRadius: radii.lg,
+    padding: spacing.md,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   roleCardActive: {
     borderColor: colors.primary,
-    backgroundColor: colors.surfaceElevated,
-    ...glowShadowPrimary(0.2),
+    backgroundColor: colors.surfaceLight,
   },
   roleEmoji: {
-    fontSize: 48,
+    fontSize: 36,
   },
   roleLabel: {
     fontFamily: fonts.bodySemi,
-    fontSize: fontSize.lg,
-    color: colors.text,
+    fontSize: fontSize.sm,
+    color: colors.textDim,
+    textAlign: 'center',
   },
   roleLabelActive: {
     color: colors.primary,
   },
   lockContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(192, 132, 252, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.3)',
+    marginVertical: spacing.md,
   },
   lockIcon: {
-    fontSize: 48,
+    fontSize: 64,
   },
   explanationText: {
     fontFamily: fonts.bodySemi,
     fontSize: fontSize.md,
     color: colors.primary,
-    marginBottom: spacing.xl,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    textAlign: 'center',
+    marginBottom: spacing.lg,
   },
   formContainer: {
     width: '100%',
-    maxWidth: 400,
-    gap: spacing.md,
+    gap: spacing.xs,
   },
   label: {
-    ...typography.label,
-    marginBottom: -4,
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
+    color: colors.textDim,
+    alignSelf: 'flex-start',
   },
   input: {
     backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    padding: spacing.md,
-    color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    color: colors.text,
     fontFamily: fonts.body,
     fontSize: fontSize.md,
-    textAlign: 'center',
-    letterSpacing: 2,
-  },
-  ctaCardsContainer: {
     width: '100%',
+  },
+  ctaGrid: {
     gap: spacing.md,
+    width: '100%',
   },
   ctaCard: {
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    width: '100%',
-  },
-  ctaHeader: {
-    marginBottom: spacing.xs,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    gap: 4,
   },
   ctaEmoji: {
     fontSize: 28,
   },
   ctaTitle: {
-    color: colors.text,
+    fontFamily: fonts.bodySemi,
     fontSize: fontSize.lg,
-    fontFamily: fonts.bodyBold,
-    marginBottom: spacing.xs,
+    color: colors.primary,
   },
   ctaDesc: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
     fontFamily: fonts.body,
-    lineHeight: 20,
-    marginBottom: spacing.md,
-  },
-  ctaFooter: {
-    alignItems: 'flex-start',
-  },
-  ctaActionText: {
-    color: colors.primary,
     fontSize: fontSize.sm,
-    fontFamily: fonts.bodyBold,
+    color: colors.textDim,
   },
   footer: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxl,
-    paddingTop: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.border,
-  },
-  dotActive: {
-    backgroundColor: colors.primary,
-    width: 24,
-  },
-  navButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    maxWidth: 600,
-    width: '100%',
-    alignSelf: 'center',
+    gap: spacing.md,
+    paddingTop: spacing.md,
   },
   navBtn: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  navBtnHidden: {
-    opacity: 0,
-  },
-  navBtnText: {
-    fontFamily: fonts.bodySemi,
-    fontSize: fontSize.md,
-    color: colors.textMuted,
-  },
-  navBtnPrimary: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radii.pill,
-  },
-  navBtnPrimaryText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: fontSize.md,
-    color: colors.onPrimary,
-  },
-  navBtnPlaceholder: {
-    width: 100,
+    flex: 1,
   },
 });

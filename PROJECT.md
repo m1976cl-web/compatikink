@@ -1,24 +1,39 @@
-# Project: Compatikink - Fetish Social & Dating Suite
+# CompatKink — Project Specification & Technical Roadmap
 
-## Architecture
-- Framework: Expo / React Native Web (Expo Router v3)
-- Language: TypeScript
-- Target Platforms: Web, Mobile (Responsive Desktop >768px and Mobile <=768px)
-- Security: AES-GCM-256 Client-Side Zero-Knowledge Encryption (Vault integration)
-- UI Style: Latex Negro Brillante (#0a0612 dark background, #c084fc neon purple, glossy latex accents)
+**Status:** Production Ready (v2.0)  
+**Security Model:** Zero-Knowledge Client-Side AES-GCM-256  
+**License:** Confidential / Proprietary
 
-## Milestones
-| # | Name | Scope | Dependencies | Status |
-|---|------|-------|-------------|--------|
-| M1 | User Manual & Initial Features | Interactive manual screen, PDF/MD export, 30 module guides | none | DONE |
-| M5 | Deep Competitive Benchmark | Research 8+ platforms (FetLife, KinkD, Feeld, Whiplr, Submitty, JoyClub, BDSM Test, Kink Academy) & Codebase Audit | M1 | IN_PROGRESS |
-| M6 | Zero-Knowledge Architecture & UI Spec | Technical E2EE privacy spec & Latex Negro Brillante design tokens | M5 | PLANNED |
-| M7 | Fetish Social & Dating Suite Implementation | Enriched Profiles with Badges, Events & Munches, Community Feed, Dashboard tabs, Manual Data | M6 | PLANNED |
-| M8 | Verification, Web Export & Forensic Audit | `npx expo export --platform web`, Reviewer, Challenger, Forensic Auditor | M7 | PLANNED |
+---
 
-## Code Layout
-- `app/`: Expo Router pages (`index.tsx`, `dating.tsx`, `events.tsx`, `kink-feed.tsx`, `quick-profile.tsx`, `manual.tsx`, etc.)
-- `components/`: UI components (`FetishProfileCard.tsx`, `BadgeSelector.tsx`, `EventsMunchModule.tsx`, `CommunityFeedModule.tsx`, etc.)
-- `lib/`: Encryption & Vault utilities (`vault.ts`, `exportManualPDF.ts`, `exportMarkdown.ts`)
-- `data/`: `manualData.ts`, `kinkCategories.ts`, etc.
-- `types/`: Data models & TypeScript interfaces
+## 1. Core Value Proposition
+
+CompatKink is an asymmetric, privacy-first platform that enables two individuals to explore intimate preferences, BDSM boundaries, roles, and safety protocols without revealing raw un-matched responses to each other or a central server.
+
+### Key Differentiators:
+1. **Asymmetric Privacy**: Host creates an invite code; guest responds blindly without seeing host answers; the app computes mutual matches, explore-together items, and limit conflicts.
+2. **Zero-Knowledge Architecture**: Encryption and key derivation occur client-side (`PBKDF2-SHA-256` + `AES-GCM-256`).
+3. **Canary (Decoy) PIN**: Protects against physical coercion or duress by unlocking a synthetic decoy state.
+
+---
+
+## 2. Social & Dating Suite Guidelines (M7 / P3.2 Content Moderation)
+
+### 2.1 Content Moderation Policy
+- **No Unencrypted Server Text**: Direct messages and journal entries are encrypted client-side (`ck1:`).
+- **Public Handle Verification**: FetLife profile linkage verifies external handles via cryptographic badge badges.
+- **Reporting Mechanism**: Local blocking & report flag storage for local content filtering.
+
+---
+
+## 3. Milestones & Priorities Matrix Summary
+
+- **P0.1 Threat Model**: Complete (`docs/THREAT_MODEL.md`).
+- **P0.2 Rate-Limiting & 48h Expiration**: Complete (`supabase/schema.sql`).
+- **P0.3 Supabase RLS Audit**: Complete (`supabase/schema.sql`).
+- **P0.4 Right to Be Forgotten**: Complete (`purgeAllUserData` + `app/privacy-policy.tsx`).
+- **P0.5 Age Verification Gate**: Complete (`app/onboarding.tsx` 18+ DOB gate).
+- **P1.1 Compatibility Tests**: Complete (`tests/compatibility.test.ts`).
+- **P1.2 Integration Flow Tests**: Complete (`tests/integration.flow.test.ts`).
+- **P1.3 GitHub Actions CI/CD**: Complete (`.github/workflows/ci.yml` & `audit.yml`).
+- **P2.1 Privacy Policy & Consent**: Complete (`docs/PRIVACY_POLICY.md` & `app/privacy-policy.tsx`).
