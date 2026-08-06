@@ -38,7 +38,8 @@ import { HomeActions } from '@/components/home/HomeActions';
 import { colors, fonts, gradients, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useHomeData } from '@/hooks/useHomeData';
-import { useHomeStore } from '@/lib/stores/useHomeStore';
+import { useHomeStore } from '@/stores/homeStore';
+import { useVaultSubscription } from '@/hooks/useVaultSubscription';
 import { useQuickInvite } from '@/hooks/useQuickInvite';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
@@ -48,11 +49,13 @@ export default function HomeScreen() {
   const { isDesktop } = useResponsive();
 
   // ── Data & Auth (via Zustand) ────────────────────────────────────────────────
-  const { profile, sessions, sceneAgreements, loadHomeData, handleLogout, handlePanicWipe } = useHomeData();
-  const activeTab = useHomeStore((s) => s.activeTab);
-  const setActiveTab = useHomeStore((s) => s.setActiveTab);
-  const searchQuery = useHomeStore((s) => s.searchQuery);
-  const setSearchQuery = useHomeStore((s) => s.setSearchQuery);
+  const { profile, profilesList, sessions, sceneAgreements, loadHomeData, handleLogout, handlePanicWipe } = useHomeData();
+  useVaultSubscription();
+
+  const activeTab = useHomeStore((s) => s.activeTab || 'explore');
+  const setActiveTab = useHomeStore((s) => s.setActiveTab || (() => {}));
+  const searchQuery = useHomeStore((s) => s.searchQuery || '');
+  const setSearchQuery = useHomeStore((s) => s.setSearchQuery || (() => {}));
   const vaultOpen = useHomeStore((s) => s.vaultOpen);
 
   // ── Local UI State ───────────────────────────────────────────────────────────
