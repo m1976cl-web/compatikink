@@ -1,12 +1,13 @@
-import React, { useMemo } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useMemo } from 'react';
+import { View, TextInput, ScrollView, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { ModuleTile } from '@/components/ModuleTile';
-import { CategoryTabs } from '@/components/CategoryTabs';
+import { CategoryTabs, CategoryTab } from '@/components/CategoryTabs';
+import { useHomeStore } from '@/lib/stores/useHomeStore';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { useResponsive } from '@/hooks/useResponsive';
 import { STATIC_MODULES, ACCENT_COLORS, CATEGORY_TABS } from '@/data/homeModules';
+import { useResponsive } from '@/hooks/useResponsive';
 import { exportUserDataJSON, importUserDataJSON } from '@/lib/storage';
 
 export type ModuleDef = {
@@ -22,10 +23,9 @@ interface ModuleGridProps {
   activeTab: string;
   onChangeTab: (tab: string) => void;
   searchQuery: string;
-  onChangeSearch: (query: string) => void;
-  onShowPWAInstallModal: () => void;
-  onShowA11yModal: () => void;
-  loadHomeData: () => Promise<void>;
+  onChangeSearch: (q: string) => void;
+  onShowPWAInstallModal?: () => void;
+  onShowA11yModal?: () => void;
 }
 
 export function ModuleGrid({
@@ -35,10 +35,11 @@ export function ModuleGrid({
   onChangeSearch,
   onShowPWAInstallModal,
   onShowA11yModal,
-  loadHomeData,
 }: ModuleGridProps) {
   const router = useRouter();
   const { isDesktop } = useResponsive();
+  const vaultUnlocked = useHomeStore((s) => s.vaultUnlocked);
+  const loadHomeData = useHomeStore((s) => s.loadHomeData);
 
   const handleBackup = () => {
     const askPassphrase = (title: string): string | null => {
@@ -99,24 +100,36 @@ export function ModuleGrid({
   );
 
   const filteredModules = useMemo(() => {
-    return allModules.filter((m) => {
-      const matchesSearch =
-        !searchQuery.trim() ||
-        m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = searchQuery.trim() ? true : m.category === activeTab;
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchQuery, activeTab, allModules]);
+    let list = allModules;
+
+    // Filter by tab if search is empty
+    if (!searchQuery.trim()) {
+      list = list.filter((m) => m.category === activeTab);
+    } else {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (m) =>
+          m.title.toLowerCase().includes(q) ||
+          m.description.toLowerCase().includes(q)
+      );
+    }
+
+    // Hide vault modules if vault is locked and active tab is vault
+    if (activeTab === 'vault' && !vaultUnlocked && !searchQuery.trim()) {
+      return list.filter((m) => m.route === '/auth');
+    }
+
+    return list;
+  }, [allModules, activeTab, searchQuery, vaultUnlocked]);
 
   return (
-    <View style={{ gap: spacing.md, marginTop: spacing.xs }}>
+    <View style={styles.container}>
       <View style={styles.searchWrap}>
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
           style={styles.searchInput}
           placeholder="Buscar módulos, herramientas o guías..."
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={onChangeSearch}
           clearButtonMode="while-editing"
@@ -127,12 +140,20 @@ export function ModuleGrid({
           </TouchableOpacity>
         ) : null}
       </View>
+
       {!searchQuery.trim() ? (
-        <CategoryTabs tabs={CATEGORY_TABS} activeKey={activeTab} onTabChange={onChangeTab} />
+        <CategoryTabs
+          tabs={CATEGORY_TABS}
+          activeKey={activeTab}
+          onTabChange={onChangeTab}
+        />
       ) : (
-        <Text style={styles.searchLabel}>Resultados de búsqueda ({filteredModules.length}):</Text>
+        <Text style={styles.searchLabel}>
+          Resultados de búsqueda ({filteredModules.length}):
+        </Text>
       )}
-      <View style={styles.moduleGrid}>
+
+      <View style={styles.grid}>
         {filteredModules.map((m, index) => (
           <View key={m.title} style={isDesktop ? styles.gridColDesktop : styles.gridColMobile}>
             <ModuleTile
@@ -151,6 +172,7 @@ export function ModuleGrid({
 }
 
 const styles = StyleSheet.create({
+  container: { marginTop: spacing.xs },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -173,7 +195,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
     letterSpacing: 0.5,
   },
-  moduleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginHorizontal: -spacing.xs },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginHorizontal: -spacing.xs,
+  },
   gridColDesktop: { width: '49%' },
   gridColMobile: { width: '100%' },
 });
