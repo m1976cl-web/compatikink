@@ -6,6 +6,7 @@
  */
 import { useEffect } from 'react';
 import { useHomeStore } from '@/lib/stores/useHomeStore';
+import { useVaultSubscription } from './useVaultSubscription';
 
 export function useHomeData() {
   const profile = useHomeStore((s) => s.profile);
@@ -16,6 +17,9 @@ export function useHomeData() {
   const handleLogin = useHomeStore((s) => s.handleLogin);
   const handleLogout = useHomeStore((s) => s.handleLogout);
   const handlePanicWipe = useHomeStore((s) => s.handlePanicWipe);
+
+  // Sincronización automática en tiempo real de los eventos del Vault con Zustand
+  useVaultSubscription();
 
   useEffect(() => {
     loadHomeData();
