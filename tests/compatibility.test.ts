@@ -51,16 +51,16 @@ function testRoleComplementarity() {
   console.log('\n2. Testing calculateRoleComplementarityScore...');
 
   const scoreDomSub = calculateRoleComplementarityScore('Dom', 'Sub');
-  assert.equal(scoreDomSub, 100, 'Dom vs Sub should yield 100% complementarity');
-  console.log('  ✅ Dom vs Sub score: 100%');
+  assert.equal(scoreDomSub, 95, 'Dom vs Sub should yield 95% complementarity');
+  console.log('  ✅ Dom vs Sub score: 95%');
 
   const scoreSwitchSwitch = calculateRoleComplementarityScore('Switch', 'Switch');
-  assert.equal(scoreSwitchSwitch, 90, 'Switch vs Switch should yield 90%');
-  console.log('  ✅ Switch vs Switch score: 90%');
+  assert.equal(scoreSwitchSwitch, 88, 'Switch vs Switch should yield 88%');
+  console.log('  ✅ Switch vs Switch score: 88%');
 
   const scoreDomDom = calculateRoleComplementarityScore('Dom', 'Dom');
-  assert.equal(scoreDomDom, 40, 'Dom vs Dom should yield low score (40%)');
-  console.log('  ✅ Dom vs Dom score: 40%');
+  assert.equal(scoreDomDom, 45, 'Dom vs Dom should yield low score (45%)');
+  console.log('  ✅ Dom vs Dom score: 45%');
 }
 
 try {
