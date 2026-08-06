@@ -19,6 +19,9 @@ import {
   RiskLevel,
 } from '@/data/shibariData';
 
+import { NerveSafetyCard } from '@/components/shibari/NerveSafetyCard';
+import { KnotInstructionStepper } from '@/components/shibari/KnotInstructionStepper';
+
 export default function ShibariGuideScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
@@ -108,7 +111,7 @@ export default function ShibariGuideScreen() {
               <View style={styles.filterChipsRow}>
                 {[
                   { key: 'all', label: 'Todas las Zonas' },
-                  { key: 'danger', label: '🔴 Peligro Alto (Nervios/Arterias)' },
+                  { key: 'danger', label: '🔴 Peligro Alto' },
                   { key: 'caution', label: '🟡 Precaución' },
                   { key: 'safe', label: '🟢 Zonas Seguras' },
                 ].map((f) => (
@@ -126,127 +129,20 @@ export default function ShibariGuideScreen() {
 
               {/* Zones Cards */}
               {filteredZones.map((zone) => (
-                <TouchableOpacity
+                <NerveSafetyCard
                   key={zone.id}
-                  style={[
-                    styles.zoneCard,
-                    zone.zoneType === 'danger' && styles.zoneCardDanger,
-                    zone.zoneType === 'caution' && styles.zoneCardCaution,
-                    zone.zoneType === 'safe' && styles.zoneCardSafe,
-                  ]}
-                  onPress={() => setSelectedAnatomyZone(zone)}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={{ fontSize: 24 }}>{zone.emoji}</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.zonePartTitle}>{zone.bodyPart}</Text>
-                      <Text style={styles.zoneNerveName}>{zone.nerveOrVessel}</Text>
-                    </View>
-                  </View>
-
-                  <Text style={styles.zoneDesc}>{zone.description}</Text>
-
-                  <View style={styles.precautionBox}>
-                    <Text style={styles.precautionText}>🛡️ Medida de Seguridad: {zone.precaution}</Text>
-                  </View>
-                </TouchableOpacity>
+                  zone={zone}
+                  onSelectZone={setSelectedAnatomyZone}
+                />
               ))}
             </View>
           )}
 
-          {/* TAB 2: BIBLIOTECA DE NUDOS PASO A PASO */}
+          {/* TAB 2: CATÁLOGO DE NUDOS PASO A PASO */}
           {activeTab === 'knots' && (
             <View style={styles.sectionGap}>
-              {selectedKnot ? (
-                /* Knot Interactive Stepper View */
-                <View style={styles.cardBox}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setSelectedKnot(null);
-                      setCurrentStepIndex(0);
-                    }}
-                    style={styles.backLink}
-                  >
-                    <Text style={styles.backLinkText}>← Volver al catálogo de nudos</Text>
-                  </TouchableOpacity>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={{ fontSize: 36 }}>{selectedKnot.emoji}</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.knotTitle}>{selectedKnot.name}</Text>
-                      <Text style={styles.knotJap}>{selectedKnot.japaneseName}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.metaRow}>
-                    <Text style={styles.metaBadge}>Dificultad: {selectedKnot.difficulty}</Text>
-                    <Text style={styles.metaBadge}>Cuerda: {selectedKnot.recommendedRope}</Text>
-                  </View>
-
-                  {/* Anatomical Warnings Box */}
-                  <View style={styles.warningBox}>
-                    <Text style={styles.warningTitle}>🔴 Advertencias Anatómicas:</Text>
-                    {selectedKnot.anatomicalWarnings.map((w, idx) => (
-                      <Text key={idx} style={styles.warningItem}>• {w}</Text>
-                    ))}
-                  </View>
-
-                  {/* STEPPER CONTAINER */}
-                  <View style={styles.stepperBox}>
-                    <View style={styles.stepperHeader}>
-                      <Text style={styles.stepNumTitle}>
-                        PASO {currentStepIndex + 1} DE {selectedKnot.steps.length}
-                      </Text>
-                      <Text style={styles.stepTitleText}>
-                        {selectedKnot.steps[currentStepIndex].title}
-                      </Text>
-                    </View>
-
-                    <Text style={styles.stepInstructionText}>
-                      {selectedKnot.steps[currentStepIndex].instruction}
-                    </Text>
-
-                    {selectedKnot.steps[currentStepIndex].tip && (
-                      <View style={styles.tipBox}>
-                        <Text style={styles.tipText}>💡 Consejo Rigger: {selectedKnot.steps[currentStepIndex].tip}</Text>
-                      </View>
-                    )}
-
-                    {selectedKnot.steps[currentStepIndex].safetyCheck && (
-                      <View style={styles.safetyBox}>
-                        <Text style={styles.safetyCheckText}>
-                          🛡️ Verificación de Seguridad: {selectedKnot.steps[currentStepIndex].safetyCheck}
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* Stepper Navigation Buttons */}
-                    <View style={styles.stepperControlsRow}>
-                      <TouchableOpacity
-                        style={[styles.stepNavBtn, currentStepIndex === 0 && styles.btnDisabled]}
-                        disabled={currentStepIndex === 0}
-                        onPress={() => setCurrentStepIndex((prev) => prev - 1)}
-                      >
-                        <Text style={styles.stepNavBtnText}>← Paso Anterior</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[
-                          styles.stepNavBtn,
-                          styles.stepNavBtnPrimary,
-                          currentStepIndex === selectedKnot.steps.length - 1 && styles.btnDisabled,
-                        ]}
-                        disabled={currentStepIndex === selectedKnot.steps.length - 1}
-                        onPress={() => setCurrentStepIndex((prev) => prev + 1)}
-                      >
-                        <Text style={styles.stepNavBtnTextPrimary}>Paso Siguiente ➔</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              ) : (
-                /* Knot Catalog Cards */
-                <View style={{ gap: spacing.md }}>
+              {!selectedKnot ? (
+                <View style={{ gap: spacing.sm }}>
                   {SHIBARI_KNOTS_CATALOG.map((knot) => (
                     <TouchableOpacity
                       key={knot.id}
@@ -256,82 +152,59 @@ export default function ShibariGuideScreen() {
                         setCurrentStepIndex(0);
                       }}
                     >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <Text style={{ fontSize: 32 }}>{knot.emoji}</Text>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.knotCardTitle}>{knot.name}</Text>
-                          <Text style={styles.knotCardJap}>{knot.japaneseName}</Text>
-                        </View>
-                      </View>
-
-                      <Text style={styles.knotCardDesc}>{knot.description}</Text>
-
-                      <View style={styles.metaRow}>
-                        <Text style={styles.metaBadge}>Dificultad: {knot.difficulty}</Text>
-                        <Text style={styles.metaBadge}>Pasos: {knot.steps.length}</Text>
-                      </View>
-
-                      <View style={styles.startBtn}>
-                        <Text style={styles.startBtnText}>Iniciar Guía Paso a Paso ➔</Text>
-                      </View>
+                      <Text style={styles.knotName}>{knot.name} ({knot.japaneseName})</Text>
+                      <Text style={styles.knotDescPreview}>{knot.description}</Text>
+                      <Text style={styles.knotStepsBadge}>📖 Ver {knot.steps.length} Pasos ➔</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
+              ) : (
+                <KnotInstructionStepper
+                  knot={selectedKnot}
+                  currentStepIndex={currentStepIndex}
+                  onStepChange={setCurrentStepIndex}
+                  onBackToCatalog={() => setSelectedKnot(null)}
+                />
               )}
             </View>
           )}
 
-          {/* TAB 3: TEMPORIZADOR DE TENSIÓN SEGURA */}
+          {/* TAB 3: TEMPORIZADOR DE PREVENCIÓN CIRCULATORIA */}
           {activeTab === 'timer' && (
-            <View style={styles.sectionGap}>
-              <View style={styles.cardBox}>
-                <Text style={styles.cardBoxTitle}>⏱️ Temporizador de Tensión Segura & Alerta de Circulación</Text>
-                <Text style={styles.timerDesc}>
-                  Configura una alerta durante la escena de ataduras para hacer check-in de temperatura en las manos/pies y verificar el estado del modelo.
-                </Text>
+            <View style={styles.timerContainer}>
+              <Text style={styles.timerTitle}>⏱️ Reloj de Control de Tensión en Cuerda</Text>
+              <Text style={styles.timerSub}>
+                Monitorea el tiempo máximo de suspensión o arnés para prevenir entumecimiento.
+              </Text>
 
-                {/* Big Timer Display */}
-                <View style={styles.timerDisplayBox}>
-                  <Text style={styles.timerText}>{formatTimerTime(timerSeconds)}</Text>
-                  <Text style={styles.timerStateLabel}>
-                    {isTimerRunning ? '🟢 Temporizador de Escena Activo' : '⏸️ Temporizador Pausado'}
-                  </Text>
-                </View>
+              <View style={styles.timerBox}>
+                <Text style={styles.timerDisplay}>{formatTimerTime(timerSeconds)}</Text>
+              </View>
 
-                {/* Preset Time Buttons */}
-                <View style={styles.presetButtonsRow}>
-                  {[
-                    { label: '5 min', secs: 5 * 60 },
-                    { label: '10 min', secs: 10 * 60 },
-                    { label: '15 min', secs: 15 * 60 },
-                  ].map((p, idx) => (
-                    <TouchableOpacity
-                      key={idx}
-                      style={styles.presetBtn}
-                      onPress={() => {
-                        setIsTimerRunning(false);
-                        setTimerSeconds(p.secs);
-                      }}
-                    >
-                      <Text style={styles.presetBtnText}>{p.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {/* Play / Stop Control */}
+              <View style={styles.timerBtnRow}>
                 <TouchableOpacity
-                  style={[styles.primaryBtn, isTimerRunning && { backgroundColor: colors.error }]}
+                  style={[styles.timerControlBtn, isTimerRunning && styles.timerControlBtnPause]}
                   onPress={() => setIsTimerRunning(!isTimerRunning)}
                 >
-                  <Text style={styles.primaryBtnText}>
-                    {isTimerRunning ? 'Pausar Temporizador ⏸️' : 'Iniciar Temporizador de Escena 🚀'}
+                  <Text style={styles.timerControlBtnText}>
+                    {isTimerRunning ? '⏸️ Pausar' : '▶️ Iniciar Timer (10 min)'}
                   </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.timerResetBtn}
+                  onPress={() => {
+                    setIsTimerRunning(false);
+                    setTimerSeconds(10 * 60);
+                  }}
+                >
+                  <Text style={styles.timerResetBtnText}>🔄 Reiniciar</Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
-          <View style={{ height: 60 }} />
+          <View style={{ height: 40 }} />
         </ScrollView>
       </View>
     </ScreenContainer>
@@ -348,76 +221,35 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
   subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
-  tabsRow: { flexDirection: 'row', gap: spacing.xs, marginVertical: spacing.xs },
-  tab: { flex: 1, paddingVertical: spacing.xs + 2, borderRadius: radii.md, backgroundColor: colors.surface, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
-  tabActive: { backgroundColor: colors.accentSoft, borderColor: colors.primary },
-  tabText: { color: colors.textMuted, fontSize: 11, fontFamily: fonts.bodySemi },
-  tabTextActive: { color: colors.primary, fontWeight: '800' },
+  tabsRow: { flexDirection: 'row', gap: spacing.xs, marginVertical: spacing.sm },
+  tab: { flex: 1, backgroundColor: colors.surface, borderRadius: radii.md, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  tabText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  tabTextActive: { color: colors.onPrimary, fontWeight: '900' },
 
-  scroll: { gap: spacing.md, paddingTop: spacing.xs },
-  sectionGap: { gap: spacing.md },
+  scroll: { gap: spacing.md },
+  sectionGap: { gap: spacing.sm },
 
-  filterChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { color: colors.textMuted, fontSize: 10 },
-  chipTextActive: { color: colors.onPrimary, fontWeight: '800' },
+  filterChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
+  chip: { backgroundColor: colors.surface, borderRadius: radii.sm, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: colors.border },
+  chipActive: { backgroundColor: colors.surfaceLight, borderColor: colors.primary },
+  chipText: { color: colors.textMuted, fontSize: 11 },
+  chipTextActive: { color: colors.primary, fontWeight: '800' },
 
-  zoneCard: { backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.borderSubtle, gap: 4 },
-  zoneCardDanger: { borderColor: colors.error, backgroundColor: 'rgba(239, 68, 68, 0.08)' },
-  zoneCardCaution: { borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.08)' },
-  zoneCardSafe: { borderColor: colors.success, backgroundColor: 'rgba(74, 222, 128, 0.08)' },
-  zonePartTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
-  zoneNerveName: { color: colors.primary, fontSize: 10, fontWeight: '700' },
-  zoneDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
-  precautionBox: { backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 6, padding: spacing.xs, marginTop: 2 },
-  precautionText: { color: colors.textDim, fontSize: 10, fontWeight: '700' },
+  knotCard: { backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.md, gap: 4, borderWidth: 1, borderColor: colors.border },
+  knotName: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
+  knotDescPreview: { color: colors.textMuted, fontSize: fontSize.xs },
+  knotStepsBadge: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800', marginTop: 4 },
 
-  cardBox: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, borderWidth: 1, borderColor: colors.borderSubtle, gap: spacing.xs },
-  cardBoxTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
-  backLink: { alignSelf: 'flex-start', marginBottom: 4 },
-  backLinkText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
-
-  knotTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800' },
-  knotJap: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
-  metaRow: { flexDirection: 'row', gap: 6, marginVertical: 2 },
-  metaBadge: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, color: colors.textMuted, fontSize: 10 },
-
-  warningBox: { backgroundColor: 'rgba(239, 68, 68, 0.12)', borderRadius: radii.md, padding: spacing.sm, borderWidth: 1, borderColor: colors.error, marginVertical: 2 },
-  warningTitle: { color: colors.error, fontSize: 10, fontWeight: '900' },
-  warningItem: { color: colors.text, fontSize: 10 },
-
-  stepperBox: { backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: radii.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.primary, marginTop: 4, gap: spacing.xs },
-  stepperHeader: { borderBottomWidth: 1, borderBottomColor: colors.borderSubtle, paddingBottom: 6 },
-  stepNumTitle: { color: colors.primary, fontSize: 10, fontWeight: '900' },
-  stepTitleText: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
-  stepInstructionText: { color: colors.text, fontSize: fontSize.sm, lineHeight: 20 },
-  tipBox: { backgroundColor: 'rgba(251, 191, 36, 0.12)', borderRadius: 6, padding: spacing.xs, borderWidth: 1, borderColor: '#fbbf24' },
-  tipText: { color: '#fbbf24', fontSize: 10, fontWeight: '700' },
-  safetyBox: { backgroundColor: 'rgba(74, 222, 128, 0.12)', borderRadius: 6, padding: spacing.xs, borderWidth: 1, borderColor: colors.success },
-  safetyCheckText: { color: colors.success, fontSize: 10, fontWeight: '800' },
-
-  stepperControlsRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm },
-  stepNavBtn: { flex: 1, backgroundColor: colors.surface, borderRadius: radii.md, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
-  stepNavBtnPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
-  btnDisabled: { opacity: 0.4 },
-  stepNavBtnText: { color: colors.textMuted, fontSize: 11 },
-  stepNavBtnTextPrimary: { color: colors.onPrimary, fontSize: 11, fontWeight: '800' },
-
-  knotCard: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.md, borderWidth: 1, borderColor: colors.borderSubtle, gap: 4 },
-  knotCardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
-  knotCardJap: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
-  knotCardDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
-  startBtn: { backgroundColor: 'rgba(192, 132, 252, 0.15)', borderRadius: radii.md, paddingVertical: 6, alignItems: 'center', marginTop: 4 },
-  startBtnText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
-
-  timerDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
-  timerDisplayBox: { backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: radii.xl, padding: spacing.lg, alignItems: 'center', borderWidth: 2, borderColor: colors.primary, marginVertical: spacing.sm },
-  timerText: { fontSize: 48, fontWeight: '900', color: colors.text, letterSpacing: 2 },
-  timerStateLabel: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800', marginTop: 4 },
-  presetButtonsRow: { flexDirection: 'row', gap: spacing.xs, marginVertical: spacing.xs },
-  presetBtn: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: radii.md, paddingVertical: 8, alignItems: 'center' },
-  presetBtnText: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
-  primaryBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center', marginTop: 4 },
-  primaryBtnText: { fontFamily: fonts.bodySemi, color: colors.onPrimary, fontSize: fontSize.sm, fontWeight: '800' },
+  timerContainer: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, alignItems: 'center', gap: spacing.md, borderWidth: 1, borderColor: colors.primary },
+  timerTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
+  timerSub: { color: colors.textMuted, fontSize: fontSize.xs, textAlign: 'center' },
+  timerBox: { backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: radii.xl, paddingHorizontal: 32, paddingVertical: 20, borderWidth: 2, borderColor: colors.primary },
+  timerDisplay: { fontSize: 48, fontWeight: '900', color: colors.text },
+  timerBtnRow: { flexDirection: 'row', gap: spacing.md },
+  timerControlBtn: { backgroundColor: colors.primary, borderRadius: radii.lg, paddingHorizontal: 20, paddingVertical: 12 },
+  timerControlBtnPause: { backgroundColor: '#fbbf24' },
+  timerControlBtnText: { color: colors.onPrimary, fontSize: fontSize.xs, fontWeight: '900' },
+  timerResetBtn: { backgroundColor: colors.surfaceLight, borderRadius: radii.lg, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: colors.border },
+  timerResetBtnText: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
 });

@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   View,
   Alert,
-  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
@@ -22,8 +21,10 @@ import {
   resetLiveSceneSession,
   TrafficLight,
 } from '@/lib/liveSceneManager';
-
 import { triggerHaptic } from '@/lib/haptics';
+
+import { TrafficLightGrid } from '@/components/scene/TrafficLightGrid';
+import { AftercareCard } from '@/components/scene/AftercareCard';
 
 export default function LiveSceneScreen() {
   const router = useRouter();
@@ -195,96 +196,23 @@ export default function LiveSceneScreen() {
               </View>
             ) : null}
 
-            {/* GIANT TRAFFIC LIGHT BUTTONS */}
-            <View style={styles.trafficLightGrid}>
-              <TouchableOpacity
-                style={[
-                  styles.lightBtn,
-                  styles.lightGreen,
-                  session.trafficLight === 'green' && styles.lightBtnSelected,
-                ]}
-                onPress={() => handleSetLight('green')}
-              >
-                <Text style={styles.lightBtnEmoji}>🟢</Text>
-                <Text style={styles.lightBtnText}>VERDE (Todo fluido)</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.lightBtn,
-                  styles.lightYellow,
-                  session.trafficLight === 'yellow' && styles.lightBtnSelected,
-                ]}
-                onPress={() => handleSetLight('yellow')}
-              >
-                <Text style={styles.lightBtnEmoji}>🟡</Text>
-                <Text style={styles.lightBtnText}>AMARILLO (Pausar/Bajar ritmo)</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.lightBtn,
-                  styles.lightRed,
-                  session.trafficLight === 'red' && styles.lightBtnSelected,
-                ]}
-                onPress={handleTriggerEmergency}
-              >
-                <Text style={styles.lightBtnEmoji}>🔴</Text>
-                <Text style={styles.lightBtnText}>ROJO / EMERGENCY (PARAR YA)</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Emergency Safeword Trigger Box */}
-            {session.status === 'safeword_triggered' && (
-              <View style={styles.emergencyBox}>
-                <Text style={styles.emergencyTitle}>🚨 PALABRA DE SEGURIDAD ACTIVADA</Text>
-                <Text style={styles.emergencyDesc}>
-                  1. Detener toda acción física inmediatamente.
-                  2. Usa las tijeras de rescate EMT para cortar cuerdas si no abren rápido.
-                  3. Ofrece manta, agua y contención emocional inmediata.
-                </Text>
-                <TouchableOpacity style={styles.aftercareTriggerBtn} onPress={handleStartAftercare}>
-                  <Text style={styles.aftercareTriggerBtnText}>Pasar a Protocolo de Aftercare 🪷 ➔</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* End Scene & Start Aftercare */}
-            {session.status === 'active' && (
-              <TouchableOpacity style={styles.endSceneBtn} onPress={handleStartAftercare}>
-                <Text style={styles.endSceneBtnText}>🏁 Concluir Escena & Pasar a Aftercare 🪷</Text>
-              </TouchableOpacity>
-            )}
+            {/* Traffic Light Grid */}
+            <TrafficLightGrid
+              session={session}
+              onSetLight={handleSetLight}
+              onTriggerEmergency={handleTriggerEmergency}
+              onStartAftercare={handleStartAftercare}
+            />
           </View>
         )}
 
         {/* STATE 3: AFTERCARE PROTOCOL MODE */}
         {session.status === 'aftercare' && (
-          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-            <View style={styles.aftercareCard}>
-              <Text style={styles.aftercareTitle}>🪷 Protocolo de Aftercare Nocturno (15 min)</Text>
-              <Text style={styles.aftercareDesc}>
-                Aterrizaje suave post-endorfinas. Mantén contacto cuerpo a cuerpo, hidratación y temperatura agradable.
-              </Text>
-
-              <View style={styles.aftercareTimerBox}>
-                <Text style={styles.aftercareTimerText}>{formatSecs(session.aftercareTimerSeconds)}</Text>
-                <Text style={styles.aftercareTimerLabel}>Tiempo de Recuperación Afectiva</Text>
-              </View>
-
-              <Text style={styles.checkHeader}>Lista de Cotejo para el Cuidado:</Text>
-              <View style={styles.aftercareCheckList}>
-                <Text style={styles.aftercareCheckItem}>✓ Envolver en manta cálida (prevenir bajada de temperatura)</Text>
-                <Text style={styles.aftercareCheckItem}>✓ Ofrecer vaso de agua o infusión tibia con azúcar/chocolate</Text>
-                <Text style={styles.aftercareCheckItem}>✓ Dar masajes suaves en articulaciones atadas</Text>
-                <Text style={styles.aftercareCheckItem}>✓ Conversar: ¿Cómo te sientes? / ¿Qué te encantó de hoy?</Text>
-              </View>
-
-              <TouchableOpacity style={styles.primaryBtn} onPress={handleReset}>
-                <Text style={styles.primaryBtnText}>Finalizar Sesión & Guardar en Bóveda ✅</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
+          <AftercareCard
+            aftercareTimerSeconds={session.aftercareTimerSeconds}
+            formatSecs={formatSecs}
+            onResetSession={handleReset}
+          />
         )}
 
         {/* Check-in Security Modal */}
@@ -340,37 +268,10 @@ const styles = StyleSheet.create({
   transcriptBox: { backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 6, padding: spacing.xs, alignItems: 'center' },
   transcriptText: { color: colors.primary, fontSize: 10, fontStyle: 'italic' },
 
-  trafficLightGrid: { flex: 1, gap: spacing.sm, marginVertical: spacing.xs },
   lightBtn: { flex: 1, borderRadius: radii.xl, justifyContent: 'center', alignItems: 'center', gap: 4, borderWidth: 2 },
   lightGreen: { backgroundColor: 'rgba(74, 222, 128, 0.15)', borderColor: colors.success },
-  lightYellow: { backgroundColor: 'rgba(251, 191, 36, 0.15)', borderColor: '#fbbf24' },
   lightRed: { backgroundColor: 'rgba(239, 68, 68, 0.25)', borderColor: colors.danger },
-  lightBtnSelected: { borderWidth: 4 },
-  lightBtnEmoji: { fontSize: 32 },
   lightBtnText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '900' },
-
-  emergencyBox: { backgroundColor: 'rgba(239, 68, 68, 0.3)', borderRadius: radii.xl, padding: spacing.md, borderWidth: 2, borderColor: colors.danger, gap: 4 },
-  emergencyTitle: { color: colors.danger, fontSize: fontSize.md, fontWeight: '900' },
-  emergencyDesc: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
-  aftercareTriggerBtn: { backgroundColor: colors.danger, borderRadius: radii.md, paddingVertical: 10, alignItems: 'center', marginTop: 4 },
-  aftercareTriggerBtnText: { color: '#ffffff', fontSize: fontSize.xs, fontWeight: '900' },
-
-  endSceneBtn: { backgroundColor: colors.surfaceLight, borderRadius: radii.lg, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
-  endSceneBtnText: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
-
-  scroll: { gap: spacing.md },
-  aftercareCard: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, gap: spacing.sm, borderWidth: 1, borderColor: colors.primary },
-  aftercareTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
-  aftercareDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
-  aftercareTimerBox: { backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: radii.lg, padding: spacing.md, alignItems: 'center', borderWidth: 1, borderColor: colors.primary },
-  aftercareTimerText: { fontSize: 36, fontWeight: '900', color: colors.text },
-  aftercareTimerLabel: { color: colors.primary, fontSize: 10, fontWeight: '800' },
-  checkHeader: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800', marginTop: 4 },
-  aftercareCheckList: { gap: 4 },
-  aftercareCheckItem: { color: colors.textMuted, fontSize: 11 },
-
-  primaryBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center', marginTop: 4 },
-  primaryBtnText: { fontFamily: fonts.bodySemi, color: colors.onPrimary, fontSize: fontSize.sm, fontWeight: '800' },
 
   checkinModalOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', padding: spacing.md },
   checkinModalContent: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, borderWidth: 2, borderColor: '#fbbf24', gap: spacing.xs },

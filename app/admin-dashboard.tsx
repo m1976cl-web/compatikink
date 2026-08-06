@@ -27,6 +27,9 @@ import {
   exportSystemAuditReport,
 } from '@/lib/vaultUnified';
 
+import { MetricsGrid } from '@/components/admin/MetricsGrid';
+import { ProfileDirectoryTable } from '@/components/admin/ProfileDirectoryTable';
+
 export default function AdminDashboardScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
@@ -148,272 +151,99 @@ export default function AdminDashboardScreen() {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={styles.title}>Panel de Administración 👑📊</Text>
             {isAuthenticated && (
-              <View style={{ flexDirection: 'row', gap: 6 }}>
-                <TouchableOpacity
-                  style={styles.auditSuiteBtn}
-                  onPress={() => router.push('/security-audit')}
-                >
-                  <Text style={styles.auditSuiteBtnText}>Suite PenTest 🛡️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-                  <Text style={styles.logoutBtnText}>Cerrar Sesión Admin 🔒</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+                <Text style={styles.logoutBtnText}>🔒 Cerrar Sesión</Text>
+              </TouchableOpacity>
             )}
           </View>
           <Text style={styles.subtitle}>
-            Gestión centralizada de credenciales maestro, directorio de perfiles registrados y auditoría Zero-Knowledge
+            Control de usuarios, métricas Zero-Knowledge y auditoría de seguridad
           </Text>
         </View>
 
-        {/* AUTHENTICATION GATE */}
+        {/* AUTH GATE: If admin not logged in */}
         {!isAuthenticated ? (
-          <View style={styles.authBox}>
+          <View style={styles.authCard}>
             <Text style={styles.authTitle}>
-              {hasPasscode ? '🔐 Iniciar Sesión de Administrador' : '👑 Configurar Credenciales de Administrador'}
+              {hasPasscode ? '🔐 Acceso Reservado a Administración' : '👑 Configurar Clave de Administración'}
             </Text>
             <Text style={styles.authDesc}>
               {hasPasscode
-                ? 'Ingresa tu Clave Maestra de Administrador para desbloquear el Dashboard de perfiles.'
-                : 'Crea tu primera Clave Maestra para activar el rol de Administrador en esta instalación.'}
+                ? 'Ingresa tu clave maestra de administración para gestionar la plataforma.'
+                : 'Crea una clave maestra para proteger el acceso a las herramientas administrativas.'}
             </Text>
 
             <TextInput
-              style={styles.input}
-              placeholder="Clave Maestra Admin..."
-              placeholderTextColor={colors.textDim}
+              style={styles.authInput}
+              placeholder="Ingresa clave maestra..."
+              placeholderTextColor={colors.textMuted}
               secureTextEntry
               value={passcodeInput}
               onChangeText={setPasscodeInput}
             />
 
-            <TouchableOpacity style={styles.primaryBtn} onPress={handleLoginOrCreatePasscode}>
-              <Text style={styles.primaryBtnText}>
-                {hasPasscode ? 'Ingresar al Dashboard Admin ➔' : 'Guardar Clave Maestra & Activar Admin 👑'}
+            <TouchableOpacity style={styles.authSubmitBtn} onPress={handleLoginOrCreatePasscode}>
+              <Text style={styles.authSubmitBtnText}>
+                {hasPasscode ? 'Desbloquear Panel Admin 🔓' : 'Guardar Clave Maestra 👑'}
               </Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={{ flex: 1 }}>
-            {/* KPI METRICS ROW */}
-            {metrics && (
-              <View style={styles.metricsGrid}>
-                <View style={styles.kpiCard}>
-                  <Text style={styles.kpiValue}>{metrics.totalProfiles}</Text>
-                  <Text style={styles.kpiLabel}>👥 Perfiles Registrados</Text>
-                </View>
-                <View style={styles.kpiCard}>
-                  <Text style={[styles.kpiValue, { color: colors.primary }]}>{metrics.verifiedProfiles}</Text>
-                  <Text style={styles.kpiLabel}>🛡️ Verificados Kink</Text>
-                </View>
-                <View style={styles.kpiCard}>
-                  <Text style={[styles.kpiValue, { color: '#fbbf24' }]}>{metrics.activePartnerships}</Text>
-                  <Text style={styles.kpiLabel}>🔗 Parejas Vinculadas</Text>
-                </View>
-                <View style={styles.kpiCard}>
-                  <Text style={[styles.kpiValue, { color: '#38bdf8' }]}>{metrics.bluePageCreators}</Text>
-                  <Text style={styles.kpiLabel}>💙 Creadores Azul</Text>
-                </View>
-              </View>
-            )}
+          /* AUTHENTICATED DASHBOARD CONTENT */
+          <View style={{ flex: 1, gap: spacing.md }}>
+            {/* Admin Metrics Grid */}
+            <MetricsGrid metrics={metrics} />
 
-            {/* TAB NAVIGATION */}
-            <View style={styles.tabsRow}>
+            {/* Admin Navigation Tabs */}
+            <View style={styles.adminTabsRow}>
               <TouchableOpacity
-                style={[styles.tab, activeTab === 'profiles' && styles.tabActive]}
+                style={[styles.adminTab, activeTab === 'profiles' && styles.adminTabActive]}
                 onPress={() => setActiveTab('profiles')}
               >
-                <Text style={[styles.tabText, activeTab === 'profiles' && styles.tabTextActive]}>
+                <Text style={[styles.adminTabText, activeTab === 'profiles' && styles.adminTabTextActive]}>
                   👥 Directorio de Perfiles ({filteredProfiles.length})
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.tab, activeTab === 'metrics' && styles.tabActive]}
-                onPress={() => setActiveTab('metrics')}
-              >
-                <Text style={[styles.tabText, activeTab === 'metrics' && styles.tabTextActive]}>
-                  📊 Métricas & Tendencias
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.tab, activeTab === 'audit' && styles.tabActive]}
+                style={[styles.adminTab, activeTab === 'audit' && styles.adminTabActive]}
                 onPress={() => setActiveTab('audit')}
               >
-                <Text style={[styles.tabText, activeTab === 'audit' && styles.tabTextActive]}>
-                  🔒 Auditoría del Sistema
+                <Text style={[styles.adminTabText, activeTab === 'audit' && styles.adminTabTextActive]}>
+                  📊 Auditoría & Exportación
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {/* TAB 1: DIRECTORIO DE PERFILES */}
-            {activeTab === 'profiles' && (
-              <View style={{ flex: 1 }}>
-                {/* Search & Filter Bar */}
-                <View style={styles.searchFilterRow}>
-                  <TextInput
-                    style={[styles.input, { flex: 2 }]}
-                    placeholder="Buscar por alias, ubicación o bio..."
-                    placeholderTextColor={colors.textDim}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                  />
+            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+              {activeTab === 'profiles' && (
+                <ProfileDirectoryTable
+                  profiles={filteredProfiles}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  roleFilter={roleFilter}
+                  onRoleFilterChange={setRoleFilter}
+                  onSelectProfile={setSelectedProfile}
+                  onToggleVerification={handleToggleVerification}
+                  onToggleStatus={handleToggleStatus}
+                />
+              )}
 
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.roleChips}>
-                    {['Todos', 'Dominante', 'Sumiso/a', 'Switch', 'Top', 'Bottom'].map((r) => (
-                      <TouchableOpacity
-                        key={r}
-                        style={[styles.roleChip, roleFilter === r && styles.roleChipActive]}
-                        onPress={() => setRoleFilter(r)}
-                      >
-                        <Text style={[styles.roleChipText, roleFilter === r && styles.roleChipTextActive]}>{r}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-
-                {/* Profiles List */}
-                <ScrollView contentContainerStyle={styles.scrollList} showsVerticalScrollIndicator={false}>
-                  {filteredProfiles.map((p) => (
-                    <View key={p.id} style={styles.profileCard}>
-                      <View style={styles.profileHeaderRow}>
-                        <View style={{ flex: 1 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Text style={styles.profileAlias}>{p.alias}</Text>
-                            {p.isVerified && <Text style={styles.verifiedTag}>🛡️ VERIFICADO</Text>}
-                            <Text
-                              style={[
-                                styles.statusTag,
-                                p.status === 'Activo' ? { color: colors.success } : { color: colors.error },
-                              ]}
-                            >
-                              • {p.status}
-                            </Text>
-                          </View>
-                          <Text style={styles.profileMeta}>
-                            Rol: {p.kinkRole} ({p.experienceLevel}) · {p.location}
-                          </Text>
-                        </View>
-
-                        <TouchableOpacity style={styles.detailBtn} onPress={() => setSelectedProfile(p)}>
-                          <Text style={styles.detailBtnText}>Ver Ficha Completa ➔</Text>
-                        </TouchableOpacity>
-                      </View>
-
-                      {/* Quick Limits summary */}
-                      <View style={styles.limitsSummaryRow}>
-                        <Text style={styles.limitsSummaryText}>
-                          🛑 Límites Duros: {p.hardLimits.length} · ⚠️ Límites Suaves: {p.softLimits.length} · 🏆 Insignias: {p.badgesCount}
-                        </Text>
-                      </View>
-
-                      {/* Action buttons */}
-                      <View style={styles.cardActionsRow}>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, p.isVerified && styles.actionBtnActive]}
-                          onPress={() => handleToggleVerification(p.id)}
-                        >
-                          <Text style={styles.actionBtnText}>
-                            {p.isVerified ? 'Revocar Verificación 🛡️' : 'Otorgar Verificación Kink 🛡️'}
-                          </Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          style={[styles.actionBtn, p.status === 'Suspendido' && { borderColor: colors.error }]}
-                          onPress={() => handleToggleStatus(p.id)}
-                        >
-                          <Text style={[styles.actionBtnText, p.status === 'Suspendido' && { color: colors.error }]}>
-                            {p.status === 'Activo' ? 'Suspender Perfil 🛑' : 'Reactivar Perfil ✅'}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
-            {/* TAB 2: MÉTRICAS & TENDENCIAS */}
-            {activeTab === 'metrics' && (
-              <ScrollView contentContainerStyle={styles.scrollList} showsVerticalScrollIndicator={false}>
-                <View style={styles.cardBox}>
-                  <Text style={styles.cardBoxTitle}>📈 Distribución de Roles en la Comunidad</Text>
-                  <Text style={styles.trendBarText}>• Dominantes / Tops: 38%</Text>
-                  <Text style={styles.trendBarText}>• Sumisos / Bottoms: 42%</Text>
-                  <Text style={styles.trendBarText}>• Switches Versátiles: 20%</Text>
-                </View>
-
-                <View style={styles.cardBox}>
-                  <Text style={styles.cardBoxTitle}>🔥 Fetiches & Prácticas Más Solicitadas</Text>
-                  <View style={styles.tagGrid}>
-                    {['#Shibari (85%)', '#Látex (78%)', '#DominaciónFemenina (64%)', '#Pegging (52%)', '#Sensorial (90%)'].map((tag, idx) => (
-                      <View key={idx} style={styles.tagChip}>
-                        <Text style={styles.tagChipText}>{tag}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              </ScrollView>
-            )}
-
-            {/* TAB 3: AUDITORÍA Y SEGURIDAD */}
-            {activeTab === 'audit' && (
-              <ScrollView contentContainerStyle={styles.scrollList} showsVerticalScrollIndicator={false}>
-                <View style={styles.cardBox}>
-                  <Text style={styles.cardBoxTitle}>🔒 Estado de Seguridad & Auditoría Zero-Knowledge</Text>
+              {activeTab === 'audit' && (
+                <View style={styles.auditCard}>
+                  <Text style={styles.auditTitle}>🛡️ Auditoría del Sistema & Zero-Knowledge Score</Text>
                   <Text style={styles.auditDesc}>
-                    La arquitectura de Compatikink utiliza cifrado local AES-GCM-256 en la bóveda del dispositivo. Ninguna clave sensible transita desencriptada por la red.
+                    Genera un reporte cifrado completo con el estado de las sesiones, integraciones y salud de la bóveda local.
                   </Text>
 
-                  <TouchableOpacity style={styles.primaryBtn} onPress={handleExportAudit}>
-                    <Text style={styles.primaryBtnText}>Exportar Informe Cifrado de Auditoría JSON 📊</Text>
+                  <TouchableOpacity style={styles.auditBtn} onPress={handleExportAudit}>
+                    <Text style={styles.auditBtnText}>📥 Exportar Informe de Auditoría JSON</Text>
                   </TouchableOpacity>
                 </View>
-              </ScrollView>
-            )}
-          </View>
-        )}
+              )}
 
-        {/* PROFILE DETAIL MODAL DRAWER */}
-        {selectedProfile && (
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Ficha de Usuario: {selectedProfile.alias}</Text>
-                <TouchableOpacity onPress={() => setSelectedProfile(null)}>
-                  <Text style={styles.modalCloseBtn}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
-                <Text style={styles.modalSubHeader}>Información General:</Text>
-                <Text style={styles.detailText}>• ID de Registro: {selectedProfile.id}</Text>
-                <Text style={styles.detailText}>• Rol Kink: {selectedProfile.kinkRole} ({selectedProfile.experienceLevel})</Text>
-                <Text style={styles.detailText}>• Ubicación: {selectedProfile.location}</Text>
-                <Text style={styles.detailText}>• Bio: "{selectedProfile.bio}"</Text>
-                <Text style={styles.detailText}>• Protocolo de Seguridad: {selectedProfile.safetyProtocol}</Text>
-
-                <Text style={styles.modalSubHeader}>🛑 Límites Duros (Inviolables):</Text>
-                {selectedProfile.hardLimits.map((hl, idx) => (
-                  <Text key={idx} style={styles.hardLimitItem}>🛑 {hl}</Text>
-                ))}
-
-                <Text style={styles.modalSubHeader}>⚠️ Límites Suaves (Precaución):</Text>
-                {selectedProfile.softLimits.map((sl, idx) => (
-                  <Text key={idx} style={styles.softLimitItem}>⚠️ {sl}</Text>
-                ))}
-
-                <Text style={styles.modalSubHeader}>🏷️ Fetiches Destacados:</Text>
-                <View style={styles.tagGrid}>
-                  {selectedProfile.fetishTags.map((tag, idx) => (
-                    <View key={idx} style={styles.tagChip}>
-                      <Text style={styles.tagChipText}>#{tag}</Text>
-                    </View>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
+              <View style={{ height: 40 }} />
+            </ScrollView>
           </View>
         )}
       </View>
@@ -423,92 +253,35 @@ export default function AdminDashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: spacing.md },
-  containerDesktop: { maxWidth: 840, alignSelf: 'center', width: '100%' },
+  containerDesktop: { maxWidth: 760, alignSelf: 'center', width: '100%' },
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
   backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
   title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
   subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
-  logoutBtn: { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1, borderColor: colors.error, borderRadius: radii.md, paddingHorizontal: 10, paddingVertical: 4 },
-  logoutBtnText: { color: colors.error, fontSize: 10, fontWeight: '800' },
-  auditSuiteBtn: { backgroundColor: 'rgba(192, 132, 252, 0.15)', borderWidth: 1, borderColor: colors.primary, borderRadius: radii.md, paddingHorizontal: 10, paddingVertical: 4 },
-  auditSuiteBtnText: { color: colors.primary, fontSize: 10, fontWeight: '800' },
 
-  authBox: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    marginTop: spacing.md,
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  authTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
-  authDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
+  logoutBtn: { backgroundColor: colors.surfaceLight, borderRadius: radii.sm, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: colors.border },
+  logoutBtnText: { color: colors.text, fontSize: 10, fontWeight: '700' },
 
-  input: {
-    backgroundColor: colors.background,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    color: colors.text,
-    fontSize: fontSize.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  primaryBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center', marginTop: 4 },
-  primaryBtnText: { fontFamily: fonts.bodySemi, color: colors.onPrimary, fontSize: fontSize.sm, fontWeight: '800' },
+  authCard: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, gap: spacing.md, marginTop: spacing.lg, borderWidth: 1, borderColor: colors.border },
+  authTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800', textAlign: 'center' },
+  authDesc: { color: colors.textMuted, fontSize: fontSize.xs, textAlign: 'center', lineHeight: 18 },
+  authInput: { backgroundColor: colors.background, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, color: colors.text, borderWidth: 1, borderColor: colors.border, fontSize: fontSize.sm },
+  authSubmitBtn: { backgroundColor: colors.primary, borderRadius: radii.lg, paddingVertical: 14, alignItems: 'center' },
+  authSubmitBtnText: { color: colors.onPrimary, fontSize: fontSize.xs, fontWeight: '900' },
 
-  metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginVertical: spacing.xs },
-  kpiCard: { flex: 1, minWidth: 120, backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.sm, alignItems: 'center', borderWidth: 1, borderColor: colors.borderSubtle },
-  kpiValue: { fontSize: 22, fontWeight: '900', color: colors.text },
-  kpiLabel: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
+  adminTabsRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs },
+  adminTab: { flex: 1, backgroundColor: colors.surface, borderRadius: radii.md, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  adminTabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  adminTabText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  adminTabTextActive: { color: colors.onPrimary, fontWeight: '900' },
 
-  tabsRow: { flexDirection: 'row', gap: spacing.xs, marginVertical: spacing.xs },
-  tab: { flex: 1, paddingVertical: spacing.xs + 2, borderRadius: radii.md, backgroundColor: colors.surface, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
-  tabActive: { backgroundColor: colors.accentSoft, borderColor: colors.primary },
-  tabText: { color: colors.textMuted, fontSize: 11, fontFamily: fonts.bodySemi },
-  tabTextActive: { color: colors.primary, fontWeight: '800' },
+  scroll: { gap: spacing.md },
 
-  searchFilterRow: { gap: spacing.xs, marginBottom: spacing.xs },
-  roleChips: { flexDirection: 'row', gap: 4 },
-  roleChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  roleChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  roleChipText: { color: colors.textMuted, fontSize: 10 },
-  roleChipTextActive: { color: colors.onPrimary, fontWeight: '800' },
-
-  scrollList: { gap: spacing.sm, paddingBottom: spacing.xl },
-  profileCard: { backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.borderSubtle, gap: spacing.xs },
-  profileHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  profileAlias: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
-  verifiedTag: { backgroundColor: 'rgba(192, 132, 252, 0.2)', color: colors.primary, fontSize: 9, fontWeight: '900', paddingHorizontal: 4, borderRadius: 4 },
-  statusTag: { fontSize: 10, fontWeight: '700' },
-  profileMeta: { color: colors.textMuted, fontSize: 10, marginTop: 2 },
-  detailBtn: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: radii.sm, paddingHorizontal: 8, paddingVertical: 4 },
-  detailBtnText: { color: colors.primary, fontSize: 10, fontWeight: '800' },
-  limitsSummaryRow: { backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 6, padding: spacing.xs },
-  limitsSummaryText: { color: colors.textDim, fontSize: 10 },
-  cardActionsRow: { flexDirection: 'row', gap: spacing.xs, marginTop: 2 },
-  actionBtn: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: radii.sm, paddingVertical: 6, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
-  actionBtnActive: { borderColor: colors.primary, backgroundColor: 'rgba(192, 132, 252, 0.1)' },
-  actionBtnText: { color: colors.text, fontSize: 10, fontWeight: '700' },
-
-  cardBox: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, borderWidth: 1, borderColor: colors.borderSubtle, gap: spacing.xs },
-  cardBoxTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
-  trendBarText: { color: colors.textMuted, fontSize: fontSize.xs },
-  tagGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  tagChip: { backgroundColor: 'rgba(192, 132, 252, 0.15)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-  tagChipText: { color: colors.primary, fontSize: 10, fontWeight: '700' },
+  auditCard: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, gap: spacing.sm, borderWidth: 1, borderColor: colors.primary },
+  auditTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
   auditDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
-
-  modalOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: spacing.md },
-  modalContent: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, borderWidth: 1, borderColor: colors.primary, maxHeight: '80%' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs },
-  modalTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
-  modalCloseBtn: { color: colors.textMuted, fontSize: 18, fontWeight: '800' },
-  modalSubHeader: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800', marginTop: 6 },
-  detailText: { color: colors.text, fontSize: fontSize.xs },
-  hardLimitItem: { color: colors.error, fontSize: 11, fontWeight: '700' },
-  softLimitItem: { color: '#fbbf24', fontSize: 11 },
+  auditBtn: { backgroundColor: colors.primary, borderRadius: radii.lg, paddingVertical: 12, alignItems: 'center', marginTop: 4 },
+  auditBtnText: { color: colors.onPrimary, fontSize: fontSize.xs, fontWeight: '800' },
 });
