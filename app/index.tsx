@@ -11,7 +11,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Platform, ScrollView, StyleSheet, Text } from 'react-native';
+import { Animated, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -35,7 +35,7 @@ import { SessionList } from '@/components/home/SessionList';
 import { ModuleGrid } from '@/components/home/ModuleGrid';
 import { HomeActions } from '@/components/home/HomeActions';
 
-import { colors, gradients, spacing } from '@/constants/theme';
+import { colors, fonts, gradients, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useHomeData } from '@/hooks/useHomeData';
 import { useHomeStore } from '@/lib/stores/useHomeStore';
@@ -173,7 +173,6 @@ export default function HomeScreen() {
                 onChangeSearch={setSearchQuery}
                 onShowPWAInstallModal={() => setShowPWAInstallModal(true)}
                 onShowA11yModal={() => setShowA11yModal(true)}
-                loadHomeData={loadHomeData}
               />
             </View>
           </View>
@@ -201,7 +200,6 @@ export default function HomeScreen() {
               onChangeSearch={setSearchQuery}
               onShowPWAInstallModal={() => setShowPWAInstallModal(true)}
               onShowA11yModal={() => setShowA11yModal(true)}
-              loadHomeData={loadHomeData}
             />
           </>
         )}

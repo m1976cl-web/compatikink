@@ -25,7 +25,7 @@ const INITIAL_GRID: CellData = {
   'A6': 'CC-103', 'B6': 'Corporate Compliance & Legal', 'C6': '210,000', 'D6': '215,500', 'E6': '225,000', 'F6': '+4.4%', 'G6': '230,000', 'H6': 'PENDING REVIEW',
   'A7': 'CC-104', 'B7': 'Marketing & Brand Strategy', 'C7': '320,500', 'D7': '310,000', 'E7': '340,000', 'F7': '+9.6%', 'G7': '350,000', 'H7': 'APPROVED',
   'A8': 'CC-105', 'B8': 'Research & Analytics (Project Alpha)', 'C8': '450,000', 'D8': '482,000', 'E8': '500,000', 'F8': '+3.7%', 'G8': '520,000', 'H8': 'APPROVED',
-  'A9': 'CC-106', 'B9': 'Security Audit & Zero-Trust Architecture', 'C9': '195,000', 'D9': '198,200', 'E9': '210,000', 'F9': '+5.9%', 'G9': '215,000', 'H8': 'APPROVED',
+  'A9': 'CC-106', 'B9': 'Security Audit & Zero-Trust Architecture', 'C9': '195,000', 'D9': '198,200', 'E9': '210,000', 'F9': '+5.9%', 'G9': '215,000', 'H9': 'APPROVED',
   'A10': 'CC-107', 'B10': 'Vendor Logistics & Supply Chain', 'C10': '112,000', 'D10': '118,400', 'E10': '125,000', 'F10': '+5.5%', 'G10': '128,000', 'H10': 'APPROVED',
   'A12': 'TOTAL EXPENDITURE', 'B12': 'Consolidated Cost Centers (A1..A10)', 'C12': '$1,516,800', 'D12': '$1,565,400', 'E12': '$1,652,000', 'F12': '+5.53%', 'G12': '$1,703,000', 'H12': 'BALANCED',
   'A14': 'KPI Summary:', 'B14': 'Operational Margin: 34.2%', 'C14': 'EBITDA: $4.1M', 'D14': 'ROI Index: 1.48',
@@ -51,7 +51,7 @@ export function OfficeModeModal() {
   };
 
   return (
-    <Modal visible={active} animationType="none" transparent={false} statusBarHidden>
+    <Modal visible={active} animationType="none" transparent={false}>
       <View style={styles.container}>
         {/* Excel Title Bar */}
         <View style={styles.titleBar}>

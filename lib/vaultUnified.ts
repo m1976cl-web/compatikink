@@ -12,7 +12,7 @@
 
 import { encryptPayload, decryptPayload, bytesToBase64, readJsonStorage, writeJsonStorage } from './cryptoVault';
 import { UserProfile } from '@/types';
-import { getPartnerLinks, getSessionEntries } from './partnerJournal';
+import { getPartnerLinks, getJournalEntries } from './partnerJournal';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECCIÓN 1: Cifrado de Perfiles & Eventos (antes vault.ts)
@@ -252,7 +252,7 @@ export async function toggleProfileStatus(profileId: string): Promise<AdminRegis
 export async function getAdminMetrics(): Promise<AdminMetrics> {
   const catalog = await getAllRegisteredProfiles();
   const partnerLinks = await getPartnerLinks();
-  const sessionEntries = await getSessionEntries();
+  const sessionEntries = await getJournalEntries();
   return {
     totalProfiles: catalog.length,
     verifiedProfiles: catalog.filter((p) => p.isVerified).length,

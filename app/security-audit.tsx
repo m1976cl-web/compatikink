@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(74, 222, 128, 0.15)',
     borderWidth: 3,
     borderColor: colors.success,
-    justify: 'center',
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 4,
   },

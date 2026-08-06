@@ -259,7 +259,7 @@ export default function PartnerChatScreen() {
                       {isLockedView ? (
                         <TouchableOpacity
                           style={styles.lockedCover}
-                          onPress={() => handleRevealMessage(msg.id)}
+                          onPress={() => handleRevealMessage(msg)}
                         >
                           <Text style={styles.lockedIcon}>🔒</Text>
                           <Text style={styles.lockedText}>

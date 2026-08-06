@@ -33,6 +33,7 @@ export const colors = {
   success: '#4ade80',
   warning: '#fbbf24',
   danger: '#f87171',
+  error: '#f87171',
   info: '#38bdf8',
 
   // Text
@@ -101,6 +102,7 @@ export const fonts = {
   bodyMedium: 'SourceSans3_500Medium',
   bodySemi: 'SourceSans3_600SemiBold',
   bodyBold: 'SourceSans3_700Bold',
+  mono: Platform.OS === 'ios' ? 'Courier' : 'monospace',
 };
 
 export const typography = {
