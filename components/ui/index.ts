@@ -5,3 +5,4 @@ export { ModuleTile } from '../ModuleTile';
 export { CategoryTabs } from '../CategoryTabs';
 export { ProgressBar } from '../ProgressBar';
 export { LoadingSkeleton } from './LoadingSkeleton';
+export { LanguageSelector } from './LanguageSelector';

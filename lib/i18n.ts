@@ -1,129 +1,69 @@
+import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TRANSLATIONS, SupportedLocale } from '@/data/translations';
 
-export type Language = 'es' | 'en' | 'pt' | 'fr' | 'de' | 'it' | 'ja';
+const LOCALE_KEY = 'compatikink_locale_v1';
+let currentLocale: SupportedLocale = 'es';
+const listeners = new Set<(locale: SupportedLocale) => void>();
 
-const LANG_KEY = 'app_language';
-
-export async function getSavedLanguage(): Promise<Language> {
-  const lang = await AsyncStorage.getItem(LANG_KEY);
-  return (lang as Language) || 'es';
+export async function initLocale(): Promise<SupportedLocale> {
+  try {
+    const saved = await AsyncStorage.getItem(LOCALE_KEY);
+    if (saved === 'es' || saved === 'en') {
+      currentLocale = saved;
+    }
+  } catch {}
+  return currentLocale;
 }
 
-export async function saveLanguage(lang: Language): Promise<void> {
-  await AsyncStorage.setItem(LANG_KEY, lang);
+export function getCurrentLocale(): SupportedLocale {
+  return currentLocale;
 }
 
-export const TRANSLATIONS: Record<Language, Record<string, string>> = {
-  es: {
-    welcome: 'Compatikink',
-    tagline: 'Define tus preferencias, invita a alguien y recibe un reporte de compatibilidad privado y consensuado.',
-    quickProfileTitle: 'Perfil Rápido (10 Preguntas)',
-    quickProfileDesc: 'Solo 10 preguntas · ~2 minutos · Privado',
-    createPersonalProfile: 'Crear Perfil Personal',
-    registerDesc: 'Registra tu nombre + PIN de 4 dígitos',
-    glossaryTitle: 'Glosario Kink',
-    glossaryDesc: 'Términos esenciales · Educación y consentimiento',
-    datingTitle: 'Conexiones & Dating Kink',
-    datingDesc: 'Descubre personas compatibles con tus gustos real-time',
-    negotiationTitle: 'Sala de Negociación en Vivo',
-    negotiationDesc: 'Revisión sincrónica de escenas y firma de acuerdos',
-    safetyTitle: 'Guía de Seguridad & Salud Kink',
-    safetyDesc: 'Protocolos de riesgos, SSC/RACK y primeros auxilios',
-  },
-  en: {
-    welcome: 'Compatikink',
-    tagline: 'Define your preferences, invite someone, and receive a private, consensual compatibility report.',
-    quickProfileTitle: 'Quick Profile (10 Questions)',
-    quickProfileDesc: 'Only 10 key questions · ~2 mins · Private',
-    createPersonalProfile: 'Create Personal Profile',
-    registerDesc: 'Register your name + 4-digit PIN',
-    glossaryTitle: 'Kink Glossary',
-    glossaryDesc: 'Essential terms · Education & Consent',
-    datingTitle: 'Kink Dating & Connections',
-    datingDesc: 'Discover compatible partners in real-time',
-    negotiationTitle: 'Live Negotiation Room',
-    negotiationDesc: 'Synchronous scene review and digital agreement signing',
-    safetyTitle: 'Kink Safety & Health Guide',
-    safetyDesc: 'Risk protocols, SSC/RACK and first aid',
-  },
-  pt: {
-    welcome: 'Compatikink',
-    tagline: 'Defina suas preferências, convide alguém e receba um relatório de compatibilidade privado e consensual.',
-    quickProfileTitle: 'Perfil Rápido (10 Perguntas)',
-    quickProfileDesc: 'Apenas 10 perguntas · ~2 minutos · Privado',
-    createPersonalProfile: 'Criar Perfil Pessoal',
-    registerDesc: 'Registre seu nome + PIN de 4 dígitos',
-    glossaryTitle: 'Glossário Kink',
-    glossaryDesc: 'Termos essenciais · Educação e consentimento',
-    datingTitle: 'Conexões & Namoro Kink',
-    datingDesc: 'Descubra parceiros compatíveis em tempo real',
-    negotiationTitle: 'Sala de Negociação ao Vivo',
-    negotiationDesc: 'Revisão síncrona de cenas e assinatura digital',
-    safetyTitle: 'Guia de Segurança & Saúde Kink',
-    safetyDesc: 'Protocolos de risco, SSC/RACK e primeiros socorros',
-  },
-  fr: {
-    welcome: 'Compatikink',
-    tagline: 'Définissez vos préférences, invitez quelqu’un et recevez un rapport de compatibilité privé et consensuel.',
-    quickProfileTitle: 'Profil Rapide (10 Questions)',
-    quickProfileDesc: 'Seulement 10 questions · ~2 min · Privé',
-    createPersonalProfile: 'Créer un Profil Personnel',
-    registerDesc: 'Enregistrez votre nom + PIN à 4 chiffres',
-    glossaryTitle: 'Glossaire Kink',
-    glossaryDesc: 'Termes essentiels · Éducation & Consentement',
-    datingTitle: 'Rencontres & Connexions Kink',
-    datingDesc: 'Découvrez des partenaires compatibles en temps réel',
-    negotiationTitle: 'Salle de Négociation en Direct',
-    negotiationDesc: 'Examen de scène synchrone et signature numérique',
-    safetyTitle: 'Guide de Sécurité & Santé Kink',
-    safetyDesc: 'Protocole de risque, SSC/RACK et premiers secours',
-  },
-  de: {
-    welcome: 'Compatikink',
-    tagline: 'Definieren Sie Ihre Vorlieben, laden Sie jemanden ein und erhalten Sie einen vertraulichen Kompatibilitätsbericht.',
-    quickProfileTitle: 'Schnellprofil (10 Fragen)',
-    quickProfileDesc: 'Nur 10 Fragen · ~2 Min. · Privat',
-    createPersonalProfile: 'Persönliches Profil Erstellen',
-    registerDesc: 'Registrieren Sie Ihren Namen + 4-stellige PIN',
-    glossaryTitle: 'Kink Glossar',
-    glossaryDesc: 'Wichtige Begriffe · Bildung & Einvernehmen',
-    datingTitle: 'Kink Dating & Kontakte',
-    datingDesc: 'Entdecken Sie kompatible Partner in Echtzeit',
-    negotiationTitle: 'Live Verhandlungsraum',
-    negotiationDesc: 'Synchrone Szenenüberprüfung und digitale Signatur',
-    safetyTitle: 'Kink Sicherheit & Gesundheit',
-    safetyDesc: 'Risikoprotokolle, SSC/RACK und Erste Hilfe',
-  },
-  it: {
-    welcome: 'Compatikink',
-    tagline: 'Definisci le tue preferenze, invita qualcuno e ricevi un report di compatibilità privato e consensuale.',
-    quickProfileTitle: 'Profilo Rapido (10 Domande)',
-    quickProfileDesc: 'Solo 10 domande · ~2 min · Privato',
-    createPersonalProfile: 'Crea Profilo Personale',
-    registerDesc: 'Registra il tuo nome + PIN a 4 cifre',
-    glossaryTitle: 'Glossario Kink',
-    glossaryDesc: 'Termini essenziali · Educazione e Consenso',
-    datingTitle: 'Incontri & Connessioni Kink',
-    datingDesc: 'Scopri partner compatibili in tempo reale',
-    negotiationTitle: 'Stanza di Negoziazione Live',
-    negotiationDesc: 'Revisione della scena sincrona e firma digitale',
-    safetyTitle: 'Guida Sicurezza & Salute Kink',
-    safetyDesc: 'Protocolli di rischio, SSC/RACK e primo soccorso',
-  },
-  ja: {
-    welcome: 'Compatikink',
-    tagline: 'お気に入りの設定を定義し、相手を招待して、安全で合意に基づいた相性レポートを受け取りましょう。',
-    quickProfileTitle: 'クイックプロフィール (10の質問)',
-    quickProfileDesc: 'たった10の質問 · 約2分 · プライベート',
-    createPersonalProfile: '個人プロフィールを作成',
-    registerDesc: '名前と4桁のPINコードを登録',
-    glossaryTitle: 'Kink 用語集',
-    glossaryDesc: '必須用語 · 教育と合意',
-    datingTitle: 'Kink デーティング＆マッチング',
-    datingDesc: 'リアルタイムで相性の良いパートナーを発見',
-    negotiationTitle: 'ライブ交渉ルーム',
-    negotiationDesc: '同期シーンレビューとデジタル署名',
-    safetyTitle: 'Kink 安全と健康ガイド',
-    safetyDesc: 'リスクプロトコル、SSC/RACK、応急処置',
-  },
-};
+export async function setLocale(newLocale: SupportedLocale): Promise<void> {
+  currentLocale = newLocale;
+  try {
+    await AsyncStorage.setItem(LOCALE_KEY, newLocale);
+  } catch {}
+  listeners.forEach((listener) => listener(newLocale));
+}
+
+export function t(key: string, params?: Record<string, string>): string {
+  const dict = TRANSLATIONS[currentLocale] || TRANSLATIONS.es;
+  let text = dict[key] || TRANSLATIONS.es[key] || key;
+
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      text = text.replace(new RegExp(`{${k}}`, 'g'), v);
+    });
+  }
+  return text;
+}
+
+export function useTranslation() {
+  const [locale, setLocaleState] = useState<SupportedLocale>(currentLocale);
+
+  useEffect(() => {
+    initLocale().then(setLocaleState);
+    const listener = (l: SupportedLocale) => setLocaleState(l);
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, []);
+
+  const translate = useCallback(
+    (key: string, params?: Record<string, string>) => t(key, params),
+    [locale]
+  );
+
+  const changeLanguage = useCallback((newLocale: SupportedLocale) => {
+    setLocale(newLocale);
+  }, []);
+
+  return {
+    t: translate,
+    locale,
+    changeLanguage,
+  };
+}
