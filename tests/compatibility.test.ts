@@ -10,18 +10,19 @@ console.log('══════════════════════�
 function testCompatibilityEngine() {
   console.log('1. Testing generateReport classification and scoring...');
 
+  // Use valid activity IDs from data/activities.ts
   const initiatorResponses: ActivityResponse[] = [
-    { activityId: 'act-1', rating: 'love', role: 'give', intensity: 3 },
-    { activityId: 'act-2', rating: 'hard_limit', role: 'flexible', intensity: 1 },
-    { activityId: 'act-3', rating: 'curious', role: 'flexible', intensity: 2 },
-    { activityId: 'act-4', rating: 'like', role: 'give', intensity: 3 },
+    { activityId: 'pe_d/s_dynamic', rating: 'love', role: 'give', intensity: 3 },
+    { activityId: 'bo_rope', rating: 'hard_limit', role: 'flexible', intensity: 1 },
+    { activityId: 'bo_cuffs', rating: 'curious', role: 'flexible', intensity: 2 },
+    { activityId: 'bo_blindfold', rating: 'like', role: 'give', intensity: 3 },
   ];
 
   const guestResponses: ActivityResponse[] = [
-    { activityId: 'act-1', rating: 'love', role: 'receive', intensity: 3 },
-    { activityId: 'act-2', rating: 'like', role: 'receive', intensity: 4 },
-    { activityId: 'act-3', rating: 'like', role: 'flexible', intensity: 2 },
-    { activityId: 'act-4', rating: 'like', role: 'give', intensity: 3 }, // role mismatch
+    { activityId: 'pe_d/s_dynamic', rating: 'love', role: 'receive', intensity: 3 },
+    { activityId: 'bo_rope', rating: 'like', role: 'receive', intensity: 4 }, // hard limit conflict vs initiator hard_limit
+    { activityId: 'bo_cuffs', rating: 'like', role: 'flexible', intensity: 2 }, // explore together
+    { activityId: 'bo_blindfold', rating: 'like', role: 'give', intensity: 3 }, // role mismatch (give vs give)
   ];
 
   const report = generateReport('test-session-1', initiatorResponses, guestResponses);
@@ -30,19 +31,19 @@ function testCompatibilityEngine() {
   console.log(`  ✅ Compatibility Score calculated: ${report.compatibilityScore}%`);
 
   const hardLimitConflict = report.items.find((i) => i.section === 'hard_limit_conflict');
-  assert.ok(hardLimitConflict, 'Must detect hard limit conflict for act-2');
+  assert.ok(hardLimitConflict, 'Must detect hard limit conflict for bo_rope');
   console.log('  ✅ Hard limit conflict correctly classified');
 
   const exploreTogether = report.items.find((i) => i.section === 'explore_together');
-  assert.ok(exploreTogether, 'Must classify curious + like as explore_together for act-3');
+  assert.ok(exploreTogether, 'Must classify curious + like as explore_together for bo_cuffs');
   console.log('  ✅ Explore together correctly classified');
 
   const mutualMatch = report.items.find((i) => i.section === 'mutual_match');
-  assert.ok(mutualMatch, 'Must classify love + love complementary roles as mutual_match for act-1');
+  assert.ok(mutualMatch, 'Must classify love + love complementary roles as mutual_match for pe_d/s_dynamic');
   console.log('  ✅ Mutual match correctly classified');
 
   const roleMismatch = report.items.find((i) => i.section === 'role_mismatch');
-  assert.ok(roleMismatch, 'Must detect role mismatch (give vs give) for act-4');
+  assert.ok(roleMismatch, 'Must detect role mismatch (give vs give) for bo_blindfold');
   console.log('  ✅ Role mismatch correctly classified');
 }
 

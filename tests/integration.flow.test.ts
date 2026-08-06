@@ -15,8 +15,8 @@ async function testFullIntegrationFlow() {
     role: 'Dom',
     experienceLevel: 'advanced',
     baseResponses: [
-      { activityId: 'act-1', rating: 'love', role: 'give', intensity: 4 },
-      { activityId: 'act-2', rating: 'hard_limit', role: 'flexible', intensity: 1 },
+      { activityId: 'pe_d/s_dynamic', rating: 'love', role: 'give', intensity: 4 },
+      { activityId: 'bo_rope', rating: 'hard_limit', role: 'flexible', intensity: 1 },
     ],
   };
 
@@ -38,8 +38,8 @@ async function testFullIntegrationFlow() {
     role: 'Sub',
     experienceLevel: 'intermediate',
     baseResponses: [
-      { activityId: 'act-1', rating: 'love', role: 'receive', intensity: 4 },
-      { activityId: 'act-2', rating: 'like', role: 'receive', intensity: 2 },
+      { activityId: 'pe_d/s_dynamic', rating: 'love', role: 'receive', intensity: 4 },
+      { activityId: 'bo_rope', rating: 'like', role: 'receive', intensity: 2 },
     ],
   };
 
