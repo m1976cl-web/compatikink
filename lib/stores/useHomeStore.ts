@@ -18,6 +18,8 @@ interface HomeState {
   sessions: Session[];
   sceneAgreements: { sessionId: string; agreements: SceneAgreement[] }[];
   vaultUnlocked: boolean;
+  vaultOpen: boolean;
+  isLoading: boolean;
   activeTab: string;
   searchQuery: string;
 
@@ -26,6 +28,8 @@ interface HomeState {
   setActiveTab: (tab: string) => void;
   setSearchQuery: (query: string) => void;
   setVaultUnlocked: (unlocked: boolean) => void;
+  setVaultOpen: (open: boolean) => void;
+  reset: () => void;
   handleLogin: (loginNick: string, loginPin: string) => Promise<boolean>;
   handleLogout: () => Promise<void>;
   handlePanicWipe: () => void;
@@ -37,25 +41,49 @@ export const useHomeStore = create<HomeState>((set, get) => ({
   sessions: [],
   sceneAgreements: [],
   vaultUnlocked: VaultLockGateAPI.isUnlocked(),
+  vaultOpen: VaultLockGateAPI.isUnlocked(),
+  isLoading: false,
   activeTab: 'explore',
   searchQuery: '',
 
   setActiveTab: (activeTab) => set({ activeTab }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
-  setVaultUnlocked: (vaultUnlocked) => set({ vaultUnlocked }),
+  setVaultUnlocked: (vaultUnlocked) => set({ vaultUnlocked, vaultOpen: vaultUnlocked }),
+  setVaultOpen: (open) => set({ vaultOpen: open, vaultUnlocked: open }),
+
+  reset: () =>
+    set({
+      profile: null,
+      profilesList: [],
+      sessions: [],
+      sceneAgreements: [],
+      vaultUnlocked: false,
+      vaultOpen: false,
+    }),
 
   loadHomeData: async () => {
-    const curProfile = await getCurrentProfile();
-    const allProfs = await listAllProfiles();
-    const mySessions = await listMyLocalSessions();
-    const agreements = await getAllSceneAgreements();
-    set({
-      profile: curProfile,
-      profilesList: allProfs,
-      sessions: mySessions,
-      sceneAgreements: agreements,
-      vaultUnlocked: VaultLockGateAPI.isUnlocked(),
-    });
+    set({ isLoading: true });
+    try {
+      const [curProfile, allProfs, mySessions, agreements] = await Promise.all([
+        getCurrentProfile(),
+        listAllProfiles(),
+        listMyLocalSessions(),
+        getAllSceneAgreements(),
+      ]);
+      const isUnlocked = VaultLockGateAPI.isUnlocked();
+      set({
+        profile: curProfile,
+        profilesList: allProfs,
+        sessions: mySessions,
+        sceneAgreements: agreements,
+        vaultUnlocked: isUnlocked,
+        vaultOpen: isUnlocked,
+        isLoading: false,
+      });
+    } catch (e) {
+      console.error('Error loading home data:', e);
+      set({ isLoading: false });
+    }
   },
 
   handleLogin: async (loginNick: string, loginPin: string): Promise<boolean> => {
@@ -93,7 +121,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
 
   handleLogout: async () => {
     await logoutProfile();
-    set({ profile: null, sessions: [] });
+    get().reset();
     await get().loadHomeData();
   },
 
@@ -108,12 +136,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
           style: 'destructive',
           onPress: async () => {
             await panicWipeData();
-            set({
-              profile: null,
-              sessions: [],
-              profilesList: [],
-              sceneAgreements: [],
-            });
+            get().reset();
             Alert.alert('Datos eliminados', 'El historial y los perfiles se borraron por completo.');
             await get().loadHomeData();
           },
