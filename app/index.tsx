@@ -132,7 +132,7 @@ export default function HomeScreen() {
           onScrollToGuest={() => scrollRef.current?.scrollTo({ y: Math.max(0, guestSectionY.current - 24), animated: true })}
         />
 
-        <ProfileBar profile={profile} vaultOpen={vaultOpen} />
+        <ProfileBar />
 
         <FetishSuiteSection />
 
