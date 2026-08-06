@@ -27,9 +27,11 @@ import { AccessibilityModal } from '@/components/AccessibilityModal';
 import { SessionsPanel } from '@/components/SessionsPanel';
 
 import { HeroSection } from '@/components/home/HeroSection';
+import { ProfileBar } from '@/components/home/ProfileBar';
 import { FetishSuiteSection } from '@/components/home/FetishSuiteSection';
 import { GuestJoinSection } from '@/components/home/GuestJoinSection';
 import { QuickInviteForm } from '@/components/home/QuickInviteForm';
+import { SessionList } from '@/components/home/SessionList';
 import { ModuleGrid } from '@/components/home/ModuleGrid';
 import { HomeActions } from '@/components/home/HomeActions';
 
@@ -130,6 +132,8 @@ export default function HomeScreen() {
           onScrollToGuest={() => scrollRef.current?.scrollTo({ y: Math.max(0, guestSectionY.current - 24), animated: true })}
         />
 
+        <ProfileBar profile={profile} vaultOpen={vaultOpen} />
+
         <FetishSuiteSection />
 
         {!profile ? (
@@ -145,7 +149,7 @@ export default function HomeScreen() {
         {isDesktop ? (
           <View style={styles.desktopGrid}>
             <View style={styles.desktopCol}>
-              <SessionsPanel
+              <SessionList
                 vaultOpen={vaultOpen}
                 sessions={sessions}
                 sceneAgreements={sceneAgreements}
@@ -175,7 +179,7 @@ export default function HomeScreen() {
           </View>
         ) : (
           <>
-            <SessionsPanel
+            <SessionList
               vaultOpen={vaultOpen}
               sessions={sessions}
               sceneAgreements={sceneAgreements}
