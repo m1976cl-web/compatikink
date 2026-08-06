@@ -91,7 +91,7 @@ export function ModuleGrid({
       ...STATIC_MODULES,
       { title: 'Bóveda Privada', description: 'Álbum de fotos cifrado AES-GCM', mark: '🖼️', category: 'vault', route: '/private-album' },
       { title: 'Cuenta & Bóveda', description: 'Acceso Zero-Knowledge', mark: '🔑', category: 'vault', route: '/auth' },
-      { title: 'Backup Cifrado', description: 'Exportar / importar en JSON', mark: '📦', category: 'vault', onPress: handleBackup },
+      { title: 'Backup Cifrado', description: 'Exportar / importar en JSON', mark: '📦', category: 'vault', route: '/backup' },
       { title: 'Admin', description: 'Requiere bóveda + rol local', mark: '🛡️', category: 'vault', route: '/admin' },
       { title: 'Instalar App', description: 'PWA en el dispositivo', mark: '📱', category: 'vault', onPress: onShowPWAInstallModal },
       { title: 'Accesibilidad', description: 'Contraste y tipografía', mark: '♿', category: 'vault', onPress: onShowA11yModal },
