@@ -36,6 +36,7 @@ import {
   addDiploma,
 } from '@/lib/partnerJournal';
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
+import { PartnerLinkCard } from '@/components/journal/PartnerLinkCard';
 
 export default function PartnerJournalScreen() {
   const router = useRouter();
@@ -267,31 +268,12 @@ export default function PartnerJournalScreen() {
                 {/* List of active partner links */}
                 <Text style={styles.sectionHeader}>Mis Vínculos Activos ({partnerLinks.length}):</Text>
                 {partnerLinks.map((link) => (
-                  <TouchableOpacity
+                  <PartnerLinkCard
                     key={link.id}
-                    style={[styles.partnerCard, selectedPartnerId === link.id && styles.partnerCardActive]}
-                    onPress={() => setSelectedPartnerId(link.id)}
-                  >
-                    <View style={styles.partnerCardHeader}>
-                      <Text style={styles.partnerName}>{link.partnerName}</Text>
-                      <View style={styles.relBadge}>
-                        <Text style={styles.relBadgeText}>
-                          {RELATIONSHIP_LABELS[link.relationshipType].emoji} {RELATIONSHIP_LABELS[link.relationshipType].label}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={styles.xpRow}>
-                      <Text style={styles.xpText}>⭐ Nivel {link.level} ({link.totalXp} XP de Afinidad)</Text>
-                      <Text style={styles.dateText}>Desde {new Date(link.linkedSince).toLocaleDateString()}</Text>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.chatLinkBtn}
-                      onPress={() => router.push({ pathname: '/partner-chat', params: { linkId: link.id } })}
-                    >
-                      <Text style={styles.chatLinkBtnText}>Abrir Chat E2EE Efímero 💬🔒</Text>
-                    </TouchableOpacity>
-                  </TouchableOpacity>
+                    link={link}
+                    isSelected={selectedPartnerId === link.id}
+                    onSelect={setSelectedPartnerId}
+                  />
                 ))}
               </View>
             )}
