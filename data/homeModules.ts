@@ -78,6 +78,7 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
   { title: 'Tienda',               description: 'Recomendaciones y partners',           mark: '🛍️', category: 'social', route: '/store'             },
 
   // IA & Hardware
+  { title: 'Asistente IA Íntimo',  description: 'Consultas de negociación y debriefing con Gemini ZK', mark: '🔮', category: 'ai', route: '/ai-assistant' },
   { title: 'Guiones IA',           description: 'Generador de scripts de escenas',      mark: '🎬', category: 'ai', route: '/ai-script'    },
   { title: 'Music Sync',           description: 'Teledildonics & estimulación BPM',     mark: '⚡', category: 'ai', route: '/music-sync'   },
   { title: 'Roleplay IA',          description: 'Ensayo confidencial de dinámicas',     mark: '🤖', category: 'ai', route: '/ai-roleplay'  },

@@ -83,6 +83,7 @@ export default function RootLayout() {
             <Stack.Screen name="security-audit"       options={{ title: 'Auditoría PenTest',         headerShown: false }} />
             <Stack.Screen name="blue-pages"           options={{ title: 'Promociona tu Página Azul', headerShown: false }} />
             <Stack.Screen name="backup"               options={{ title: 'Backup Cifrado',            headerShown: false }} />
+            <Stack.Screen name="ai-assistant"         options={{ title: 'Asistente IA Íntimo',       headerShown: false }} />
             <Stack.Screen name="guest/[code]"         options={{ title: 'Cuestionario',              headerShown: false }} />
             <Stack.Screen name="guest/done"           options={{ title: 'Listo',                     headerShown: false }} />
           </Stack>
