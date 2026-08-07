@@ -15,6 +15,8 @@ import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 
+import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
+
 interface VerificationSchedule {
   id: string;
   intervalHours: number;
@@ -25,18 +27,53 @@ interface VerificationSchedule {
   skinStatus?: 'excelente' | 'irritacion_leve' | 'requiere_descanso';
 }
 
-const STORAGE_KEY_VERIFICATIONS = 'chastity_verifications_v1';
+interface ChastityStarterProgress {
+  day1Done: boolean;
+  day2Done: boolean;
+  day3Done: boolean;
+  day4Done: boolean;
+  notes: string;
+}
+
+const STORAGE_KEY_STARTER = 'chastity_4day_starter_v1';
 
 export default function ChastityScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
 
-  const [activeTab, setActiveTab] = useState<'profiles' | 'verification'>('verification');
+  const [activeTab, setActiveTab] = useState<'verification' | 'profiles' | 'starter'>('verification');
   const [filterRole, setFilterRole] = useState<'all' | 'keyholder' | 'wearer'>('all');
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<number>(24);
   const [skinStatus, setSkinStatus] = useState<'excelente' | 'irritacion_leve' | 'requiere_descanso'>('excelente');
   const [mockPhoto, setMockPhoto] = useState<string | null>(null);
+
+  const [starterProgress, setStarterProgress] = useState<ChastityStarterProgress>({
+    day1Done: false,
+    day2Done: false,
+    day3Done: false,
+    day4Done: false,
+    notes: '',
+  });
+
+  // Load persistent schedules and 4-day starter progress from ZK Vault / AsyncStorage
+  useEffect(() => {
+    readJsonStorage<ChastityStarterProgress>(STORAGE_KEY_STARTER, {
+      day1Done: false,
+      day2Done: false,
+      day3Done: false,
+      day4Done: false,
+      notes: '',
+    }).then((saved: ChastityStarterProgress) => {
+      if (saved) setStarterProgress(saved);
+    });
+  }, []);
+
+  const toggleStarterDay = async (dayKey: keyof Omit<ChastityStarterProgress, 'notes'>) => {
+    const updated = { ...starterProgress, [dayKey]: !starterProgress[dayKey] };
+    setStarterProgress(updated);
+    await writeJsonStorage(STORAGE_KEY_STARTER, updated);
+  };
 
   const [schedules, setSchedules] = useState<VerificationSchedule[]>([
     {
@@ -119,7 +156,16 @@ export default function ChastityScreen() {
             onPress={() => setActiveTab('verification')}
           >
             <Text style={[styles.tabText, activeTab === 'verification' && styles.tabTextActive]}>
-              📸 Verificaciones & Push
+              📸 Verificaciones
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'starter' && styles.tabActive]}
+            onPress={() => setActiveTab('starter')}
+          >
+            <Text style={[styles.tabText, activeTab === 'starter' && styles.tabTextActive]}>
+              🔒 Starter 4 Días
             </Text>
           </TouchableOpacity>
 
@@ -128,7 +174,7 @@ export default function ChastityScreen() {
             onPress={() => setActiveTab('profiles')}
           >
             <Text style={[styles.tabText, activeTab === 'profiles' && styles.tabTextActive]}>
-              🗝️ Keyholders & Wearers
+              🗝️ Keyholders
             </Text>
           </TouchableOpacity>
         </View>
@@ -200,6 +246,59 @@ export default function ChastityScreen() {
                 ))}
               </View>
             </>
+          ) : activeTab === 'starter' ? (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>🔒 Plan de Iniciación en Castidad (4 Días)</Text>
+              <Text style={styles.cardSub}>
+                Guía progresiva para parejas o Keyholders/Wearers iniciando su primera experiencia de contención.
+              </Text>
+
+              <View style={{ gap: spacing.md, marginTop: spacing.sm }}>
+                {[
+                  {
+                    key: 'day1Done' as const,
+                    day: 'Día 1: Negociación & Ajuste Ergonométrico',
+                    desc: 'Negociación de límites, verificación de llaves físicas/digitales y ajuste del dispositivo sin presión excesiva.',
+                    icon: '🗝️',
+                  },
+                  {
+                    key: 'day2Done' as const,
+                    day: 'Día 2: Control de Impulsos & Tareas de Sumisión',
+                    desc: 'Introducción a tareas diarias de atención al Keyholder y protocolo de prohibición de clímax.',
+                    icon: '⚡',
+                  },
+                  {
+                    key: 'day3Done' as const,
+                    day: 'Día 3: Check-in de Salud Cutánea & Limpieza',
+                    desc: 'Inspección minuciosa de la piel, higiene rigurosa con agua tibia y verificación de circulación.',
+                    icon: '🧴',
+                  },
+                  {
+                    key: 'day4Done' as const,
+                    day: 'Día 4: Evaluación, Celebración & Desbloqueo',
+                    desc: 'Debriefing post-castidad: evaluación emocional, liberación negociada y Aftercare intensivo.',
+                    icon: '🔓',
+                  },
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.key}
+                    style={[styles.starterItem, starterProgress[item.key] && styles.starterItemDone]}
+                    onPress={() => toggleStarterDay(item.key)}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                      <Text style={{ fontSize: 24 }}>{item.icon}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.starterDayTitle, starterProgress[item.key] && styles.starterDayTitleDone]}>
+                          {item.day}
+                        </Text>
+                        <Text style={styles.starterDayDesc}>{item.desc}</Text>
+                      </View>
+                      <Text style={{ fontSize: 20 }}>{starterProgress[item.key] ? '✅' : '⬜'}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           ) : (
             /* Profiles list tab */
             <View style={styles.card}>
@@ -316,15 +415,9 @@ const styles = StyleSheet.create({
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
 
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    borderWidth: 1.5,
-    borderColor: colors.borderSubtle,
-    gap: spacing.md,
-  },
-  cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
+  card: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: colors.borderSubtle },
+  cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
+  cardSub: { color: colors.textMuted, fontSize: fontSize.xs },
   cardDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
 
   actionButtonsRow: { gap: spacing.xs },
@@ -395,4 +488,30 @@ const styles = StyleSheet.create({
 
   saveVerificationBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
   saveVerificationText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '800' },
+
+  starterItem: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  starterItemDone: {
+    backgroundColor: 'rgba(74, 222, 128, 0.08)',
+    borderColor: colors.success,
+  },
+  starterDayTitle: {
+    color: colors.text,
+    fontSize: fontSize.xs,
+    fontWeight: '800',
+  },
+  starterDayTitleDone: {
+    color: colors.success,
+  },
+  starterDayDesc: {
+    color: colors.textMuted,
+    fontSize: 11,
+    marginTop: 2,
+    lineHeight: 16,
+  },
 });

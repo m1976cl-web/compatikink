@@ -12,20 +12,58 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
+import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
 import { listMyLocalSessions } from '@/lib/storage';
-import { getSessionByToken } from '@/lib/sessions';
 import { generateReport } from '@/lib/compatibility';
 import { Session, ReportItem, RATING_LABELS, ROLE_LABELS } from '@/types';
+
+interface PauseDsState {
+  durationDays: number;
+  pausedRules: string[];
+  retainedRules: string[];
+  reopenDate: string;
+  isPaused: boolean;
+}
+
+interface CncNegotiationState {
+  authorizedScenarios: string[];
+  revocationSafeword: string;
+  tactileSignal: string;
+  aftercareMandatory: boolean;
+  isConfirmed: boolean;
+}
+
+const STORAGE_KEY_PAUSE = 'ds_pause_protocol_v1';
+const STORAGE_KEY_CNC = 'cnc_negotiation_menu_v1';
 
 export default function NegotiationScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const params = useLocalSearchParams<{ token?: string }>();
+  const [activeSubTab, setActiveSubTab] = useState<'negotiation' | 'pause' | 'cnc'>('negotiation');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [negotiationNotes, setNegotiationNotes] = useState<Record<string, string>>({});
   const [negotiationStatuses, setNegotiationStatuses] = useState<Record<string, 'agreed' | 'adjust' | 'rejected'>>({});
   const [signed, setSigned] = useState(false);
+
+  // Pausing D/s State
+  const [pauseState, setPauseState] = useState<PauseDsState>({
+    durationDays: 14,
+    pausedRules: ['Protocolos de vestimenta', 'Tareas de servicio diario'],
+    retainedRules: ['Check-in de salud emocional diario', 'Uso de Safewords de emergencia'],
+    reopenDate: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString().split('T')[0],
+    isPaused: false,
+  });
+
+  // CNC Negotiation State
+  const [cncState, setCncState] = useState<CncNegotiationState>({
+    authorizedScenarios: ['Prácticas de inmovilización sorpresiva acordadas', 'Juego de roles de captura ligera'],
+    revocationSafeword: 'Rojo / RED',
+    tactileSignal: '3 toques rápidos en el hombro',
+    aftercareMandatory: true,
+    isConfirmed: false,
+  });
 
   useEffect(() => {
     (async () => {
@@ -39,8 +77,27 @@ export default function NegotiationScreen() {
       } else if (completeSessions.length > 0) {
         setSelectedSession(completeSessions[0]);
       }
+
+      // Load saved Pause and CNC states
+      const savedPause = await readJsonStorage<PauseDsState | null>(STORAGE_KEY_PAUSE, null);
+      if (savedPause) setPauseState(savedPause);
+
+      const savedCnc = await readJsonStorage<CncNegotiationState | null>(STORAGE_KEY_CNC, null);
+      if (savedCnc) setCncState(savedCnc);
     })();
   }, [params.token]);
+
+  const togglePauseDs = async () => {
+    const next = { ...pauseState, isPaused: !pauseState.isPaused };
+    setPauseState(next);
+    await writeJsonStorage(STORAGE_KEY_PAUSE, next);
+  };
+
+  const toggleConfirmCnc = async () => {
+    const next = { ...cncState, isConfirmed: !cncState.isConfirmed };
+    setCncState(next);
+    await writeJsonStorage(STORAGE_KEY_CNC, next);
+  };
 
   const report = useMemo(() => {
     if (!selectedSession || !selectedSession.guestResponses) return null;
@@ -85,32 +142,118 @@ export default function NegotiationScreen() {
           </Text>
         </View>
 
-        {/* Session Picker */}
-        {sessions.length > 1 && (
-          <View style={styles.sessionPickerBar}>
-            <Text style={styles.pickerLabel}>Seleccionar Sesión:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-              {sessions.map((s) => {
-                const name = s.guestNickname || s.guestProfile?.nickname || 'Pareja';
-                const active = selectedSession?.id === s.id;
-                return (
-                  <TouchableOpacity
-                    key={s.id}
-                    style={[styles.pickerChip, active && styles.pickerChipActive]}
-                    onPress={() => setSelectedSession(s)}
-                  >
-                    <Text style={[styles.pickerChipText, active && styles.pickerChipTextActive]}>
-                      Sesión con {name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        )}
+        {/* Sub-Tab Navigation Bar */}
+        <View style={styles.subTabsRow}>
+          <TouchableOpacity
+            style={[styles.subTab, activeSubTab === 'negotiation' && styles.subTabActive]}
+            onPress={() => setActiveSubTab('negotiation')}
+          >
+            <Text style={[styles.subTabText, activeSubTab === 'negotiation' && styles.subTabTextActive]}>
+              🤝 Negociación
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.subTab, activeSubTab === 'pause' && styles.subTabActive]}
+            onPress={() => setActiveSubTab('pause')}
+          >
+            <Text style={[styles.subTabText, activeSubTab === 'pause' && styles.subTabTextActive]}>
+              ⏸️ Pausa D/s
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.subTab, activeSubTab === 'cnc' && styles.subTabActive]}
+            onPress={() => setActiveSubTab('cnc')}
+          >
+            <Text style={[styles.subTabText, activeSubTab === 'cnc' && styles.subTabTextActive]}>
+              ⚠️ Menú CNC
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Content */}
-        {!selectedSession || !report ? (
+        {activeSubTab === 'pause' ? (
+          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoTitle}>⏸️ Protocolo de Pausa Consensuada D/s</Text>
+              <Text style={styles.infoSub}>
+                Congelación temporal de reglas y dinámicas de poder para descanso emocional o laboral, manteniendo la seguridad.
+              </Text>
+
+              <View style={[styles.pauseStatusBox, pauseState.isPaused && styles.pauseStatusBoxActive]}>
+                <Text style={styles.pauseStatusTitle}>
+                  Estado Actual: <Text style={{ color: pauseState.isPaused ? colors.warning : colors.success, fontWeight: '900' }}>
+                    {pauseState.isPaused ? '⏸️ DINÁMICA PAUSADA' : '▶️ DINÁMICA ACTIVA'}
+                  </Text>
+                </Text>
+                <Text style={styles.pauseStatusSub}>Re-apertura programada: {pauseState.reopenDate}</Text>
+              </View>
+
+              <View style={styles.clauseBox}>
+                <Text style={styles.clauseTitle}>🛑 Reglas Temporalmente Pausadas:</Text>
+                {pauseState.pausedRules.map((rule, idx) => (
+                  <Text key={idx} style={styles.clauseItem}>• {rule}</Text>
+                ))}
+              </View>
+
+              <View style={styles.clauseBox}>
+                <Text style={styles.clauseTitle}>🟢 Reglas Inviolables que Se Mantienen:</Text>
+                {pauseState.retainedRules.map((rule, idx) => (
+                  <Text key={idx} style={styles.clauseItem}>• {rule}</Text>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={[styles.pauseBtn, pauseState.isPaused && styles.pauseBtnActive]}
+                onPress={togglePauseDs}
+              >
+                <Text style={styles.pauseBtnText}>
+                  {pauseState.isPaused ? '▶️ Re-activar Dinámica Consensuada' : '⏸️ Activar Pausa Consensuada (14 Días)'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        ) : activeSubTab === 'cnc' ? (
+          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoTitle}>⚠️ Menú de Negociación CNC (Consensual Non-Consent)</Text>
+              <Text style={styles.infoSub}>
+                Protocolo estricto de consentimiento previo entusiasta con salvaguardas universales irrenunciables.
+              </Text>
+
+              <View style={[styles.pauseStatusBox, cncState.isConfirmed && styles.pauseStatusBoxActive]}>
+                <Text style={styles.pauseStatusTitle}>
+                  Estado del Menú: <Text style={{ color: cncState.isConfirmed ? colors.success : colors.warning, fontWeight: '900' }}>
+                    {cncState.isConfirmed ? '✓ AUTORIZADO Y RATIFICADO' : '📝 EN NEGOCIACIÓN'}
+                  </Text>
+                </Text>
+              </View>
+
+              <View style={styles.clauseBox}>
+                <Text style={styles.clauseTitle}>📋 Escenarios Expresamente Autorizados:</Text>
+                {cncState.authorizedScenarios.map((sc, idx) => (
+                  <Text key={idx} style={styles.clauseItem}>• {sc}</Text>
+                ))}
+              </View>
+
+              <View style={styles.clauseBox}>
+                <Text style={styles.clauseTitle}>🚨 Señales de Revocación Inmediata Instantánea:</Text>
+                <Text style={styles.clauseItem}>🗣️ Safeword Verbal: <Text style={{ fontWeight: '800', color: colors.warning }}>{cncState.revocationSafeword}</Text></Text>
+                <Text style={styles.clauseItem}>✋ Señal Táctil No-Verbal: <Text style={{ fontWeight: '800', color: colors.warning }}>{cncState.tactileSignal}</Text></Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.pauseBtn, cncState.isConfirmed && styles.pauseBtnActive]}
+                onPress={toggleConfirmCnc}
+              >
+                <Text style={styles.pauseBtnText}>
+                  {cncState.isConfirmed ? '✓ Revocar Ratificación de Menú CNC' : '✍️ Ratificar Menú CNC en Bóveda Cifrada'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        ) : !selectedSession || !report ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>No hay sesión completa seleccionada</Text>
             <Text style={styles.emptyText}>
@@ -310,4 +453,27 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.sm },
   emptyTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800' },
   emptyText: { color: colors.textMuted, fontSize: fontSize.sm, textAlign: 'center', maxWidth: 360 },
+
+  subTabsRow: { flexDirection: 'row', gap: spacing.xs, marginVertical: spacing.sm },
+  subTab: { flex: 1, backgroundColor: colors.surface, borderRadius: radii.md, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  subTabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  subTabText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  subTabTextActive: { color: '#fff', fontWeight: '900' },
+
+  card: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: colors.borderSubtle },
+  cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '900' },
+  cardSub: { color: colors.textMuted, fontSize: fontSize.xs },
+
+  pauseStatusBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.lg, gap: 4, borderWidth: 1, borderColor: colors.border },
+  pauseStatusBoxActive: { borderColor: colors.warning, backgroundColor: 'rgba(251, 191, 36, 0.08)' },
+  pauseStatusTitle: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
+  pauseStatusSub: { color: colors.textMuted, fontSize: 10 },
+
+  clauseBox: { backgroundColor: colors.surfaceLight, padding: spacing.md, borderRadius: radii.lg, gap: 4, borderWidth: 1, borderColor: colors.border },
+  clauseTitle: { color: colors.warning, fontSize: fontSize.xs, fontWeight: '800' },
+  clauseItem: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
+
+  pauseBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
+  pauseBtnActive: { backgroundColor: colors.success },
+  pauseBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '900' },
 });

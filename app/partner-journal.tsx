@@ -38,12 +38,65 @@ import {
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
 import { PartnerLinkCard } from '@/components/journal/PartnerLinkCard';
 
+import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
+
+interface BurnoutCheckIn {
+  id: string;
+  timestamp: string;
+  physicalFatigue: number; // 1-5
+  emotionalBattery: number; // 1-5
+  aftercareQuality: number; // 1-5
+  totalScore: number;
+  recommendation: string;
+}
+
+const STORAGE_KEY_BURNOUT = 'kink_burnout_checkins_v1';
+
 export default function PartnerJournalScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
 
-  const [activeTab, setActiveTab] = useState<'links' | 'journal' | 'challenges' | 'diplomas'>('links');
+  const [activeTab, setActiveTab] = useState<'links' | 'journal' | 'challenges' | 'diplomas' | 'burnout'>('links');
   const [vaultUnlocked, setVaultUnlocked] = useState(() => VaultLockGateAPI.isUnlocked());
+
+  // Burnout Assessment State
+  const [physicalFatigue, setPhysicalFatigue] = useState(2);
+  const [emotionalBattery, setEmotionalBattery] = useState(2);
+  const [aftercareQuality, setAftercareQuality] = useState(4);
+  const [burnoutLogs, setBurnoutLogs] = useState<BurnoutCheckIn[]>([]);
+
+  // Load Burnout Logs from ZK Vault / AsyncStorage
+  useEffect(() => {
+    readJsonStorage<BurnoutCheckIn[]>(STORAGE_KEY_BURNOUT, []).then((saved: BurnoutCheckIn[]) => {
+      if (Array.isArray(saved)) setBurnoutLogs(saved);
+    });
+  }, []);
+
+  const handleSaveBurnoutCheckin = async () => {
+    const totalScore = physicalFatigue + emotionalBattery + (6 - aftercareQuality);
+    let rec = '🟢 Bajo Riesgo: Excelente equilibrio en tus dinámicas.';
+    if (totalScore >= 10) {
+      rec = '🔴 Alto Riesgo de Burnout: Se recomienda activar el Protocolo de Pausa Consensuada D/s y priorizar descanso.';
+    } else if (totalScore >= 7) {
+      rec = '🟡 Riesgo Moderado: Aumentar el tiempo de Aftercare y la frecuencia de check-ins verbales.';
+    }
+
+    const entry: BurnoutCheckIn = {
+      id: `bo-${Date.now()}`,
+      timestamp: new Date().toISOString().split('T')[0],
+      physicalFatigue,
+      emotionalBattery,
+      aftercareQuality,
+      totalScore,
+      recommendation: rec,
+    };
+
+    const nextLogs = [entry, ...burnoutLogs];
+    setBurnoutLogs(nextLogs);
+    await writeJsonStorage(STORAGE_KEY_BURNOUT, nextLogs);
+
+    Alert.alert('Diagnóstico Registrado 📊', `${rec}`);
+  };
 
   // Data States
   const [partnerLinks, setPartnerLinks] = useState<PartnerLink[]>([]);
@@ -212,9 +265,10 @@ export default function PartnerJournalScreen() {
           <View style={styles.tabsRow}>
             {[
               { key: 'links', label: '🔗 Vínculos' },
-              { key: 'journal', label: '📖 Diario & Debrief' },
-              { key: 'challenges', label: '🎯 Desafíos & XP' },
+              { key: 'journal', label: '📖 Diario' },
+              { key: 'challenges', label: '🎯 Desafíos' },
               { key: 'diplomas', label: '📜 Diplomas' },
+              { key: 'burnout', label: '📊 Burnout' },
             ].map((t) => (
               <TouchableOpacity
                 key={t.key}
@@ -526,6 +580,74 @@ export default function PartnerJournalScreen() {
               </View>
             )}
 
+            {/* TAB 5: KINK-BURNOUT SELF-ASSESSMENT */}
+            {activeTab === 'burnout' && (
+              <View style={styles.sectionGap}>
+                <View style={styles.cardBox}>
+                  <Text style={styles.cardBoxTitle}>📊 Auto-Evaluación de Kink-Burnout & Bienestar</Text>
+                  <Text style={typography.bodyMuted}>
+                    Evalúa la sobrecarga física o emocional en tu dinámica para mantener un equilibrio saludable.
+                  </Text>
+
+                  <Text style={styles.fieldLabel}>1. Cansancio Físico / Fatiga Post-Escena (1 = Leve, 5 = Extremo)</Text>
+                  <View style={styles.chipGrid}>
+                    {[1, 2, 3, 4, 5].map((val) => (
+                      <TouchableOpacity
+                        key={val}
+                        style={[styles.chip, physicalFatigue === val && styles.chipActive]}
+                        onPress={() => setPhysicalFatigue(val)}
+                      >
+                        <Text style={[styles.chipText, physicalFatigue === val && styles.chipTextActive]}>{val}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={styles.fieldLabel}>2. Saturación / Batería Emocional (1 = Llena, 5 = Ahorro)</Text>
+                  <View style={styles.chipGrid}>
+                    {[1, 2, 3, 4, 5].map((val) => (
+                      <TouchableOpacity
+                        key={val}
+                        style={[styles.chip, emotionalBattery === val && styles.chipActive]}
+                        onPress={() => setEmotionalBattery(val)}
+                      >
+                        <Text style={[styles.chipText, emotionalBattery === val && styles.chipTextActive]}>{val}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={styles.fieldLabel}>3. Calidad del Aftercare & Atención Mutua (1 = Insuficiente, 5 = Excelente)</Text>
+                  <View style={styles.chipGrid}>
+                    {[1, 2, 3, 4, 5].map((val) => (
+                      <TouchableOpacity
+                        key={val}
+                        style={[styles.chip, aftercareQuality === val && styles.chipActive]}
+                        onPress={() => setAftercareQuality(val)}
+                      >
+                        <Text style={[styles.chipText, aftercareQuality === val && styles.chipTextActive]}>{val}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <TouchableOpacity style={styles.createBtn} onPress={handleSaveBurnoutCheckin}>
+                    <Text style={styles.createBtnText}>📊 Guardar Diagnóstico en Bóveda</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* History */}
+                {burnoutLogs.length > 0 && (
+                  <View style={styles.cardBox}>
+                    <Text style={styles.cardBoxTitle}>📋 Historial de Diagnósticos ({burnoutLogs.length}):</Text>
+                    {burnoutLogs.map((log) => (
+                      <View key={log.id} style={styles.journalItem}>
+                        <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>📅 {log.timestamp}</Text>
+                        <Text style={{ color: colors.text, fontSize: fontSize.xs, fontWeight: '700' }}>{log.recommendation}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
             <View style={{ height: 60 }} />
           </ScrollView>
         </VaultLockGate>
@@ -739,4 +861,21 @@ const styles = StyleSheet.create({
   diplomaRecipient: { color: colors.textMuted, fontSize: fontSize.xs },
   viewCertBtn: { backgroundColor: 'rgba(251, 191, 36, 0.15)', borderWidth: 1, borderColor: '#fbbf24', borderRadius: radii.md, paddingHorizontal: 12, paddingVertical: 6, marginTop: 6 },
   viewCertBtnText: { color: '#fbbf24', fontSize: fontSize.xs, fontWeight: '800' },
+  createBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  createBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '900' },
+
+  journalItem: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 4,
+  },
 });

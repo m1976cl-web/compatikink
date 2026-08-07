@@ -16,13 +16,37 @@ import { getAllActivities } from '@/data/activities';
 import { ActivityResponse, Rating, RolePreference } from '@/types';
 import { createLocalSession, saveGuestProfile, saveLocalSessions, loadLocalSessions } from '@/lib/storage';
 
+import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
+
+export const INTIMACY_QUESTIONS_36 = [
+  '¿Cuál es la primera fantasía o deseo que recuerdas haber tenido y que nunca has contado?',
+  '¿Qué gesto afectivo o de cuidado te hace sentir más seguro/a en medio de una escena?',
+  '¿Hay algún límite suave (soft limit) que te gustaría explorar gradualmente si hubiera suficiente confianza?',
+  '¿Cómo describirías tu ritmo o necesidad de Aftercare después de una experiencia intensa?',
+  '¿Qué aspecto de tu sexualidad o inclinación desearías que la sociedad comprendiera mejor?',
+  '¿Qué rol o dinamismo te despierta mayor curiosidad sin importar si es como Dom, Sub o Switch?',
+  '¿Cuál ha sido la conversación sobre consentimiento más reveladora o sanadora que has tenido?',
+  '¿Qué objeto, textura o estímulo sensorial desencadena mayor presencia o excitación en ti?',
+  '¿Qué significa para ti el abandono consensuado del control o la entrega total?',
+  '¿Cómo manejas la vulnerabilidad cuando algo durante una escena no sale como lo planeaste?',
+  '¿Cuál es la regla o protocolo en una dinámica que te genera más anticipación o deseo?',
+  '¿Qué conversación íntima sientes que la mayoría de las parejas evitan tener por miedo al juicio?',
+];
+
+const STORAGE_KEY_INTIMACY_36 = 'intimacy_36_progress_v1';
+
 export default function PassAndPlayScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const activities = getAllActivities();
 
+  const [mode, setMode] = useState<'compat_test' | '36_questions'>('compat_test');
   const [step, setStep] = useState<'p1_setup' | 'p1_questions' | 'curtain' | 'p2_setup' | 'p2_questions'>('p1_setup');
   
+  // 36 Questions Progress State
+  const [q36Index, setQ36Index] = useState(0);
+  const [q36Notes, setQ36Notes] = useState<Record<number, string>>({});
+
   // Person 1
   const [p1Name, setP1Name] = useState('Persona 1');
   const [p1Index, setP1Index] = useState(0);
@@ -32,6 +56,25 @@ export default function PassAndPlayScreen() {
   const [p2Name, setP2Name] = useState('Persona 2');
   const [p2Index, setP2Index] = useState(0);
   const [p2Responses, setP2Responses] = useState<Record<string, ActivityResponse>>({});
+
+  // Load saved 36 questions progress on mount
+  React.useEffect(() => {
+    readJsonStorage<{ index: number; notes: Record<number, string> }>(STORAGE_KEY_INTIMACY_36, { index: 0, notes: {} })
+      .then((saved) => {
+        if (saved) {
+          setQ36Index(saved.index || 0);
+          setQ36Notes(saved.notes || {});
+        }
+      });
+  }, []);
+
+  const handleNextQ36 = async (noteText?: string) => {
+    const nextNotes = { ...q36Notes, [q36Index]: noteText || '' };
+    const nextIndex = Math.min(q36Index + 1, INTIMACY_QUESTIONS_36.length - 1);
+    setQ36Notes(nextNotes);
+    setQ36Index(nextIndex);
+    await writeJsonStorage(STORAGE_KEY_INTIMACY_36, { index: nextIndex, notes: nextNotes });
+  };
 
   const handleP1Response = (rating: Rating) => {
     const act = activities[p1Index];
@@ -96,27 +139,73 @@ export default function PassAndPlayScreen() {
           </TouchableOpacity>
           <Text style={styles.title}>Modo Presencial (Mismo Teléfono)</Text>
           <Text style={styles.subtitle}>
-            Respondan en el mismo dispositivo de forma privada, turnándose secuencialmente.
+            Turnos alternados en un solo dispositivo con cortina de privacidad entre personas
           </Text>
         </View>
 
-        {/* Step 1: P1 Setup */}
-        {step === 'p1_setup' && (
-          <View style={styles.card}>
-            <Text style={styles.stepBadge}>PASO 1 DE 2 — INICIADOR</Text>
-            <Text style={styles.cardTitle}>Nombre de Persona 1</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej: Alex"
-              placeholderTextColor={colors.textMuted}
-              value={p1Name}
-              onChangeText={setP1Name}
-            />
-            <TouchableOpacity style={styles.btnPrimary} onPress={() => setStep('p1_questions')}>
-              <Text style={styles.btnPrimaryText}>Iniciar mis Respuestas 🚀</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* Mode Selector Tabs */}
+        <View style={styles.tabsRow}>
+          <TouchableOpacity
+            style={[styles.tab, mode === 'compat_test' && styles.tabActive]}
+            onPress={() => setMode('compat_test')}
+          >
+            <Text style={[styles.tabText, mode === 'compat_test' && styles.tabTextActive]}>
+              📱 Test de Compatibilidad
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tab, mode === '36_questions' && styles.tabActive]}
+            onPress={() => setMode('36_questions')}
+          >
+            <Text style={[styles.tabText, mode === '36_questions' && styles.tabTextActive]}>
+              💬 36 Preguntas Íntimas
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {mode === '36_questions' ? (
+          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+            <View style={styles.cardBox}>
+              <Text style={styles.cardTitle}>💬 36 Preguntas de Conversación Íntima Profunda</Text>
+              <Text style={styles.stepSub}>
+                Guía de diálogo presencial para explorar deseos, vulnerabilidad y acuerdos de seguridad.
+              </Text>
+
+              <View style={styles.questionCard}>
+                <Text style={styles.qIndexLabel}>Pregunta {q36Index + 1} de {INTIMACY_QUESTIONS_36.length}</Text>
+                <Text style={styles.qTextMain}>{INTIMACY_QUESTIONS_36[q36Index]}</Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.nextQBtn}
+                onPress={() => handleNextQ36()}
+              >
+                <Text style={styles.nextQBtnText}>
+                  {q36Index < INTIMACY_QUESTIONS_36.length - 1 ? 'Siguiente Pregunta ➔' : '✓ Completar Guía Íntima'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        ) : (
+          <>
+            {/* Step 1: P1 Setup */}
+            {step === 'p1_setup' && (
+              <View style={styles.card}>
+                <Text style={styles.stepBadge}>PASO 1 DE 2 — INICIADOR</Text>
+                <Text style={styles.cardTitle}>Nombre de Persona 1</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ej: Alex"
+                  placeholderTextColor={colors.textMuted}
+                  value={p1Name}
+                  onChangeText={setP1Name}
+                />
+                <TouchableOpacity style={styles.btnPrimary} onPress={() => setStep('p1_questions')}>
+                  <Text style={styles.btnPrimaryText}>Iniciar mis Respuestas 🚀</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
         {/* Step 2: P1 Questions */}
         {step === 'p1_questions' && currentP1Act && (
@@ -213,6 +302,8 @@ export default function PassAndPlayScreen() {
             </View>
           </View>
         )}
+        </>
+        )}
       </View>
     </ScreenContainer>
   );
@@ -274,4 +365,19 @@ const styles = StyleSheet.create({
   rBtnText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '700' },
 
   curtainDesc: { color: colors.text, fontSize: fontSize.sm, textAlign: 'center', lineHeight: 22 },
+
+  tabsRow: { flexDirection: 'row', gap: spacing.xs, marginVertical: spacing.sm },
+  tab: { flex: 1, backgroundColor: colors.surface, borderRadius: radii.md, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  tabText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+  tabTextActive: { color: '#fff', fontWeight: '900' },
+
+  scroll: { gap: spacing.md, paddingTop: spacing.xs },
+  cardBox: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: colors.borderSubtle },
+  stepSub: { color: colors.textMuted, fontSize: fontSize.xs },
+  questionCard: { backgroundColor: colors.surfaceLight, borderRadius: radii.lg, padding: spacing.lg, gap: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  qIndexLabel: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
+  qTextMain: { color: colors.text, fontSize: fontSize.md, fontWeight: '700', lineHeight: 26 },
+  nextQBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
+  nextQBtnText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '900' },
 });
