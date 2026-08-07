@@ -23,6 +23,7 @@ import {
   getRandomActByFilter,
   completeTodayAct,
 } from '@/lib/dailyActTracker';
+import { schedule3PhaseAftercareProtocol } from '@/lib/localNotifications';
 
 export default function DailySubmissiveActScreen() {
   const router = useRouter();
@@ -62,12 +63,13 @@ export default function DailySubmissiveActScreen() {
   const handleMarkCompleted = async () => {
     if (!currentAct) return;
     const updatedState = await completeTodayAct(currentAct.id, reflectionNote);
+    await schedule3PhaseAftercareProtocol();
     setState(updatedState);
     setIsCompleting(false);
     setReflectionNote('');
     Alert.alert(
       '¡Acto Cumplido! 🎉',
-      `Felicidades. Has ganado +${currentAct.xpReward} XP y tu racha es de ${updatedState.streakDays} días seguidos.`
+      `Felicidades. Has ganado +${currentAct.xpReward} XP y tu racha es de ${updatedState.streakDays} días seguidos. Protocolo de Aftercare agendado.`
     );
   };
 

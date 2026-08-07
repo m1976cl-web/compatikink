@@ -35,7 +35,15 @@ function generateCode(): string {
 }
 
 function generateToken(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+  try {
+    return generateInviteSecret();
+  } catch {
+    const bytes = new Uint8Array(24);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(bytes);
+    }
+    return bytesToBase64(bytes).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
+  }
 }
 
 export async function saveInitiatorToken(token: string): Promise<void> {

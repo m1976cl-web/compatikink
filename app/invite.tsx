@@ -16,6 +16,7 @@ import {
 import { getSessionByToken } from '@/lib/sessions';
 import { getGuestProfile } from '@/lib/storage';
 import { Session, GuestProfile } from '@/types';
+import { createInviteWebUrl, createInviteSchemeUrl, generateQRCodeSVG } from '@/lib/linking';
 
 export default function InviteScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
@@ -55,23 +56,29 @@ export default function InviteScreen() {
     Alert.alert('Copiado', 'Código copiado al portapapeles.');
   };
 
+  const copyLink = async () => {
+    if (!session) return;
+    const webUrl = createInviteWebUrl(session.inviteCode, session.inviteSecret);
+    await Clipboard.setStringAsync(webUrl);
+    Alert.alert('Copiado', 'Enlace directo de invitación copiado al portapapeles.');
+  };
+
   const shareInvite = async () => {
     if (!session) return;
     const guestName = guestProfile?.nickname || 'alguien especial';
     const secret = session.inviteSecret;
-    const guestPath = secret
-      ? `guest/${session.inviteCode}#k=${secret}`
-      : `guest/${session.inviteCode}`;
+    const webUrl = createInviteWebUrl(session.inviteCode, secret);
+    const schemeUrl = createInviteSchemeUrl(session.inviteCode, secret);
+
     const richMessage =
       `*Compatikink* — Test de compatibilidad privado\n\n` +
       `Hola${guestName !== 'alguien especial' ? `, ${guestName}` : ''}! Te invito a un test de compatibilidad privado.\n\n` +
-      `Tu código:\n\n` +
+      `Tu código:\n` +
       `  *${session.inviteCode}*\n\n` +
-      (secret
-        ? `Enlace (incluye secreto de cifrado):\nhttps://m1976cl-web.github.io/compatikink/${guestPath}\n\n`
-        : '') +
+      `Enlace directo Web (Zero-Knowledge):\n${webUrl}\n\n` +
+      `Abrir en App (Deep Link):\n${schemeUrl}\n\n` +
       `Pasos:\n` +
-      `1. Entra a: https://m1976cl-web.github.io/compatikink/\n` +
+      `1. Abre el enlace o entra a: https://m1976cl-web.github.io/compatikink/\n` +
       `2. Pulsa "Me invitaron" e introduce: *${session.inviteCode}*\n` +
       `3. Responde en privado (tus respuestas viajan cifradas)\n\n` +
       `Cuando termines, recibiré el análisis de compatibilidad.`;
@@ -104,9 +111,8 @@ export default function InviteScreen() {
     return `Expira en ${days} día${days > 1 ? 's' : ''}`;
   })();
 
-  const qrData = `https://m1976cl-web.github.io/compatikink/guest/${session.inviteCode}${
-    session.inviteSecret ? `#k=${session.inviteSecret}` : ''
-  }`;
+  const qrData = createInviteWebUrl(session.inviteCode, session.inviteSecret);
+  const qrSvgUri = generateQRCodeSVG(qrData, 240);
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -138,12 +144,14 @@ export default function InviteScreen() {
 
         <View style={styles.shareRow}>
           <Button title="Copiar código" onPress={copyCode} style={{ flex: 1 }} />
-          <Button title="Compartir" onPress={shareInvite} variant="secondary" style={{ flex: 1 }} />
+          <Button title="Copiar enlace" onPress={copyLink} variant="secondary" style={{ flex: 1 }} />
         </View>
 
+        <Button title="Compartir invitación completa" onPress={shareInvite} variant="secondary" />
+
         <TouchableOpacity style={styles.qrCard} onPress={() => setShowQrModal(true)}>
-          <Text style={styles.qrCardTitle}>Código QR</Text>
-          <Text style={styles.qrCardSub}>Mostrar para escanear cara a cara</Text>
+          <Text style={styles.qrCardTitle}>Código QR (Local Offline)</Text>
+          <Text style={styles.qrCardSub}>Mostrar para escanear cara a cara (100% cifrado local)</Text>
         </TouchableOpacity>
 
         <Modal visible={showQrModal} transparent animationType="fade" onRequestClose={() => setShowQrModal(false)}>
@@ -153,12 +161,10 @@ export default function InviteScreen() {
                 <Text style={styles.qrCloseText}>✕</Text>
               </TouchableOpacity>
               <Text style={styles.qrModalTitle}>Escanear para responder</Text>
-              <Text style={styles.qrModalSub}>El enlace incluye el secreto de cifrado de la sesión.</Text>
+              <Text style={styles.qrModalSub}>El enlace incluye el secreto de cifrado de la sesión (Local SVG Offline).</Text>
               <View style={styles.qrImageContainer}>
                 <Image
-                  source={{
-                    uri: `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrData)}`,
-                  }}
+                  source={{ uri: qrSvgUri }}
                   style={{ width: 220, height: 220, borderRadius: 12 }}
                   resizeMode="contain"
                 />

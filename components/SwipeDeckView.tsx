@@ -9,7 +9,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import { Activity, ActivityResponse, Rating, RolePreference, CATEGORY_LABELS } from '@/types';
+import { Activity, ActivityResponse, Rating, RolePreference } from '@/types';
+import { getActivityName, getActivityDescription, getCategoryLabel } from '@/data/activities';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -161,12 +162,12 @@ export function SwipeDeckView({
         <Animated.View style={[styles.card, position.getLayout()]}>
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryBadgeText}>
-              {CATEGORY_LABELS[currentActivity.category]}
+              {getCategoryLabel(currentActivity.category)}
             </Text>
           </View>
 
-          <Text style={styles.activityName}>{currentActivity.name}</Text>
-          <Text style={styles.activityDesc}>{currentActivity.description}</Text>
+          <Text style={styles.activityName}>{getActivityName(currentActivity)}</Text>
+          <Text style={styles.activityDesc}>{getActivityDescription(currentActivity)}</Text>
 
           {/* Quick Role Selection if rated positive */}
           {isPositiveRating ? (

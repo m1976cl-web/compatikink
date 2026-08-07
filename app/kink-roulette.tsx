@@ -17,6 +17,7 @@ import {
   RouletteIntensity,
 } from '@/data/kinkRouletteData';
 import { addXpToPartnerLink, getPartnerLinks } from '@/lib/partnerJournal';
+import { schedule3PhaseAftercareProtocol } from '@/lib/localNotifications';
 
 export default function KinkRouletteScreen() {
   const router = useRouter();
@@ -55,11 +56,15 @@ export default function KinkRouletteScreen() {
       await addXpToPartnerLink(links[0].id, currentChallenge.xpReward);
       Alert.alert(
         '¡Reto Cumplido! 🎉',
-        `Has ganado +${currentChallenge.xpReward} XP y se han sumado a tu vínculo con ${links[0].partnerName}.`
+        `Has ganado +${currentChallenge.xpReward} XP y se han sumado a tu vínculo con ${links[0].partnerName}. Protocolo de Aftercare agendado.`
       );
     } else {
-      Alert.alert('¡Reto Cumplido! 🎉', `Has ganado +${currentChallenge.xpReward} XP de Afinidad Kink.`);
+      Alert.alert(
+        '¡Reto Cumplido! 🎉',
+        `Has ganado +${currentChallenge.xpReward} XP de Afinidad Kink. Protocolo de Aftercare agendado.`
+      );
     }
+    await schedule3PhaseAftercareProtocol();
     setCompletedList((prev) => [...prev, currentChallenge.id]);
   };
 

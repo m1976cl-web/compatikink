@@ -18,14 +18,37 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.compatikink.app"
+      "bundleIdentifier": "com.compatikink.app",
+      "associatedDomains": [
+        "applinks:m1976cl-web.github.io"
+      ]
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0c0a09"
       },
-      "package": "com.compatikink.app"
+      "package": "com.compatikink.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "m1976cl-web.github.io",
+              "pathPrefix": "/compatikink"
+            },
+            {
+              "scheme": "compatikink"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "plugins": [
       "expo-router",

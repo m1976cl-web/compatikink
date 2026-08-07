@@ -1,4 +1,5 @@
-import { Activity, ActivityCategory } from '@/types';
+import { Activity, ActivityCategory, CATEGORY_LABELS } from '@/types';
+import { t } from '@/lib/i18n';
 
 export const ACTIVITIES: Activity[] = [
   // ═══════════════════════════════════════════
@@ -260,12 +261,36 @@ export function getActivityById(id: string, customs?: Activity[]): Activity | un
  * Returns localized name for an activity, falling back to activity.name.
  */
 export function getActivityName(activity: Activity): string {
-  return activity.name;
+  const key = `activity.${activity.id}.name`;
+  const translated = t(key);
+  return translated !== key ? translated : activity.name;
 }
 
 /**
  * Returns localized description for an activity, falling back to activity.description.
  */
 export function getActivityDescription(activity: Activity): string {
-  return activity.description;
+  const key = `activity.${activity.id}.desc`;
+  const translated = t(key);
+  return translated !== key ? translated : activity.description;
 }
+
+/**
+ * Returns localized safety tip for an activity, if any, falling back to activity.safetyTip.
+ */
+export function getActivitySafetyTip(activity: Activity): string | undefined {
+  if (!activity.safetyTip) return undefined;
+  const key = `activity.${activity.id}.safety`;
+  const translated = t(key);
+  return translated !== key ? translated : activity.safetyTip;
+}
+
+/**
+ * Returns localized category label for an activity category, falling back to CATEGORY_LABELS[category].
+ */
+export function getCategoryLabel(category: ActivityCategory): string {
+  const key = `category.${category}`;
+  const translated = t(key);
+  return translated !== key ? translated : CATEGORY_LABELS[category] ?? category;
+}
+

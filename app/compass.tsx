@@ -11,7 +11,7 @@ import { getCurrentProfile, listMyLocalSessions, getWishlist, toggleWishlist, Wi
 import { calculateCompassPoint, determineArchetype } from '@/lib/compatibility';
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
 import { UserProfile, Session, CATEGORY_LABELS, CATEGORY_EMOJIS, ActivityCategory } from '@/types';
-import { getAllActivities } from '@/data/activities';
+import { getAllActivities, getCategoryLabel } from '@/data/activities';
 
 export default function CompassScreen() {
   const router = useRouter();
@@ -151,7 +151,7 @@ export default function CompassScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.wishlistItemName}>{item.activityName}</Text>
                 <Text style={styles.wishlistItemCat}>
-                  {CATEGORY_EMOJIS[item.category as ActivityCategory] ?? '✨'} {CATEGORY_LABELS[item.category as ActivityCategory] ?? item.category}
+                  {CATEGORY_EMOJIS[item.category as ActivityCategory] ?? '✨'} {getCategoryLabel(item.category as ActivityCategory)}
                 </Text>
               </View>
               <TouchableOpacity
@@ -183,7 +183,7 @@ export default function CompassScreen() {
             <View key={category} style={{ gap: 2 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ color: colors.text, fontSize: fontSize.xs, fontWeight: '700' }}>
-                  {CATEGORY_EMOJIS[category]} {CATEGORY_LABELS[category]}
+                  {CATEGORY_EMOJIS[category]} {getCategoryLabel(category)}
                 </Text>
                 <Text style={{ color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' }}>{avgPct}%</Text>
               </View>

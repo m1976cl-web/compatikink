@@ -151,6 +151,48 @@ async function testComponentLogic() {
   assert.ok(Array.isArray(manualData.MANUAL_MODULES), 'MANUAL_MODULES must be array');
   assert.ok(manualData.MANUAL_MODULES.length >= 20, 'Must have >= 20 manual modules');
   console.log(`  ✅ Manual Bookmarks & Modules verified (${manualData.MANUAL_MODULES.length} modules)`);
+
+  // ─── 12. Deep Linking & Direct Invitation Format (R3 / Item #7) ──────
+  console.log('\n12. Testing Deep Linking & Direct Invitation (lib/linking)...');
+  const linking = await import('../lib/linking');
+  assert.ok(typeof linking.parseInviteLink === 'function', 'parseInviteLink must be exported');
+  assert.ok(typeof linking.generateQRCodeSVG === 'function', 'generateQRCodeSVG must be exported');
+
+  // Test Case 1: Custom App Scheme
+  const p1 = linking.parseInviteLink('compatikink://join/ABC123#k=SecretKey99');
+  assert.equal(p1.inviteCode, 'ABC123');
+  assert.equal(p1.inviteSecret, 'SecretKey99');
+  assert.equal(p1.isValid, true);
+
+  // Test Case 2: Custom App Scheme guest variant
+  const p2 = linking.parseInviteLink('compatikink://guest/ABC123#k=SecretKey99');
+  assert.equal(p2.inviteCode, 'ABC123');
+  assert.equal(p2.inviteSecret, 'SecretKey99');
+  assert.equal(p2.isValid, true);
+
+  // Test Case 3: Universal Web URL
+  const p3 = linking.parseInviteLink('https://m1976cl-web.github.io/compatikink/guest/XYZ789#k=Key77');
+  assert.equal(p3.inviteCode, 'XYZ789');
+  assert.equal(p3.inviteSecret, 'Key77');
+  assert.equal(p3.isValid, true);
+
+  // Test Case 4: Web Query Fallback
+  const p4 = linking.parseInviteLink('https://m1976cl-web.github.io/compatikink/invite?code=DEF456&k=Key88');
+  assert.equal(p4.inviteCode, 'DEF456');
+  assert.equal(p4.inviteSecret, 'Key88');
+  assert.equal(p4.isValid, true);
+
+  // Test Case 5: Raw Code String Input
+  const p5 = linking.parseInviteLink('  ghj001  ');
+  assert.equal(p5.inviteCode, 'GHJ001');
+  assert.equal(p5.inviteSecret, undefined);
+  assert.equal(p5.isValid, true);
+
+  // Test Case 6: Local Offline QR Code SVG Generation
+  const svgData = linking.generateQRCodeSVG('https://m1976cl-web.github.io/compatikink/guest/ABC123#k=SecretKey99');
+  assert.ok(svgData.startsWith('data:image/svg+xml;utf8,'), 'QR Code must be local SVG data URL');
+  assert.ok(svgData.includes('%3Csvg'), 'QR SVG must contain valid SVG tag');
+  console.log('  ✅ Deep Linking & Offline QR Code generator verified');
 }
 
 testComponentLogic()
@@ -163,3 +205,4 @@ testComponentLogic()
     console.error('\n❌ Test Failure:', e?.message || e);
     process.exit(1);
   });
+

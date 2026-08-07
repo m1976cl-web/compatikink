@@ -10,12 +10,17 @@ import {
 import { colors, fontSize, spacing } from '@/constants/theme';
 import {
   Activity,
-  CATEGORY_LABELS,
   CATEGORY_EMOJIS,
   DIFFICULTY_LABELS,
   MOOD_LABELS,
   DifficultyLevel,
 } from '@/types';
+import {
+  getActivityName,
+  getActivityDescription,
+  getActivitySafetyTip,
+  getCategoryLabel,
+} from '@/data/activities';
 
 interface Props {
   visible: boolean;
@@ -46,13 +51,13 @@ export function ActivityTooltipModal({ visible, activity, onClose }: Props) {
           </TouchableOpacity>
 
           {/* Header */}
-          <Text style={styles.activityName}>{activity.name}</Text>
+          <Text style={styles.activityName}>{getActivityName(activity)}</Text>
 
           {/* Category + Difficulty badges row */}
           <View style={styles.badgeRow}>
             <View style={[styles.badge, { borderColor: colors.primary }]}>
               <Text style={styles.badgeText}>
-                {CATEGORY_EMOJIS[activity.category]} {CATEGORY_LABELS[activity.category]}
+                {CATEGORY_EMOJIS[activity.category]} {getCategoryLabel(activity.category)}
               </Text>
             </View>
             {diffInfo && (
@@ -65,7 +70,7 @@ export function ActivityTooltipModal({ visible, activity, onClose }: Props) {
           </View>
 
           {/* Description */}
-          <Text style={styles.description}>{activity.description}</Text>
+          <Text style={styles.description}>{getActivityDescription(activity)}</Text>
 
           <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
             {/* Risk Level */}
@@ -78,12 +83,12 @@ export function ActivityTooltipModal({ visible, activity, onClose }: Props) {
             )}
 
             {/* Safety Tip */}
-            {activity.safetyTip && (
+            {getActivitySafetyTip(activity) ? (
               <View style={styles.safetyBox}>
                 <Text style={styles.safetyTitle}>⚠️ Consejo de seguridad</Text>
-                <Text style={styles.safetyText}>{activity.safetyTip}</Text>
+                <Text style={styles.safetyText}>{getActivitySafetyTip(activity)}</Text>
               </View>
-            )}
+            ) : null}
 
             {/* Suggested Gear */}
             {activity.suggestedGear && activity.suggestedGear.length > 0 && (

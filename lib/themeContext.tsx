@@ -9,7 +9,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type ThemePreset = 'latex_negro' | 'vinilo_carmesi' | 'cyberpunk_neon';
+export type ThemePreset = 'latex_negro' | 'vinilo_carmesi' | 'cyberpunk_neon' | 'office_light';
 
 export interface ThemePalette {
   id: ThemePreset;
@@ -80,6 +80,23 @@ export const THEME_PRESETS: Record<ThemePreset, ThemePalette> = {
     textMuted: '#38bdf8',
     textDim: '#0369a1',
     gradientHint: 'radial-gradient(ellipse 120% 80% at 50% -20%, rgba(56,189,248,0.18) 0%, transparent 60%), linear-gradient(165deg, #040b14 0%, #081726 45%, #0d2338 100%)',
+  },
+  office_light: {
+    id: 'office_light',
+    name: 'Modo Oficina / Tema Claro',
+    emoji: '💼',
+    background: '#f8fafc',
+    backgroundMid: '#f1f5f9',
+    surface: '#ffffff',
+    border: '#cbd5e1',
+    borderSubtle: 'rgba(14, 165, 233, 0.25)',
+    primary: '#0284c7',
+    primaryDark: '#0369a1',
+    accent: '#0d9488',
+    text: '#0f172a',
+    textMuted: '#475569',
+    textDim: '#64748b',
+    gradientHint: 'radial-gradient(ellipse 120% 80% at 50% -20%, rgba(2,132,199,0.08) 0%, transparent 60%), linear-gradient(165deg, #f8fafc 0%, #f1f5f9 45%, #e2e8f0 100%)',
   },
 };
 

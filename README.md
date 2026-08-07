@@ -1,83 +1,71 @@
-# CompatKink — App móvil de compatibilidad
+# CompatKink — App Móvil y Web de Compatibilidad Íntima Asimétrica
 
-App móvil (iOS + Android) para explorar compatibilidad de preferencias de forma **privada y asimétrica**:
+CompatKink es una plataforma web y móvil (Expo 53 / React Native Web) para explorar la compatibilidad de preferencias de forma **privada, asimétrica y con cifrado Zero-Knowledge**:
 
-1. **Tú** respondes el cuestionario y creas una invitación.
-2. **La otra persona** responde con un código (sin ver tus respuestas).
-3. **Tú** recibes un reporte completo y decides qué compartir.
+1. **Iniciador/a:** Responde el cuestionario de compatibilidad y genera un enlace o código de invitación con clave simétrica en su dispositivo.
+2. **Invitado/a:** Responde desde su dispositivo con el código de invitación sin ver en ningún momento las respuestas del iniciador.
+3. **Reporte Asimétrico:** El iniciador desvela únicamente las coincidencias mutuas deseada ("Matches"), protegiendo los límites y preferencias no compartidas.
 
-## Requisitos
+---
 
-- [Node.js 20+](https://nodejs.org/)
-- [Expo Go](https://expo.dev/go) en tu móvil (para probar) o Android Studio / Xcode (para build nativo)
+## 🛡️ Arquitectura de Seguridad Zero-Knowledge (E2EE)
 
-## Instalación
+- **Cifrado Cliente:** Toda la información sensible en reposo se cifra localmente con `AES-GCM-256` y derivation `PBKDF2` (310,000 iteraciones).
+- **Zero-Knowledge Backend:** El servidor de Supabase almacena exclusivamente cyphertext opaco `ck1:`. Ningún dato legible o plaintext toca servidores remotos.
+- **Mecanismos Anti-Coerción:** Incluye sistema de PIN Canario (Decoy PIN) que desbloquea un estado señuelo inofensivo en caso de coacción física.
+
+---
+
+## 📦 Requisitos e Instalación
+
+- **Node.js 20+**
+- **pnpm 10** (o npm 10+)
+- **Expo Go** en tu dispositivo móvil o navegador web para desarrollo
 
 ```bash
-cd Compatibilidadcursor
-npm install
-cp .env.example .env
+# Clonar e instalar dependencias
+git clone https://github.com/m1976cl-web/compatikink.git
+cd compatikink
+pnpm install
 ```
 
-### Supabase (recomendado para dos dispositivos)
+### Configuración de Supabase (Opcional para sincronización remota)
 
-Sin Supabase la app funciona en **modo local** (mismo dispositivo). Para que otra persona responda desde su móvil:
+Si no se configura Supabase, la app funciona en **modo local presencial (Mismo Teléfono)**. Para conectar dos dispositivos remotos:
 
-1. Crea un proyecto gratis en [supabase.com](https://supabase.com)
-2. Ejecuta `supabase/schema.sql` en el SQL Editor
-3. Copia URL y anon key a `.env`:
+1. Crea un proyecto en [Supabase](https://supabase.com).
+2. Ejecuta los scripts `supabase/schema.sql` y `supabase/migrations/001_hardening.sql` en el SQL Editor.
+3. Copia tus credenciales en `.env`:
 
-```
-EXPO_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 ```
 
-## Ejecutar
+---
+
+## 🛠️ Comandos Principales
 
 ```bash
-npx expo start
+# Iniciar servidor de desarrollo (Expo / Web)
+pnpm start
+
+# Ejecutar typechecking TypeScript
+pnpm exec tsc --noEmit
+
+# Ejecutar suite completa de pruebas (Vault, Criptografía, i18n, Componentes)
+pnpm run test:vault:all
+
+# Compilar bundle de producción Web PWA
+pnpm run build:web
 ```
 
-Escanea el QR con Expo Go (Android) o la app Cámara (iOS).
+---
 
-## Flujo de la app
+## 📚 Documentación del Proyecto
 
-| Pantalla | Descripción |
-|----------|-------------|
-| Inicio | Elegir "Soy quien inicia" o "Me invitaron" |
-| Cuestionario | ~70 actividades con rating, rol e intensidad |
-| Invitar | Código de 6 caracteres + compartir por WhatsApp |
-| Reporte | Solo visible para quien inició la sesión |
-| Compartir | Filtrar qué secciones enviar al invitado |
-
-## Estructura
-
-```
-app/           Pantallas (Expo Router)
-components/    UI reutilizable
-data/          Catálogo de actividades
-lib/           Compatibilidad, sesiones, Supabase
-types/         Tipos TypeScript
-supabase/      Schema SQL
-```
-
-## Reporte — secciones
-
-- **Match mutuo** — interés positivo de ambos
-- **Explorar juntos** — curiosidad compatible
-- **Solo tus intereses** — privado, no se comparte por defecto
-- **Intereses del invitado** — te interesa a ellos, no a ti
-- **Conflicto de límites** — hard limit vs interés
-- **Desalineación de roles** — mismo interés, roles/intensidad distintos
-
-## Build para producción
-
-```bash
-npm install -g eas-cli
-eas build --platform android
-eas build --platform ios
-```
-
-## Aviso legal
-
-Solo para mayores de 18 años. Herramienta de comunicación consensuada, no sustituye conversación ni consejo profesional.
+- [`PROJECT.md`](./PROJECT.md) — Visión del producto, arquitectura y estado de desarrollo.
+- [`ROADMAP.md`](./ROADMAP.md) — Plan de desarrollo de Horizontes 1–3 y checklist de refactorización.
+- [`ANTIGRAVITY.md`](./ANTIGRAVITY.md) — Guía de handoff para desarrolladores y agentes IA (convenciones, stack y guardrails).
+- [`docs/SUPABASE_HARDENING.md`](./docs/SUPABASE_HARDENING.md) — Hardening de base de datos, RPCs, rate limits y caducidad de sesiones.
+- [`PLAN_REFACTOR.md`](./PLAN_REFACTOR.md) — Plan de refactorización del Dashboard y arquitectura Zustand.

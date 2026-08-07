@@ -127,17 +127,7 @@ export async function submitGuestResponses(
   );
 }
 
-export async function refreshSession(sessionId: string): Promise<Session | null> {
-  if (!supabase) return null;
-
-  // Prefer token-scoped RPC when possible; id-only select requires claim.
-  // Fallback: initiator who has token should use getSessionByToken.
-  const { data, error } = await supabase
-    .from('sessions')
-    .select('*')
-    .eq('id', sessionId)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return mapSession(data as DbSession);
+export async function refreshSession(token: string): Promise<Session | null> {
+  if (!supabase || !token) return null;
+  return getSessionByToken(token);
 }

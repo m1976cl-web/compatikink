@@ -33,10 +33,10 @@ export function ThemeSelectorModal({ visible, onClose }: ThemeSelectorModalProps
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} style={[styles.modalBox, { borderColor: palette.primary }]}>
+        <TouchableOpacity activeOpacity={1} style={[styles.modalBox, { backgroundColor: palette.surface, borderColor: palette.primary }]}>
           <Text style={[styles.title, { color: palette.primary }]}>🎨 Personalizar Tema Visual</Text>
           <Text style={[styles.subtitle, { color: palette.text }]}>
-            Selecciona la paleta de diseño Glossy Noir para tu sesión:
+            Selecciona la paleta de diseño para tu sesión:
           </Text>
 
           <View style={styles.presetList}>
@@ -70,7 +70,9 @@ export function ThemeSelectorModal({ visible, onClose }: ThemeSelectorModalProps
           </View>
 
           <TouchableOpacity style={[styles.closeBtn, { backgroundColor: palette.primary }]} onPress={onClose}>
-            <Text style={styles.closeBtnText}>Guardar & Cerrar</Text>
+            <Text style={[styles.closeBtnText, { color: palette.id === 'office_light' ? '#ffffff' : '#07050a' }]}>
+              Guardar & Cerrar
+            </Text>
           </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>

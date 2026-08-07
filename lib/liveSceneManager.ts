@@ -1,3 +1,8 @@
+import {
+  schedule3PhaseAftercareProtocol,
+  cancelScheduledAftercareNotifications,
+} from './localNotifications';
+
 export type TrafficLight = 'green' | 'yellow' | 'red';
 export type SceneModeStatus = 'idle' | 'active' | 'safeword_triggered' | 'aftercare';
 
@@ -24,6 +29,7 @@ export function getLiveSceneSession(): LiveSceneSession {
 }
 
 export function startLiveSceneSession(): LiveSceneSession {
+  cancelScheduledAftercareNotifications().catch(() => {});
   activeSession = {
     status: 'active',
     trafficLight: 'green',
@@ -53,10 +59,12 @@ export function triggerEmergencySafeword(): LiveSceneSession {
 export function startAftercareSequence(): LiveSceneSession {
   activeSession.status = 'aftercare';
   activeSession.aftercareTimerSeconds = 15 * 60;
+  schedule3PhaseAftercareProtocol().catch(() => {});
   return activeSession;
 }
 
 export function resetLiveSceneSession(): LiveSceneSession {
+  cancelScheduledAftercareNotifications().catch(() => {});
   activeSession = {
     status: 'idle',
     trafficLight: 'green',

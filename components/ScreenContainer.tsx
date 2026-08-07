@@ -1,5 +1,6 @@
 import { Platform, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { AppHeader } from '@/components/AppHeader';
+import { useTheme } from '@/lib/themeContext';
 import {
   colors,
   fonts,
@@ -23,7 +24,7 @@ interface Props {
 }
 
 /**
- * Screen shell with ink depth background (gradient on web, layered solid on native).
+ * Screen shell with dynamic theme background (gradient on web, layered solid on native).
  */
 export function ScreenContainer({
   title,
@@ -34,21 +35,23 @@ export function ScreenContainer({
   style,
   hideHeader = false,
 }: Props) {
+  const { palette } = useTheme();
+
   const webBg =
     Platform.OS === 'web'
-      ? ({ backgroundImage: gradients.inkRadialHint } as ViewStyle)
+      ? ({ backgroundImage: palette.gradientHint } as ViewStyle)
       : undefined;
 
   return (
-    <View style={[styles.root, webBg, style]}>
+    <View style={[styles.root, { backgroundColor: palette.background }, webBg, style]}>
       <View style={styles.textureHint} pointerEvents="none" />
       <View style={styles.container}>
         {hideHeader ? null : brand ? (
           <AppHeader brand title={title} subtitle={subtitle} mark={mark ?? 'Nox'} />
         ) : (
           <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+            <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
+            {subtitle ? <Text style={[styles.subtitle, { color: palette.textMuted }]}>{subtitle}</Text> : null}
           </View>
         )}
         {children}

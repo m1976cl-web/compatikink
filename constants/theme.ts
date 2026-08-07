@@ -53,6 +53,21 @@ export const colors = {
   glowPink: 'rgba(244, 114, 182, 0.35)',
 };
 
+/** Office Light / Modo Oficina palette tokens */
+export const officeLightColors = {
+  background: '#f8fafc',
+  backgroundMid: '#f1f5f9',
+  surface: '#ffffff',
+  border: '#cbd5e1',
+  borderSubtle: 'rgba(14, 165, 233, 0.25)',
+  primary: '#0284c7',
+  primaryDark: '#0369a1',
+  accent: '#0d9488',
+  text: '#0f172a',
+  textMuted: '#475569',
+  textDim: '#64748b',
+};
+
 /** Glossy Latex gradient stops for shell / ScreenContainer */
 export const gradients = {
   ink: ['#07050a', '#0d0814', '#150d24'] as const,

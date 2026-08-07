@@ -38,7 +38,7 @@ import {
 } from '@/types';
 import { ActivityTooltipModal } from '@/components/ActivityTooltipModal';
 import { createSession } from '@/lib/sessions';
-import { CATEGORY_ORDER, ACTIVITIES, getAllActivities } from '@/data/activities';
+import { CATEGORY_ORDER, ACTIVITIES, getAllActivities, getCategoryLabel, getActivityName, getActivityDescription } from '@/data/activities';
 import { CustomActivityModal } from '@/components/CustomActivityModal';
 import { SwipeDeckView } from '@/components/SwipeDeckView';
 import { getCurrentProfile, saveProfile, getCustomActivities } from '@/lib/storage';
@@ -319,7 +319,7 @@ export default function QuestionnaireScreen() {
                     onPress={() => toggleCategory(cat)}
                   >
                     <Text style={[styles.categoryCardText, active && styles.categoryCardTextActive]}>
-                      {CATEGORY_EMOJIS[cat]} {CATEGORY_LABELS[cat]}
+                      {CATEGORY_EMOJIS[cat]} {getCategoryLabel(cat)}
                     </Text>
                     <Text style={styles.categoryCardSub}>
                       {active ? '✓ Activa' : '✕ Omitida'} · {getAllActivities(customActivities).filter((a) => a.category === cat).length} actividades
@@ -508,9 +508,9 @@ function QuestionnaireActiveFlow({
           <ProgressBar progress={q.progress} />
           <ProgressLabel current={q.currentIndex + 1} total={q.total} />
 
-          <Text style={styles.category}>{CATEGORY_LABELS[q.currentActivity.category]}</Text>
-          <Text style={styles.activityName}>{q.currentActivity.name}</Text>
-          <Text style={styles.description}>{q.currentActivity.description}</Text>
+          <Text style={styles.category}>{getCategoryLabel(q.currentActivity.category)}</Text>
+          <Text style={styles.activityName}>{getActivityName(q.currentActivity)}</Text>
+          <Text style={styles.description}>{getActivityDescription(q.currentActivity)}</Text>
 
           <Text style={styles.sectionLabel}>¿Qué te parece?</Text>
           <RatingPicker value={q.currentResponse.rating} onChange={handleRatingSelect} />

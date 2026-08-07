@@ -1,9 +1,11 @@
 import React from 'react';
 import { Alert, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import { Button } from '@/components/Button';
 import { Section } from '@/components/Section';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import { parseInviteLink } from '@/lib/linking';
 
 interface GuestJoinSectionProps {
   guestCode: string;
@@ -14,29 +16,39 @@ interface GuestJoinSectionProps {
 export function GuestJoinSection({ guestCode, onChangeCode, onLayout }: GuestJoinSectionProps) {
   const router = useRouter();
 
-  const joinAsGuest = () => {
-    const raw = guestCode.trim();
-    const secretFromPaste = (() => {
-      try {
-        if (raw.includes('k=')) {
-          const m = raw.match(/[?#&]k=([^&\s#]+)/);
-          if (m) return decodeURIComponent(m[1]);
-        }
-      } catch {
-        /* ignore */
-      }
-      return undefined;
-    })();
-    const codeMatch = raw.match(/guest\/([A-Za-z0-9]+)/i);
-    const code = (codeMatch ? codeMatch[1] : raw.replace(/[^A-Za-z0-9]/g, '')).toUpperCase();
-    if (code.length < 4) {
-      Alert.alert('Código inválido', 'Introduce el código o el enlace completo.');
+  const handleJoin = (input: string) => {
+    const parsed = parseInviteLink(input);
+    if (!parsed.isValid) {
+      Alert.alert('Código inválido', 'Introduce un código o enlace de invitación válido.');
       return;
     }
-    if (secretFromPaste) {
-      router.push(`/guest/${code}?k=${encodeURIComponent(secretFromPaste)}`);
+    const { inviteCode, inviteSecret } = parsed;
+    if (inviteSecret) {
+      const enc = encodeURIComponent(inviteSecret);
+      router.push(`/guest/${inviteCode}?k=${enc}#k=${enc}`);
     } else {
-      router.push(`/guest/${code}`);
+      router.push(`/guest/${inviteCode}`);
+    }
+  };
+
+  const joinAsGuest = () => {
+    handleJoin(guestCode);
+  };
+
+  const pasteAndJoin = async () => {
+    try {
+      const text = await Clipboard.getStringAsync();
+      if (text && text.trim()) {
+        onChangeCode(text);
+        const parsed = parseInviteLink(text);
+        if (parsed.isValid) {
+          handleJoin(text);
+          return;
+        }
+      }
+      Alert.alert('Portapapeles', 'No se encontró un código o enlace de invitación válido en el portapapeles.');
+    } catch {
+      Alert.alert('Error', 'No se pudo acceder al portapapeles.');
     }
   };
 
@@ -52,7 +64,10 @@ export function GuestJoinSection({ guestCode, onChangeCode, onLayout }: GuestJoi
             onChangeText={onChangeCode}
             autoCapitalize="characters"
           />
-          <Button title="Unirme" onPress={joinAsGuest} variant="secondary" />
+          <View style={styles.buttonRow}>
+            <Button title="Pegar y unirme" onPress={pasteAndJoin} variant="secondary" style={{ flex: 1 }} />
+            <Button title="Unirme" onPress={joinAsGuest} style={{ flex: 1 }} />
+          </View>
         </View>
       </Section>
     </View>
@@ -72,5 +87,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     letterSpacing: 1.5,
     textAlign: 'center',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
 });

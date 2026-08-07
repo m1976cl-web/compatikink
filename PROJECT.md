@@ -1,39 +1,46 @@
-# CompatKink — Project Specification & Technical Roadmap
+# CompatKink — Especificación del Proyecto & Visión de Producto
 
-**Status:** Production Ready (v2.0)  
-**Security Model:** Zero-Knowledge Client-Side AES-GCM-256  
-**License:** Confidential / Proprietary
-
----
-
-## 1. Core Value Proposition
-
-CompatKink is an asymmetric, privacy-first platform that enables two individuals to explore intimate preferences, BDSM boundaries, roles, and safety protocols without revealing raw un-matched responses to each other or a central server.
-
-### Key Differentiators:
-1. **Asymmetric Privacy**: Host creates an invite code; guest responds blindly without seeing host answers; the app computes mutual matches, explore-together items, and limit conflicts.
-2. **Zero-Knowledge Architecture**: Encryption and key derivation occur client-side (`PBKDF2-SHA-256` + `AES-GCM-256`).
-3. **Canary (Decoy) PIN**: Protects against physical coercion or duress by unlocking a synthetic decoy state.
+**Estado:** En producción / v2.1 Refactoring & Hardening  
+**Core Strategy:** Compatibilidad Íntima Asimétrica Privada (Core First)  
+**Modelo de Seguridad:** Zero-Knowledge Client-Side AES-GCM-256 / PBKDF2 310k iteraciones  
 
 ---
 
-## 2. Social & Dating Suite Guidelines (M7 / P3.2 Content Moderation)
+## 1. Propuesta de Valor Core (Core First Alignment)
 
-### 2.1 Content Moderation Policy
-- **No Unencrypted Server Text**: Direct messages and journal entries are encrypted client-side (`ck1:`).
-- **Public Handle Verification**: FetLife profile linkage verifies external handles via cryptographic badge badges.
-- **Reporting Mechanism**: Local blocking & report flag storage for local content filtering.
+CompatKink es una plataforma privacy-first enfocada en permitir a parejas o individuos explorar preferencias íntimas, límites BDSM, roles y protocolos de seguridad sin revelar respuestas crudas no coincidentes a la otra persona ni a servidores centrales.
+
+### Pilares Fundamentales (El Core Inviolable)
+1. **Privacidad Asimétrica:** El iniciador/a crea una sesión cifrada; el invitado/a responde de forma ciega sin ver las respuestas del iniciador/a. El sistema calcula únicamente coincidencias mutuas ("Matches") y conflictos de límites duros ("Hard Limits").
+2. **Arquitectura Zero-Knowledge Real:** Todo cifrado y derivación de clave ocurren exclusivamente en el cliente (`PBKDF2-SHA-256` con 310,000 iteraciones + `AES-GCM-256`).
+3. **PIN Canario (Decoy PIN):** Protección anti-coerción que desbloquea una bóveda señuelo inofensiva bajo coacción física o intrusión.
+4. **Soberanía de Datos:** Eliminación total instantánea ("Right to Be Forgotten") conforme a GDPR Art. 9 y Ley N° 21.719.
 
 ---
 
-## 3. Milestones & Priorities Matrix Summary
+## 2. Jerarquía de Funcionalidades (Core vs Post-Core)
 
-- **P0.1 Threat Model**: Complete (`docs/THREAT_MODEL.md`).
-- **P0.2 Rate-Limiting & 48h Expiration**: Complete (`supabase/schema.sql`).
-- **P0.3 Supabase RLS Audit**: Complete (`supabase/schema.sql`).
-- **P0.4 Right to Be Forgotten**: Complete (`purgeAllUserData` + `app/privacy-policy.tsx`).
-- **P0.5 Age Verification Gate**: Complete (`app/onboarding.tsx` 18+ DOB gate).
-- **P1.1 Compatibility Tests**: Complete (`tests/compatibility.test.ts`).
-- **P1.2 Integration Flow Tests**: Complete (`tests/integration.flow.test.ts`).
-- **P1.3 GitHub Actions CI/CD**: Complete (`.github/workflows/ci.yml` & `audit.yml`).
-- **P2.1 Privacy Policy & Consent**: Complete (`docs/PRIVACY_POLICY.md` & `app/privacy-policy.tsx`).
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CORE PRINCIPAL (v1 - v2)                 │
+│  Cuestionario Asimétrico · Bóveda ZK · Reportes · Aftercare  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   POST-CORE / EXPANSIONES (v3+)             │
+│   Suite Social (Events, Dating, Feed) · AI Roleplay Sandbox │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. Estado de Hitos de Desarrollo
+
+| Hito / Lote | Descripción | Estado |
+|---|---|---|
+| **Lote A — Refactor Home** | Módulo `stores/homeStore.ts`, componentes `components/home/`, desmonolitización de `index.tsx` | `DONE` ✅ |
+| **Lote C — Hardening Supabase** | Tokens CSPRNG de alta entropía, `expires_at`, rate-limiting RPC, limpieza de `refreshSession` | `DONE` ✅ |
+| **Lote B — CI/CD & Tests** | GitHub Actions (`ci.yml`, `audit.yml`) y 12 suites de prueba integradas | `DONE` ✅ |
+| **Tier 1 — Proxy IA & Audit** | Edge Function Gemini, clasificación Screen Registry, analytics Plausible | `DONE` ✅ |
+| **Tier 2 — Modo Office & Aftercare** | Tema Claro / Excel Disguise, Protocolo Aftercare 3 fases, Deep Links QR, i18n Actividades | `DONE` ✅ |

@@ -24,6 +24,27 @@ async function testI18nEngine() {
   assert.ok(interpolated.length > 0);
   console.log('  ✅ Translation text is non-empty');
 
+  console.log('\n4. Testing Activity Catalog i18n translation helpers (Item #8)...');
+  const { getActivityName, getActivityDescription, getActivitySafetyTip, getCategoryLabel, getActivityById } = await import('../data/activities');
+
+  const ropeAct = getActivityById('bo_rope')!;
+  const agePlayAct = getActivityById('pe_age_play')!;
+
+  // Test Spanish (current)
+  await setLocale('es');
+  assert.equal(getCategoryLabel('bondage'), 'Ataduras');
+  assert.equal(getActivityName(ropeAct), 'Cuerdas (shibari)');
+  assert.equal(getActivityDescription(ropeAct), 'Ataduras decorativas o restrictivas con cuerda.');
+  assert.equal(getActivitySafetyTip(agePlayAct), 'Requiere negociación profunda y límites claros. Siempre entre adultos.');
+
+  // Test English
+  await setLocale('en');
+  assert.equal(getCategoryLabel('bondage'), 'Bondage & Restraints');
+  assert.equal(getActivityName(ropeAct), 'Rope Bondage (Shibari)');
+  assert.equal(getActivityDescription(ropeAct), 'Decorative or restrictive Japanese rope bondage.');
+  assert.equal(getActivitySafetyTip(agePlayAct), 'Requires deep negotiation and clear boundaries. Always strictly between adults.');
+  console.log('  ✅ Activity Catalog helper functions translate dynamically across locales');
+
   // Reset to default
   await setLocale('es');
 }
