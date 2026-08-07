@@ -178,6 +178,8 @@ export const ACTIVITIES: Activity[] = [
   { id: 'ls_contract', category: 'lifestyle', name: 'Contratos de dinámica', description: 'Documento formal con acuerdos, límites, roles y revisiones periódicas.', moods: ['fantasia_roles', 'poder_adrenalina'], difficultyLevel: 'intermediate' },
 ];
 
+import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
+
 export const CATEGORY_ORDER: ActivityCategory[] = [
   'power_exchange',
   'bondage',
@@ -193,6 +195,9 @@ export const CATEGORY_ORDER: ActivityCategory[] = [
   'lifestyle',
 ];
 
+// Storage key for user-defined custom activities
+const STORAGE_KEY_CUSTOM_ACTIVITIES = 'user_custom_activities_v1';
+
 // Dynamically register custom activities added by the user
 let dynamicCustomActivities: Activity[] = [];
 
@@ -200,6 +205,40 @@ export function registerCustomActivity(activity: Activity): void {
   if (!dynamicCustomActivities.some((a) => a.id === activity.id)) {
     dynamicCustomActivities.push(activity);
   }
+}
+
+export async function loadUserCustomActivities(): Promise<Activity[]> {
+  try {
+    const saved = await readJsonStorage<Activity[]>(STORAGE_KEY_CUSTOM_ACTIVITIES, []);
+    if (Array.isArray(saved)) {
+      dynamicCustomActivities = saved;
+      return saved;
+    }
+  } catch {
+    // Ignore load error
+  }
+  return dynamicCustomActivities;
+}
+
+export async function saveUserCustomActivity(newActivity: Omit<Activity, 'id'>): Promise<Activity> {
+  const customId = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const fullActivity: Activity = {
+    ...newActivity,
+    id: customId,
+  };
+
+  const current = await loadUserCustomActivities();
+  const updated = [fullActivity, ...current];
+  dynamicCustomActivities = updated;
+  await writeJsonStorage(STORAGE_KEY_CUSTOM_ACTIVITIES, updated);
+  return fullActivity;
+}
+
+export async function deleteUserCustomActivity(id: string): Promise<void> {
+  const current = await loadUserCustomActivities();
+  const updated = current.filter((a) => a.id !== id);
+  dynamicCustomActivities = updated;
+  await writeJsonStorage(STORAGE_KEY_CUSTOM_ACTIVITIES, updated);
 }
 
 export function getAllActivities(customs?: Activity[]): Activity[] {
@@ -215,4 +254,18 @@ export function getAllActivities(customs?: Activity[]): Activity[] {
 
 export function getActivityById(id: string, customs?: Activity[]): Activity | undefined {
   return getAllActivities(customs).find((a) => a.id === id);
+}
+
+/**
+ * Returns localized name for an activity, falling back to activity.name.
+ */
+export function getActivityName(activity: Activity): string {
+  return activity.name;
+}
+
+/**
+ * Returns localized description for an activity, falling back to activity.description.
+ */
+export function getActivityDescription(activity: Activity): string {
+  return activity.description;
 }

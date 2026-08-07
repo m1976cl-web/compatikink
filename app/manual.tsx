@@ -17,6 +17,8 @@ import {
   MANUAL_MODULES,
   ManualModule,
   ManualArea,
+  loadManualBookmarks,
+  toggleManualBookmark,
 } from '@/data/manualData';
 import { exportManualAsPDF } from '@/lib/exportManualPDF';
 import { copyManualAsMarkdown, downloadManualAsMarkdown } from '@/lib/exportMarkdown';
@@ -29,10 +31,28 @@ export default function UserManualScreen() {
   const [selectedAreaId, setSelectedAreaId] = useState<string>('all');
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [copiedToast, setCopiedToast] = useState(false);
+  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+
+  // Load bookmarks on mount
+  React.useEffect(() => {
+    loadManualBookmarks().then((saved) => {
+      if (Array.isArray(saved)) setBookmarkedIds(saved);
+    });
+  }, []);
+
+  const handleToggleBookmark = async (id: string) => {
+    const next = await toggleManualBookmark(id);
+    setBookmarkedIds(next);
+  };
 
   // Filter modules dynamically by category area and search query
   const filteredModules = useMemo(() => {
     return MANUAL_MODULES.filter((module) => {
+      if (showBookmarksOnly && !bookmarkedIds.includes(module.id)) {
+        return false;
+      }
+
       if (selectedAreaId !== 'all') {
         const area = MANUAL_AREAS.find((a) => a.id === selectedAreaId);
         if (area && !area.moduleIds.includes(module.id)) {
@@ -188,13 +208,39 @@ export default function UserManualScreen() {
                 style={styles.sidebarCategoryScroll}
                 showsVerticalScrollIndicator={false}
               >
+                {/* Category "Marcadores" */}
+                <TouchableOpacity
+                  style={[
+                    styles.sidebarCategoryItem,
+                    showBookmarksOnly && styles.sidebarCategoryItemActive,
+                  ]}
+                  onPress={() => {
+                    setShowBookmarksOnly(!showBookmarksOnly);
+                    setSelectedAreaId('all');
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.categoryEmoji}>⭐</Text>
+                  <Text
+                    style={[
+                      styles.categoryName,
+                      showBookmarksOnly && styles.categoryNameActive,
+                    ]}
+                  >
+                    Mis Marcadores ({bookmarkedIds.length})
+                  </Text>
+                </TouchableOpacity>
+
                 {/* Category "Todas" */}
                 <TouchableOpacity
                   style={[
                     styles.sidebarCategoryItem,
-                    selectedAreaId === 'all' && styles.sidebarCategoryItemActive,
+                    !showBookmarksOnly && selectedAreaId === 'all' && styles.sidebarCategoryItemActive,
                   ]}
-                  onPress={() => setSelectedAreaId('all')}
+                  onPress={() => {
+                    setShowBookmarksOnly(false);
+                    setSelectedAreaId('all');
+                  }}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.categoryEmoji}>📚</Text>
@@ -305,7 +351,9 @@ export default function UserManualScreen() {
                     key={module.id}
                     module={module}
                     isExpanded={!!expandedModules[module.id]}
+                    isBookmarked={bookmarkedIds.includes(module.id)}
                     onToggle={() => toggleModule(module.id)}
+                    onToggleBookmark={() => handleToggleBookmark(module.id)}
                     onNavigate={(path) => router.push(path as any)}
                   />
                 ))}
@@ -453,7 +501,9 @@ export default function UserManualScreen() {
                   key={module.id}
                   module={module}
                   isExpanded={!!expandedModules[module.id]}
+                  isBookmarked={bookmarkedIds.includes(module.id)}
                   onToggle={() => toggleModule(module.id)}
+                  onToggleBookmark={() => handleToggleBookmark(module.id)}
                   onNavigate={(path) => router.push(path as any)}
                 />
               ))}
@@ -479,14 +529,18 @@ export default function UserManualScreen() {
 interface ModuleAccordionItemProps {
   module: ManualModule;
   isExpanded: boolean;
+  isBookmarked?: boolean;
   onToggle: () => void;
+  onToggleBookmark?: () => void;
   onNavigate: (path: string) => void;
 }
 
 function ModuleAccordionItem({
   module,
   isExpanded,
+  isBookmarked,
   onToggle,
+  onToggleBookmark,
   onNavigate,
 }: ModuleAccordionItemProps) {
   // Find associated area icon for category
@@ -564,6 +618,17 @@ function ModuleAccordionItem({
           <Text style={styles.cardTitle}>{module.title}</Text>
           <Text style={styles.cardSummary}>{module.summary}</Text>
         </View>
+
+        <TouchableOpacity
+          onPress={(e) => {
+            e.stopPropagation();
+            onToggleBookmark?.();
+          }}
+          style={{ paddingHorizontal: 6 }}
+        >
+          <Text style={{ fontSize: 18 }}>{isBookmarked ? '⭐' : '☆'}</Text>
+        </TouchableOpacity>
+
         <View style={styles.arrowBox}>
           <Text style={styles.arrowText}>{isExpanded ? '▲' : '▼'}</Text>
         </View>

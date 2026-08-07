@@ -929,6 +929,10 @@ registerCustomActivity(newCustomActivity);`,
   },
 ];
 
+import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
+
+const STORAGE_KEY_MANUAL_BOOKMARKS = 'manual_bookmarked_modules_v1';
+
 // Helper functions for search & retrieval
 export function getManualModuleById(id: string): ManualModule | undefined {
   return MANUAL_MODULES.find((m) => m.id === id);
@@ -950,4 +954,22 @@ export function searchManualModules(query: string): ManualModule[] {
       m.summary.toLowerCase().includes(q) ||
       m.tags.some((t) => t.toLowerCase().includes(q))
   );
+}
+
+export async function loadManualBookmarks(): Promise<string[]> {
+  try {
+    const saved = await readJsonStorage<string[]>(STORAGE_KEY_MANUAL_BOOKMARKS, []);
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function toggleManualBookmark(moduleId: string): Promise<string[]> {
+  const current = await loadManualBookmarks();
+  const next = current.includes(moduleId)
+    ? current.filter((id) => id !== moduleId)
+    : [...current, moduleId];
+  await writeJsonStorage(STORAGE_KEY_MANUAL_BOOKMARKS, next);
+  return next;
 }

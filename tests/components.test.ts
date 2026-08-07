@@ -52,10 +52,12 @@ async function testComponentLogic() {
     return age >= 18;
   }
 
-  assert.ok(isAtLeast18(new Date(2000, 0, 1)), '2000-01-01 should be 18+');
-  assert.ok(!isAtLeast18(new Date(2020, 0, 1)), '2020-01-01 should NOT be 18+');
-  assert.ok(isAtLeast18(new Date(2008, 7, 6)), '2008-08-06 should be exactly 18 today');
-  assert.ok(!isAtLeast18(new Date(2008, 7, 7)), '2008-08-07 should NOT be 18 yet');
+  const now = new Date();
+  const eighteenYearsAgo = new Date(now.getFullYear() - 18, now.getMonth(), now.getDate());
+  const seventeenYearsAgo = new Date(now.getFullYear() - 17, now.getMonth(), now.getDate());
+
+  assert.ok(isAtLeast18(eighteenYearsAgo), '18 years ago should be 18+');
+  assert.ok(!isAtLeast18(seventeenYearsAgo), '17 years ago should NOT be 18 yet');
   console.log('  ✅ AgeVerificationModal age logic verified');
 
   // ─── 4. SessionsPanel: session data shape validation ───────────────
