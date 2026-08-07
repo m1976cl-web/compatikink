@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
+import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
 
 interface DSContract {
   id: string;
@@ -23,6 +24,8 @@ interface DSContract {
   hardLimits: string[];
   safewords: { red: string; yellow: string; green: string };
   isSigned: boolean;
+  signature?: string;
+  signedAt?: string;
 }
 
 const DEFAULT_CONTRACT: DSContract = {
@@ -44,16 +47,32 @@ export default function ContractsScreen() {
   const [contract, setContract] = useState<DSContract>(DEFAULT_CONTRACT);
   const [signature, setSignature] = useState('');
 
-  const handleSignContract = () => {
+  // Load saved contract on mount
+  useEffect(() => {
+    readJsonStorage<DSContract | null>('ds_signed_contracts_v1', null).then((saved: DSContract | null) => {
+      if (saved) setContract(saved);
+    });
+  }, []);
+
+  const handleSignContract = async () => {
     if (!signature.trim()) {
       Alert.alert('Firma requerida ✍️', 'Ingresa tus iniciales o nombre para ratificar digitalmente el acuerdo.');
       return;
     }
 
-    setContract({ ...contract, isSigned: true });
+    const updatedContract: DSContract = {
+      ...contract,
+      isSigned: true,
+      signature: signature.trim(),
+      signedAt: new Date().toISOString().split('T')[0],
+    };
+
+    setContract(updatedContract);
+    await writeJsonStorage('ds_signed_contracts_v1', updatedContract);
+
     Alert.alert(
       '¡Contrato Firmado Digitalmente! 📜✍️',
-      `El acuerdo "${contract.title}" ha sido ratificado con éxito. Ambas partes conservan una copia cifrada en su Bóveda.`
+      `El acuerdo "${contract.title}" ha sido ratificado con éxito. Copia cifrada guardada en tu Bóveda.`
     );
   };
 

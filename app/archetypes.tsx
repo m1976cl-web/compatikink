@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -21,6 +21,7 @@ import {
 } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
 import { ARCHETYPE_QUESTIONS, calculateArchetypes, ArchetypeResult } from '@/lib/archetypes';
+import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
 
 const RESULT_ROWS: { key: keyof ArchetypeResult; label: string }[] = [
   { key: 'dominant', label: 'Dominante' },
@@ -41,15 +42,30 @@ export default function ArchetypesScreen() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [result, setResult] = useState<ArchetypeResult | null>(null);
 
-  const handleSelectOption = (optionIdx: number) => {
+  // Load saved archetype profile on mount
+  useEffect(() => {
+    readJsonStorage<ArchetypeResult | null>('user_kink_archetype_profile_v1', null).then((saved: ArchetypeResult | null) => {
+      if (saved) setResult(saved);
+    });
+  }, []);
+
+  const handleSelectOption = async (optionIdx: number) => {
     const nextAnswers = [...answers, optionIdx];
     setAnswers(nextAnswers);
 
     if (currentQ < ARCHETYPE_QUESTIONS.length - 1) {
       setCurrentQ(currentQ + 1);
     } else {
-      setResult(calculateArchetypes(nextAnswers));
+      const calculated = calculateArchetypes(nextAnswers);
+      setResult(calculated);
+      await writeJsonStorage('user_kink_archetype_profile_v1', calculated);
     }
+  };
+
+  const handleResetQuiz = () => {
+    setAnswers([]);
+    setCurrentQ(0);
+    setResult(null);
   };
 
   const handleShareResult = () => {
@@ -112,7 +128,12 @@ export default function ArchetypesScreen() {
                 })}
               </View>
 
-              <Button title="Compartir perfil" onPress={handleShareResult} style={{ marginTop: spacing.md }} />
+              <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.md }}>
+                <Button title="Compartir perfil" onPress={handleShareResult} style={{ flex: 1 }} />
+                <TouchableOpacity onPress={handleResetQuiz} style={styles.resetBtn}>
+                  <Text style={styles.resetBtnText}>🔄 Repetir Test</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         </ScrollView>
@@ -181,4 +202,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   fill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
+  resetBtn: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radii.md,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  resetBtnText: {
+    fontFamily: fonts.bodySemi,
+    color: colors.text,
+    fontSize: fontSize.xs,
+  },
 });

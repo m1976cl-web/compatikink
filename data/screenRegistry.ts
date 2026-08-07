@@ -52,15 +52,16 @@ export const SCREEN_REGISTRY: Record<string, ScreenClassification> = {
   '/report':              { route: '/report',              status: 'ready' },
   '/security-audit':      { route: '/security-audit',      status: 'ready' },
   '/share':               { route: '/share',               status: 'ready' },
+  '/archetypes':          { route: '/archetypes',          status: 'ready' },
+  '/contracts':           { route: '/contracts',           status: 'ready' },
+  '/shibari-guide':       { route: '/shibari-guide',       status: 'ready' },
   '/task-economy':        { route: '/task-economy',        status: 'ready' },
 
-  // ═══ PREVIEW (23 screens) — Has UI, no real persistence ══════════
+  // ═══ PREVIEW (20 screens) — Has UI, no real persistence ══════════
   '/ai-roleplay':         { route: '/ai-roleplay',         status: 'preview', badge: '🚧 Beta' },
-  '/archetypes':          { route: '/archetypes',          status: 'preview', badge: '🚧 Beta' },
   '/astrology':           { route: '/astrology',           status: 'preview', badge: '🚧 Beta' },
   '/chastity':            { route: '/chastity',            status: 'preview', badge: '🚧 Beta' },
   '/communities':         { route: '/communities',         status: 'preview', badge: '🚧 Beta' },
-  '/contracts':           { route: '/contracts',           status: 'preview', badge: '🚧 Beta' },
   '/courses':             { route: '/courses',             status: 'preview', badge: '🚧 Beta' },
   '/events':              { route: '/events',              status: 'preview', badge: '🚧 Beta' },
   '/glossary':            { route: '/glossary',            status: 'preview', badge: '🚧 Beta' },
@@ -72,7 +73,6 @@ export const SCREEN_REGISTRY: Record<string, ScreenClassification> = {
   '/playlists':           { route: '/playlists',           status: 'preview', badge: '🚧 Beta' },
   '/quick-start-bundle':  { route: '/quick-start-bundle',  status: 'preview', badge: '🚧 Beta' },
   '/safety-guide':        { route: '/safety-guide',        status: 'preview', badge: '🚧 Beta' },
-  '/shibari-guide':       { route: '/shibari-guide',       status: 'preview', badge: '🚧 Beta' },
   '/store':               { route: '/store',               status: 'preview', badge: '🚧 Beta' },
   '/truth-or-dare':       { route: '/truth-or-dare',       status: 'preview', badge: '🚧 Beta' },
   '/weekly-challenge':    { route: '/weekly-challenge',     status: 'preview', badge: '🚧 Beta' },

@@ -22,6 +22,8 @@ import {
 import { NerveSafetyCard } from '@/components/shibari/NerveSafetyCard';
 import { KnotInstructionStepper } from '@/components/shibari/KnotInstructionStepper';
 
+import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
+
 export default function ShibariGuideScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
@@ -35,10 +37,26 @@ export default function ShibariGuideScreen() {
   // Knot Library Stepper State
   const [selectedKnot, setSelectedKnot] = useState<ShibariKnot | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [favoriteKnots, setFavoriteKnots] = useState<string[]>([]);
 
   // Tension Safety Timer State
   const [timerSeconds, setTimerSeconds] = useState(10 * 60); // Default 10 min
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+
+  // Load persistent favorite knots from ZK Vault / AsyncStorage
+  useEffect(() => {
+    readJsonStorage<string[]>('shibari_favorite_knots_v1', []).then((saved: string[]) => {
+      if (Array.isArray(saved)) setFavoriteKnots(saved);
+    });
+  }, []);
+
+  const toggleFavoriteKnot = async (knotId: string) => {
+    const next = favoriteKnots.includes(knotId)
+      ? favoriteKnots.filter((id) => id !== knotId)
+      : [...favoriteKnots, knotId];
+    setFavoriteKnots(next);
+    await writeJsonStorage('shibari_favorite_knots_v1', next);
+  };
 
   useEffect(() => {
     let interval: any = null;
@@ -152,7 +170,18 @@ export default function ShibariGuideScreen() {
                         setCurrentStepIndex(0);
                       }}
                     >
-                      <Text style={styles.knotName}>{knot.name} ({knot.japaneseName})</Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={styles.knotName}>{knot.name} ({knot.japaneseName})</Text>
+                        <TouchableOpacity
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            toggleFavoriteKnot(knot.id);
+                          }}
+                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        >
+                          <Text style={{ fontSize: 16 }}>{favoriteKnots.includes(knot.id) ? '⭐' : '☆'}</Text>
+                        </TouchableOpacity>
+                      </View>
                       <Text style={styles.knotDescPreview}>{knot.description}</Text>
                       <Text style={styles.knotStepsBadge}>📖 Ver {knot.steps.length} Pasos ➔</Text>
                     </TouchableOpacity>
