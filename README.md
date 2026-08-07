@@ -65,7 +65,11 @@ pnpm run build:web
 ## 📚 Documentación del Proyecto
 
 - [`PROJECT.md`](./PROJECT.md) — Visión del producto, arquitectura y estado de desarrollo.
-- [`ROADMAP.md`](./ROADMAP.md) — Plan de desarrollo de Horizontes 1–3 y checklist de refactorización.
-- [`ANTIGRAVITY.md`](./ANTIGRAVITY.md) — Guía de handoff para desarrolladores y agentes IA (convenciones, stack y guardrails).
-- [`docs/SUPABASE_HARDENING.md`](./docs/SUPABASE_HARDENING.md) — Hardening de base de datos, RPCs, rate limits y caducidad de sesiones.
+- [`ROADMAP.md`](./ROADMAP.md) — Plan de desarrollo de Horizontes 1–3 y checklist A/C + siguientes pasos.
+- [`AGENTS.md`](./AGENTS.md) — Handoff corto para agentes de IA (guardrails y comandos).
+- [`ANTIGRAVITY.md`](./ANTIGRAVITY.md) — Guía ampliada de handoff (stack, sagrados, pendientes).
+- [`ANTIGRAVITY_PROMPT.md`](./ANTIGRAVITY_PROMPT.md) — **Texto listo para pegar** en Antigravity.
+- [`docs/IMPROVEMENT_REVIEW.md`](./docs/IMPROVEMENT_REVIEW.md) — Revisión de ideas de mejora priorizadas.
+- [`docs/SUPABASE_HARDENING.md`](./docs/SUPABASE_HARDENING.md) — Hardening de base de datos, RPCs, rate limits y caducidad.
+- [`docs/THREAT_MODEL.md`](./docs/THREAT_MODEL.md) — Modelo de amenazas zero-knowledge.
 - [`PLAN_REFACTOR.md`](./PLAN_REFACTOR.md) — Plan de refactorización del Dashboard y arquitectura Zustand.

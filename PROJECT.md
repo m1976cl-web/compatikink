@@ -44,3 +44,13 @@ CompatKink es una plataforma privacy-first enfocada en permitir a parejas o indi
 | **Lote B — CI/CD & Tests** | GitHub Actions (`ci.yml`, `audit.yml`) y 12 suites de prueba integradas | `DONE` ✅ |
 | **Tier 1 — Proxy IA & Audit** | Edge Function Gemini, clasificación Screen Registry, analytics Plausible | `DONE` ✅ |
 | **Tier 2 — Modo Office & Aftercare** | Tema Claro / Excel Disguise, Protocolo Aftercare 3 fases, Deep Links QR, i18n Actividades | `DONE` ✅ |
+| **Docs handoff Antigravity** | `AGENTS.md`, `ANTIGRAVITY_PROMPT.md`, `docs/IMPROVEMENT_REVIEW.md`, roadmap alineado | `DONE` ✅ |
+
+### Siguiente (P0 / P1) — ver `ROADMAP.md`
+
+1. Unificar defaults de caducidad y tablas de rate-limit entre `schema.sql` y `migrations/001_hardening.sql`.
+2. Feature flags MVP vs módulos Beta.
+3. Deep links HTTPS + cuestionario express.
+4. Split de `lib/storage.ts`.
+
+**Prompt Antigravity:** pegar el bloque de [`ANTIGRAVITY_PROMPT.md`](./ANTIGRAVITY_PROMPT.md).
