@@ -28,6 +28,7 @@ export interface DbSession {
   initiator_ciphertext: string;
   guest_ciphertext: string | null;
   status: SessionStatus;
+  expires_at?: string | null;
   created_at: string;
   completed_at: string | null;
 }
@@ -50,6 +51,7 @@ function mapSession(row: DbSession, extras?: Partial<Session>): Session {
     status: row.status,
     createdAt: row.created_at,
     completedAt: row.completed_at ?? undefined,
+    expiresAt: row.expires_at ?? extras?.expiresAt,
     inviteSecret: extras?.inviteSecret,
     sessionDekB64: extras?.sessionDekB64,
   };

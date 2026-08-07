@@ -1,63 +1,84 @@
 # Supabase Hardening & Security Architecture Specification
 
-Este documento especifica la arquitectura de endurecimiento de seguridad (hardening) implementada en Supabase para el proyecto **CompatKink**.
+Hardening unificado de Supabase para **CompatKink** (P0, 2026-08-07).
+
+**Fuente de verdad:** [`supabase/schema.sql`](../supabase/schema.sql)  
+**Bases ya desplegadas:** ejecutar [`supabase/migrations/001_hardening.sql`](../supabase/migrations/001_hardening.sql) (idempotente; alinea con schema).
 
 ---
 
-## 🛡️ Principios Criptográficos Zero-Knowledge
+## Principios Zero-Knowledge
 
-1. **Sin Plaintext en Servidor:** Supabase nunca recibe ni almacena textos planos, nombres, correos o respuestas de cuestionarios. Únicamente almacena blobs cifrados con el prefijo `ck1:`.
-2. **Tokens de Alta Entropía:** Los identificadores de sesión (`initiator_token`, `invite_secret`) se generan mediante generadores de números aleatorios criptográficamente seguros (`CSPRNG` con 256-bit de entropía).
-3. **UX vs Seguridad:** El `invite_code` de 6 caracteres es un atajo visual de conveniencia para la UX. La seguridad criptográfica real del canal asimétrico reside en la clave derivada `invite_secret` presente en el fragmento hash de la URL o QR.
+1. **Sin plaintext en servidor:** solo blobs `ck1:` (AES-GCM-256).
+2. **Tokens CSPRNG:** `initiator_token` e `invite_secret` se generan en cliente con `crypto.getRandomValues` (`lib/utils.ts`, `lib/cryptoVault.ts`).
+3. **Código de 6 chars = UX:** la seguridad del canal es el secreto `#k=` / DEK wrap, no el código corto.
+4. **Cliente sin SELECT abierto:** no hay `.from('sessions')` en el app; solo RPC con claim (invite code o initiator token).
 
 ---
 
-## 🗄️ Esquema de Base de Datos y Hardening SQL
+## Defaults canónicos (P0)
 
-### 1. Columna de Caducidad (`expires_at`)
-Todas las sesiones remotas creadas tienen un tiempo de vida máximo por defecto de **24 horas** (`NOW() + INTERVAL '24 hours'`).
+| Parámetro | Valor |
+|-----------|--------|
+| TTL sesión remota (`expires_at`) | **48 horas** al crear |
+| Rate limit canje invite | **20** intentos / **15 min** (por código o IP, tabla `invite_attempts`) |
+| Rate limit create sesión | **30** / hora por token (`rpc_rate_limits`, bucket `create:…`) |
+| Rate limit get por token | **60** / 15 min (`token:…`) |
+| Rate limit guest submit | **5** / hora por código (`submit:…`) + un solo `status=waiting→complete` |
+
+Tablas de rate limit:
+
+- `invite_attempts` — log de intentos guest (código + IP + timestamp)
+- `rpc_rate_limits` — contadores por bucket (`check_and_increment_rate_limit`)
+
+---
+
+## RPCs (SECURITY DEFINER)
+
+| RPC | Rol |
+|-----|-----|
+| `create_zk_session` | Insert ciphertext + `expires_at = now()+48h` |
+| `get_session_by_invite` | Guest; rate limit + rechaza expiradas |
+| `get_session_by_initiator_token` | Iniciador; rate limit por token |
+| `submit_guest_ciphertext` | Guest complete; rate limit + expires check |
+| `purge_user_session_by_token` | Derecho al olvido por token |
+| `purge_expired_sessions` | Limpieza de filas caducadas |
+
+RLS: SELECT solo con `request.compatikink.invite_code` o `initiator_token` vía `set_config` en la misma transacción RPC.
+
+---
+
+## Migración en proyecto existente
+
+1. SQL Editor de Supabase.
+2. Pegar y **Run** `supabase/migrations/001_hardening.sql`.
+3. Verificar:
 
 ```sql
-ALTER TABLE sessions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '24 hours');
+select column_name, column_default
+from information_schema.columns
+where table_name = 'sessions' and column_name = 'expires_at';
+
+select tablename from pg_tables
+where tablename in ('invite_attempts', 'rpc_rate_limits');
 ```
 
-### 2. Tabla de Rate Limiting (`rpc_rate_limits`)
-Control de tasa de peticiones pragmático a nivel de base de datos para prevenir ataques de fuerza bruta sobre códigos de invitación o denegación de servicio.
+4. Opcional: `select purge_expired_sessions();`
 
-```sql
-CREATE TABLE IF NOT EXISTS rpc_rate_limits (
-  bucket TEXT PRIMARY KEY,
-  hits INT NOT NULL DEFAULT 1,
-  window_start TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-```
+Proyecto **nuevo:** ejecutar `supabase/schema.sql` completo (incluye lo anterior).
 
 ---
 
-## ⚡ Funciones RPC Protegidas (SECURITY DEFINER)
+## Cliente TypeScript
 
-### `create_zk_session(...)`
-Crea una sesión cifrada remota con caducidad explícita.
-- **Límite de tasa:** Máximo 30 creaciones por hora por token iniciador.
-- **Parámetros:** `p_initiator_token`, `p_invite_code`, `p_ciphertext`, `p_expires_in_hours` (por defecto 24).
-
-### `get_session_by_invite(...)`
-Obtiene la sesión remota cifrada usando el código de 6 caracteres.
-- **Validación:** Rechaza automáticamente si `expires_at < NOW()` devolviendo un error explícito.
-- **Límite de tasa:** Máximo 30 intentos cada 15 minutos por código de invitación.
-
-### `submit_guest_ciphertext(...)`
-Envía las respuestas cifradas del invitado a la sesión.
-- **Validación:** Comprueba que la sesión no haya caducado y que su estado sea `pending`.
-- **Límite de tasa:** Máximo 5 intentos por código.
+- `lib/supabase.ts` — solo RPC; `refreshSession(token)` → `getSessionByToken`
+- `lib/utils.ts` — `generateToken()` / `generateInviteCode()` con CSPRNG (falla si no hay WebCrypto)
+- `lib/storage.ts` — reutiliza utils (sin `Date.now`+`Math.random` para tokens)
 
 ---
 
-## 🚀 Guía de Migración para Proyectos Supabase Existentes
+## Limitaciones honestas
 
-Si ya tienes un proyecto de Supabase desplegado y deseas aplicar este hardening:
-
-1. Abre el **SQL Editor** en tu panel de control de Supabase.
-2. Abre el archivo [`supabase/migrations/001_hardening.sql`](../supabase/migrations/001_hardening.sql).
-3. Copia todo su contenido y ejecútalo (**Run**).
-4. El script es **idempotente** (utiliza `IF NOT EXISTS` y `OR REPLACE`), por lo que no destruirá datos ni tablas existentes.
+- La IP de guest depende de que el cliente pase `p_client_ip` (hoy el RPC tiene default `0.0.0.0`). Rate limit por IP real robusto = Edge Function o proxy delante de Supabase.
+- El código de 6 caracteres sigue siendo enumerable en teoría; el secreto de invite y el rate limit mitigan abuso.
+- Tras cambiar SQL en el repo, hay que **re-aplicar** la migración en el proyecto Supabase de producción/staging.

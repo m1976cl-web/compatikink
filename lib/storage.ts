@@ -21,30 +21,10 @@ import {
   openWithKey,
   VAULT_VERSION,
 } from '@/lib/cryptoVault';
+import { generateInviteCode, generateToken } from '@/lib/utils';
 
 const TOKEN_KEY = 'initiator_token';
 const SESSIONS_KEY = 'local_sessions';
-
-function generateCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
-}
-
-function generateToken(): string {
-  try {
-    return generateInviteSecret();
-  } catch {
-    const bytes = new Uint8Array(24);
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-      crypto.getRandomValues(bytes);
-    }
-    return bytesToBase64(bytes).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
-  }
-}
 
 export async function saveInitiatorToken(token: string): Promise<void> {
   if (Platform.OS === 'web') {
@@ -92,7 +72,7 @@ export async function createLocalSession(
   expiresAt?: string
 ): Promise<Session> {
   const token = generateToken();
-  const inviteCode = generateCode();
+  const inviteCode = generateInviteCode();
   const inviteSecret = generateInviteSecret();
   const dekRaw = generateDataEncryptionKeyBytes();
   const dekWrapInvite = await wrapDek(dekRaw, inviteSecret);

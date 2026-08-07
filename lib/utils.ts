@@ -1,18 +1,37 @@
+/**
+ * Shared pure helpers (no React Native imports).
+ * Session tokens / invite codes use CSPRNG when available.
+ */
+
+const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+
+function randomBytes(length: number): Uint8Array {
+  const out = new Uint8Array(length);
+  const c = globalThis.crypto;
+  if (!c?.getRandomValues) {
+    throw new Error(
+      'WebCrypto getRandomValues no disponible: no se pueden generar tokens seguros.'
+    );
+  }
+  c.getRandomValues(out);
+  return out;
+}
+
+/** 6-char invite code (UX only — real security is inviteSecret / DEK wrap). */
 export function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = randomBytes(6);
   let code = '';
   for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
+    code += INVITE_CODE_ALPHABET[bytes[i]! % INVITE_CODE_ALPHABET.length];
   }
   return code;
 }
 
+/**
+ * High-entropy initiator / session token (CSPRNG).
+ * Format: hex(16 bytes) without predictable Date.now prefix.
+ */
 export function generateToken(): string {
-  const rand =
-    typeof globalThis.crypto?.getRandomValues === 'function'
-      ? Array.from(globalThis.crypto.getRandomValues(new Uint8Array(16)))
-          .map((b) => b.toString(16).padStart(2, '0'))
-          .join('')
-      : `${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
-  return `${Date.now().toString(36)}-${rand}`;
+  const bytes = randomBytes(24);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }

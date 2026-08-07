@@ -40,26 +40,27 @@ Horizonte 3 (futuro):  suite social real (solo con tracción del core)
 
 - [x] Tokens CSPRNG (`generateInviteSecret` / `crypto.getRandomValues`)  
 - [x] `expires_at` en sessions + checks en RPC  
-- [x] Rate limiting SQL (`invite_attempts` y/o `rpc_rate_limits` — **alinear schema vs migration**)  
+- [x] Rate limiting SQL (`invite_attempts` + `rpc_rate_limits`)  
 - [x] `refreshSession` RPC-only en `lib/supabase.ts`  
-- [ ] **P0 residual:** unificar default 24h vs 48h entre `schema.sql` y `001_hardening.sql` y documentar fuente de verdad  
-- [ ] **P0 residual:** smoke `tsc` + `test:vault:all` tras cualquier toque crypto/SQL  
+
+### P0 — Cierre y coherencia (2026-08-07)
+
+- [x] Unificar **48h** TTL en `schema.sql` y `migrations/001_hardening.sql`  
+- [x] Mismas RPCs + límites en ambos SQL (fuente de verdad = schema; migration alinea existentes)  
+- [x] Tokens/códigos: `lib/utils.ts` CSPRNG estricto; `storage.ts` reutiliza utils  
+- [x] Sin `.from('sessions')` en cliente (solo RPC)  
+- [x] Docs `docs/SUPABASE_HARDENING.md` actualizados  
+- [x] Smoke `tsc` + `test:vault:all` (ver CI / commit P0)  
 
 ---
 
-## 🔮 Siguiente para Antigravity (orden recomendado)
-
-### P0 — Cierre y coherencia
-1. Auditoría tokens: ningún `Date.now`+`Math.random` para `initiator_token`.  
-2. Ningún `.from('sessions').select` sin claim en cliente.  
-3. Alinear schema/migration de caducidad y rate-limit tables.  
-4. Smoke tests.
+## 🔮 Siguiente (orden recomendado)
 
 ### P1 — Core producto
-5. Feature flags MVP vs Beta (`data/homeModules.ts` / `ModuleGrid`).  
-6. Cuestionario express + reanudar.  
-7. Deep links HTTPS + fallback web `#k=`.  
-8. Reporte accionable (guión + export unificado).
+1. Feature flags MVP vs Beta (`data/homeModules.ts` / `ModuleGrid`).  
+2. Cuestionario express + reanudar.  
+3. Deep links HTTPS + fallback web `#k=`.  
+4. Reporte accionable (guión + export unificado).
 
 ### P2 — Ingeniería
 9. Split `lib/storage.ts`.  
