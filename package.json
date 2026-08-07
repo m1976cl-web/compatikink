@@ -14,7 +14,8 @@
     "test:integration": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/integration.flow.test.ts",
     "test:i18n": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/i18n.test.ts",
     "test:gemini": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/geminiAssistant.test.ts",
-    "test:vault:all": "pnpm run test:vault && pnpm run test:vault:rotation && pnpm run test:vault:canary && pnpm run test:compatibility && pnpm run test:integration && pnpm run test:i18n && pnpm run test:gemini",
+    "test:notifications": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/localNotifications.test.ts",
+    "test:vault:all": "pnpm run test:vault && pnpm run test:vault:rotation && pnpm run test:vault:canary && pnpm run test:compatibility && pnpm run test:integration && pnpm run test:i18n && pnpm run test:gemini && pnpm run test:notifications",
     "build:web": "expo export --platform web && node scripts/prepare-gh-pages.js",
     "predeploy": "npm run build:web",
     "deploy": "gh-pages -d dist --dotfiles"
