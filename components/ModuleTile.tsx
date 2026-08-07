@@ -24,6 +24,8 @@ interface ModuleTileProps {
   children?: ReactNode;
   /** Stagger index for entrance animation delay */
   index?: number;
+  /** Status badge text (e.g., '🚧 Beta') */
+  badge?: string;
 }
 
 /**
@@ -39,6 +41,7 @@ export function ModuleTile({
   style,
   children,
   index = 0,
+  badge,
 }: ModuleTileProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -136,6 +139,7 @@ export function ModuleTile({
           ) : null}
           <View style={styles.copy}>
             <Text style={styles.title} numberOfLines={1}>{title}</Text>
+            {badge ? <Text style={styles.badge}>{badge}</Text> : null}
             {description ? <Text style={styles.description} numberOfLines={2}>{description}</Text> : null}
             {children}
           </View>
@@ -205,5 +209,17 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 22,
     opacity: 0.7,
+  },
+  badge: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.primary,
+    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+    borderRadius: radii.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
+    marginTop: 2,
   },
 });

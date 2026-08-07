@@ -7,6 +7,7 @@ import { CategoryTabs, CategoryTab } from '@/components/CategoryTabs';
 import { useHomeStore } from '@/lib/stores/useHomeStore';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { STATIC_MODULES, ACCENT_COLORS, CATEGORY_TABS } from '@/data/homeModules';
+import { isScreenVisible, getScreenBadge } from '@/data/screenRegistry';
 import { useResponsive } from '@/hooks/useResponsive';
 import { exportUserDataJSON, importUserDataJSON } from '@/lib/storage';
 
@@ -100,7 +101,8 @@ export function ModuleGrid({
   );
 
   const filteredModules = useMemo(() => {
-    let list = allModules;
+    // First filter out STUB screens (hidden from navigation)
+    let list = allModules.filter((m) => !m.route || isScreenVisible(m.route));
 
     // Filter by tab if search is empty
     if (!searchQuery.trim()) {
@@ -162,6 +164,7 @@ export function ModuleGrid({
               description={m.description}
               mark={m.mark}
               accent={ACCENT_COLORS[m.category] || colors.primary}
+              badge={m.route ? getScreenBadge(m.route) : undefined}
               onPress={m.onPress || (m.route ? go(m.route) : () => {})}
             />
           </View>

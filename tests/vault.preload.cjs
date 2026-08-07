@@ -46,6 +46,18 @@ module.exports = {
 `
 );
 
+const constantsStub = path.join(stubsDir, 'expo-constants.js');
+fs.writeFileSync(
+  constantsStub,
+  `module.exports = { default: { expoConfig: { extra: {} } }, expoConfig: { extra: {} } };`
+);
+
+const modulesCoreStub = path.join(stubsDir, 'expo-modules-core.js');
+fs.writeFileSync(
+  modulesCoreStub,
+  `module.exports = { NativeModule: class {}, requireNativeModule: () => ({}) };`
+);
+
 const originalResolveFilename = Module._resolveFilename;
 Module._resolveFilename = function (request, parent, isMain, options) {
   if (
@@ -56,6 +68,12 @@ Module._resolveFilename = function (request, parent, isMain, options) {
   }
   if (request === 'expo-secure-store' || request.endsWith('expo-secure-store')) {
     return secureStub;
+  }
+  if (request === 'expo-constants' || request.endsWith('expo-constants')) {
+    return constantsStub;
+  }
+  if (request === 'expo-modules-core' || request.endsWith('expo-modules-core')) {
+    return modulesCoreStub;
   }
   if (request === 'react-native' || request.startsWith('react-native/')) {
     return originalResolveFilename.call(this, 'react-native-web', parent, isMain, options);

@@ -1,12 +1,26 @@
 import { getCurrentLocale } from './i18n';
 
+// Safe check for Supabase URL in environment without forcing top-level module load of native packages in Node.js
+function checkSupabaseConfigured(): boolean {
+  return Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
+}
+
 export interface AssistantMessage {
   role: 'user' | 'model';
   content: string;
   timestamp: string;
 }
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMINI_DIRECT_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+
+/**
+ * Supabase Edge Function proxy URL.
+ * When Supabase is configured, we route through this proxy so the API key
+ * never touches the client bundle. The proxy adds the key server-side.
+ */
+const GEMINI_PROXY_URL = process.env.EXPO_PUBLIC_SUPABASE_URL
+  ? `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/gemini-proxy`
+  : '';
 
 const SYSTEM_INSTRUCTION = `
 Eres la IA de Asistencia Íntima y Consentimiento de CompatKink (plataforma de compatibilidad BDSM, fetichismo y sexualidad consciente).
@@ -18,15 +32,55 @@ Principios clave:
 5. Responde siempre en el idioma solicitado por el usuario (Español por defecto).
 `.trim();
 
+// ─── Client-side rate limiter (30 requests / hour) ───────────────────
+const CLIENT_RATE_LIMIT = 30;
+const CLIENT_RATE_WINDOW_MS = 3600_000; // 1 hour
+let _requestCount = 0;
+let _windowStart = Date.now();
+
+function isClientRateLimited(): boolean {
+  const now = Date.now();
+  if (now - _windowStart > CLIENT_RATE_WINDOW_MS) {
+    _requestCount = 0;
+    _windowStart = now;
+  }
+  if (_requestCount >= CLIENT_RATE_LIMIT) return true;
+  _requestCount++;
+  return false;
+}
+
+// ─── Debounce guard (2s minimum between requests) ────────────────────
+let _lastRequestTime = 0;
+const DEBOUNCE_MS = 2000;
+
 export async function askGeminiAssistant(
   prompt: string,
   chatHistory: AssistantMessage[] = [],
   customApiKey?: string
 ): Promise<string> {
-  const apiKey = customApiKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+  // Debounce: reject if called within 2s of last request
+  const now = Date.now();
+  if (now - _lastRequestTime < DEBOUNCE_MS) {
+    return generateSyntheticResponse(prompt);
+  }
+  _lastRequestTime = now;
 
-  if (!apiKey) {
-    // Fallback asistencial sintético cuando no se configura clave API
+  // Client-side rate limit
+  if (isClientRateLimited()) {
+    const locale = getCurrentLocale();
+    return locale === 'en'
+      ? '⚠️ Rate limit reached (30 requests/hour). Please try again later.'
+      : '⚠️ Límite de consultas alcanzado (30/hora). Intenta de nuevo más tarde.';
+  }
+
+  // Determine which endpoint to use:
+  // 1. Proxy (preferred): Supabase Edge Function hides the API key server-side
+  // 2. Direct (fallback): User-provided key in RAM (never persisted)
+  // 3. Synthetic: No key available, use local fallback responses
+  const useProxy = checkSupabaseConfigured() && GEMINI_PROXY_URL;
+  const directApiKey = customApiKey || '';
+
+  if (!useProxy && !directApiKey) {
     return generateSyntheticResponse(prompt);
   }
 
@@ -42,20 +96,34 @@ export async function askGeminiAssistant(
       },
     ];
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: SYSTEM_INSTRUCTION }],
-        },
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 800,
-        },
-      }),
-    });
+    const requestBody = {
+      system_instruction: {
+        parts: [{ text: SYSTEM_INSTRUCTION }],
+      },
+      contents,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 800,
+      },
+    };
+
+    let response: Response;
+
+    if (useProxy) {
+      // Route through Supabase Edge Function proxy (API key stays server-side)
+      response = await fetch(GEMINI_PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+    } else {
+      // Direct call with user-provided RAM-only key (never from EXPO_PUBLIC_*)
+      response = await fetch(`${GEMINI_DIRECT_URL}?key=${directApiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+    }
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
@@ -70,12 +138,12 @@ export async function askGeminiAssistant(
 
     return candidateText.trim();
   } catch (error: any) {
-    console.warn('Falló Gemini API HTTP, usando respuesta asistencial local:', error?.message);
+    console.warn('Falló Gemini API, usando respuesta asistencial local:', error?.message);
     return generateSyntheticResponse(prompt);
   }
 }
 
-function generateSyntheticResponse(userPrompt: string): string {
+export function generateSyntheticResponse(userPrompt: string): string {
   const lower = userPrompt.toLowerCase();
   const locale = getCurrentLocale();
 
