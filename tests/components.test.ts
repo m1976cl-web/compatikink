@@ -114,6 +114,43 @@ async function testComponentLogic() {
   await i18n.setLocale('es');
   assert.equal(i18n.getCurrentLocale(), 'es');
   console.log('  ✅ LanguageSelector i18n integration verified');
+
+  // ─── 8. Pass & Play: 36 Deep Intimacy Questions ───────────────────
+  console.log('\n8. Testing 36 Intimacy Questions content dataset...');
+  const { INTIMACY_QUESTIONS_36 } = await import('../data/intimacyQuestions');
+  assert.ok(Array.isArray(INTIMACY_QUESTIONS_36), 'INTIMACY_QUESTIONS_36 must be exported array');
+  assert.ok(INTIMACY_QUESTIONS_36.length >= 12, 'Must have at least 12 questions');
+  for (const q of INTIMACY_QUESTIONS_36) {
+    assert.ok(typeof q === 'string' && q.length > 15, 'Each question must be a meaningful string');
+  }
+  console.log(`  ✅ 36 Intimacy Questions dataset verified (${INTIMACY_QUESTIONS_36.length} questions)`);
+
+  // ─── 9. Screen Registry: 60+ routes mapped ───────────────────────
+  console.log('\n9. Testing Screen Registry classification...');
+  const { SCREEN_REGISTRY, SCREEN_STATS } = await import('../data/screenRegistry');
+  const screenKeys = Object.keys(SCREEN_REGISTRY);
+  assert.ok(screenKeys.length >= 60, `Must have >= 60 screens, got ${screenKeys.length}`);
+  assert.ok(SCREEN_STATS.ready >= 35, `Must have >= 35 READY screens, got ${SCREEN_STATS.ready}`);
+  console.log(`  ✅ Screen Registry verified (${screenKeys.length} screens, ${SCREEN_STATS.ready} READY)`);
+
+  // ─── 10. Data Stores: Custom Activities logic ─────────────────────
+  console.log('\n10. Testing Custom Activities data store...');
+  const activitiesStore = await import('../data/activities');
+  assert.ok(typeof activitiesStore.getAllActivities === 'function');
+  assert.ok(typeof activitiesStore.getActivityById === 'function');
+  const allActs = activitiesStore.getAllActivities();
+  assert.ok(allActs.length >= 80, `Must have >= 80 activities, got ${allActs.length}`);
+  assert.ok(activitiesStore.getActivityById('pe_d/s_dynamic'), 'Must find pe_d/s_dynamic');
+  console.log(`  ✅ Custom Activities store verified (${allActs.length} total activities)`);
+
+  // ─── 11. Data Stores: Manual Bookmarks logic ──────────────────────
+  console.log('\n11. Testing Manual Bookmarks ZK storage exports...');
+  const manualData = await import('../data/manualData');
+  assert.ok(typeof manualData.loadManualBookmarks === 'function');
+  assert.ok(typeof manualData.toggleManualBookmark === 'function');
+  assert.ok(Array.isArray(manualData.MANUAL_MODULES), 'MANUAL_MODULES must be array');
+  assert.ok(manualData.MANUAL_MODULES.length >= 20, 'Must have >= 20 manual modules');
+  console.log(`  ✅ Manual Bookmarks & Modules verified (${manualData.MANUAL_MODULES.length} modules)`);
 }
 
 testComponentLogic()
