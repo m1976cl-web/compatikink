@@ -32,9 +32,12 @@ export function QuickInviteForm({ invite }: QuickInviteFormProps) {
           onChangeText={invite.setQuickGuestNotes}
           multiline
         />
+        <Text style={styles.expiryHint}>
+          Remoto (Supabase): caducidad fija 48 h. Local: usa el chip elegido.
+        </Text>
         <View style={styles.expiryRow}>
           {[
-            { label: '24 h', value: '24h' as const },
+            { label: '48 h', value: '48h' as const },
             { label: '7 días', value: '7d' as const },
             { label: 'Sin límite', value: 'none' as const },
           ].map((opt) => (
@@ -90,6 +93,12 @@ const styles = StyleSheet.create({
   },
   textArea: { minHeight: 72, textAlignVertical: 'top' },
   label: { ...typography.label, marginBottom: -4 },
+  expiryHint: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    lineHeight: 16,
+  },
   expiryRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },
   expiryChip: {
     paddingVertical: spacing.xs,

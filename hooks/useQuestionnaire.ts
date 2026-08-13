@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { ActivityResponse, Rating, RolePreference, ActivityCategory, Activity, DifficultyLevel } from '@/types';
-import { ACTIVITIES, getAllActivities } from '@/data/activities';
+import { getAllActivities } from '@/data/activities';
 
 const defaultResponse = (activityId: string): ActivityResponse => ({
   activityId,
@@ -14,13 +14,18 @@ export function useQuestionnaire(
   enabledCategories?: ActivityCategory[],
   customs?: Activity[],
   difficultyFilter?: DifficultyLevel | 'all',
-  searchQuery?: string
+  searchQuery?: string,
+  /** When set, only these activity IDs are asked (express / curated sets). */
+  activityIdFilter?: string[] | null
 ) {
   const allActs = useMemo(() => getAllActivities(customs), [customs]);
 
   const filteredActivities = useMemo(() => {
     let result = allActs;
-    if (enabledCategories && enabledCategories.length > 0) {
+    if (activityIdFilter && activityIdFilter.length > 0) {
+      const allow = new Set(activityIdFilter);
+      result = result.filter((a) => allow.has(a.id));
+    } else if (enabledCategories && enabledCategories.length > 0) {
       result = result.filter((a) => enabledCategories.includes(a.category));
     }
     if (difficultyFilter && difficultyFilter !== 'all') {
@@ -33,14 +38,18 @@ export function useQuestionnaire(
       );
     }
     return result;
-  }, [enabledCategories, allActs, difficultyFilter, searchQuery]);
+  }, [enabledCategories, allActs, difficultyFilter, searchQuery, activityIdFilter]);
 
   const [responses, setResponses] = useState<Record<string, ActivityResponse>>(() => {
     const map: Record<string, ActivityResponse> = {};
     for (const activity of allActs) {
       const existing = initial?.find((r) => r.activityId === activity.id);
-      // If category is disabled, force it to not_interested
-      if (enabledCategories && enabledCategories.length > 0 && !enabledCategories.includes(activity.category)) {
+      if (
+        !activityIdFilter?.length &&
+        enabledCategories &&
+        enabledCategories.length > 0 &&
+        !enabledCategories.includes(activity.category)
+      ) {
         map[activity.id] = {
           activityId: activity.id,
           rating: 'not_interested',
@@ -58,9 +67,22 @@ export function useQuestionnaire(
 
   useEffect(() => {
     setCurrentIndex((prev) => Math.min(prev, Math.max(0, filteredActivities.length - 1)));
-  }, [enabledCategories, filteredActivities.length]);
+  }, [enabledCategories, filteredActivities.length, activityIdFilter]);
+
+  // Hydrate from initial when draft loads after mount
+  useEffect(() => {
+    if (!initial?.length) return;
+    setResponses((prev) => {
+      const next = { ...prev };
+      for (const r of initial) {
+        next[r.activityId] = r;
+      }
+      return next;
+    });
+  }, [initial]);
+
   const currentActivity = filteredActivities[currentIndex] || allActs[0];
-  const currentResponse = responses[currentActivity.id];
+  const currentResponse = responses[currentActivity?.id];
 
   const updateCurrent = useCallback(
     (patch: Partial<ActivityResponse>) => {
@@ -119,6 +141,7 @@ export function useQuestionnaire(
     currentActivity,
     currentResponse,
     currentIndex,
+    setCurrentIndex,
     total: filteredActivities.length,
     progress,
     setRating,

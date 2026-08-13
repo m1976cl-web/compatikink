@@ -60,7 +60,9 @@ export async function createSession(
   nickname: string,
   responses: ActivityResponse[],
   privateGuestNotes?: GuestProfile,
-  initiatorProfile?: UserProfile
+  initiatorProfile?: UserProfile,
+  /** Local TTL hint. Remote ZK sessions always use server 48h default. */
+  expiresAt?: string
 ): Promise<Session> {
   const inviteSecret = generateInviteSecret();
   const dekRaw = generateDataEncryptionKeyBytes();
@@ -99,7 +101,7 @@ export async function createSession(
     await persistLocalDekMirror(session);
     await saveInitiatorToken(token);
   } else {
-    session = await createLocalSession(nickname, responses, initiatorProfile);
+    session = await createLocalSession(nickname, responses, initiatorProfile, expiresAt);
     // Local path already generates inviteSecret/DEK; ensure consistent
     if (!session.inviteSecret) {
       session.inviteSecret = inviteSecret;

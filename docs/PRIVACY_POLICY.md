@@ -10,7 +10,7 @@
 CompatKink es una plataforma de evaluación de compatibilidad y comunicación privada para personas adultas. Para entregar sus servicios, la aplicación procesa **datos de categoría especial** (preferencias íntimas, prácticas BDSM, safewords y límites de consentimiento).
 
 ### Principio de Cero-Conocimiento (Zero-Knowledge):
-- **Cifrado en Cliente**: Todos tus datos sensibles se cifran en tu propio dispositivo utilizando el algoritmo `AES-GCM-256` con claves derivadas mediante `PBKDF2-SHA-256` (100.000 iteraciones).
+- **Cifrado en Cliente**: Todos tus datos sensibles se cifran en tu propio dispositivo utilizando el algoritmo `AES-GCM-256` con claves derivadas mediante `PBKDF2-SHA-256` (310.000 iteraciones).
 - **Servidor Ciego**: La infraestructura de backend (Supabase) almacena únicamente textos cifrados de alta entropía (`ck1:...`). Ni los administradores ni terceros pueden leer tus respuestas o perfiles.
 
 ---
@@ -38,7 +38,7 @@ Tienes derecho a:
 
 - **Sesiones e Invitaciones**: Las sesiones de invitación expiran automáticamente tras **48 horas** de su creación.
 - **Códigos de Canje**: Invalidación automática al primer uso exitoso.
-- **Rate-Limiting**: Bloqueo temporal de 15 minutos ante 5 intentos fallidos consecutuivos.
+- **Rate-Limiting**: Bloqueo temporal de 15 minutos ante 20 intentos fallidos de canje de invitación (ver `docs/SUPABASE_HARDENING.md`).
 
 ---
 

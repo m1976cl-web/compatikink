@@ -24,7 +24,7 @@ Because intimate preferences represent **Special Category Data** under GDPR Arti
 
 ### 2.1 Key Derivation Function (KDF)
 - **Algorithm**: `PBKDF2` with `HMAC-SHA-256`.
-- **Iteration Count**: `100,000` iterations.
+- **Iteration Count**: `310,000` iterations.
 - **Salt**: 16-byte cryptographically secure random salt (`crypto.getRandomValues`) unique per profile.
 - **Output**: 256-bit AES-GCM Master Key (`CryptoKey`).
 
@@ -51,14 +51,14 @@ When an initiator generates an invitation code:
 | **Network Eavesdropper (MITM)** | Intercepts HTTPS traffic | TLS 1.3 encryption in transit + payload-level `ck1:` AES-GCM double encryption. Intercepted payloads are useless without client-side key. | **NEGLIGIBLE** |
 | **Physical Device Theft (Locked App)** | Physical access to unlocked or locked device | Device storage only contains `ck1:` ciphertexts. Key is derived on demand from PIN. Auto-lock clears RAM key after 5 minutes of inactivity. | **LOW** |
 | **Coercion / Duress (Physical Forcing)** | Attacker forces user to enter PIN under threat | **Canary (Decoy) PIN**: Entering secondary decoy PIN unlocks a static, harmless synthetic environment without exposing real vault data or key existence. | **LOW** |
-| **Brute Force (6-Char Invite Code)** | Attacker guesses 6-char invitation token | Rate-limiting (5 attempts / 15 min), short 48-hour expiration window, and single-use claim invalidation. | **LOW** |
+| **Brute Force (6-Char Invite Code)** | Attacker guesses 6-char invitation token | Rate-limiting (20 attempts / 15 min), short 48-hour expiration window, invite secret `#k=`, and single-use claim invalidation. | **LOW** |
 
 ---
 
 ## 4. Key Management Lifecycle
 
 ```
-[User PIN Input] ──> PBKDF2 (100k iterations) ──> Master CryptoKey (RAM Only)
+[User PIN Input] ──> PBKDF2 (310k iterations) ──> Master CryptoKey (RAM Only)
                                                        │
                                  ┌─────────────────────┴─────────────────────┐
                                  ▼                                           ▼

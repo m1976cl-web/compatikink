@@ -1,15 +1,14 @@
-import { useMemo } from 'react';
-import { View, TextInput, ScrollView, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
+import { useMemo, useEffect } from 'react';
+import { View, TextInput, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as Clipboard from 'expo-clipboard';
 import { ModuleTile } from '@/components/ModuleTile';
-import { CategoryTabs, CategoryTab } from '@/components/CategoryTabs';
+import { CategoryTabs } from '@/components/CategoryTabs';
 import { useHomeStore } from '@/lib/stores/useHomeStore';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { STATIC_MODULES, ACCENT_COLORS, CATEGORY_TABS } from '@/data/homeModules';
 import { isScreenVisible, getScreenBadge } from '@/data/screenRegistry';
+import { isMvpMode, MVP_MODULE_CATEGORIES, MVP_CORE_ROUTES } from '@/lib/featureFlags';
 import { useResponsive } from '@/hooks/useResponsive';
-import { exportUserDataJSON, importUserDataJSON } from '@/lib/storage';
 
 export type ModuleDef = {
   title: string;
@@ -29,6 +28,35 @@ interface ModuleGridProps {
   onShowA11yModal?: () => void;
 }
 
+const MVP_SUITE_BLOCK = new Set([
+  '/dating',
+  '/astrology',
+  '/admin-dashboard',
+  '/security-audit',
+  '/fantasy-match',
+  '/poly-group',
+  '/partner-chat',
+  '/partner-journal',
+  '/private-album',
+  '/premium',
+  '/achievements',
+  '/analytics',
+  '/blue-pages',
+  '/task-economy',
+  '/contracts',
+  '/negotiation',
+  '/calendar',
+  '/gear-closet',
+  '/live-scene',
+  '/kink-roulette',
+  '/daily-submissive-act',
+  '/shibari-guide',
+  '/quick-start-bundle',
+  '/pegging',
+  '/events-munches',
+  '/admin',
+]);
+
 export function ModuleGrid({
   activeTab,
   onChangeTab,
@@ -40,56 +68,30 @@ export function ModuleGrid({
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const vaultUnlocked = useHomeStore((s) => s.vaultUnlocked);
-  const loadHomeData = useHomeStore((s) => s.loadHomeData);
 
-  const handleBackup = () => {
-    const askPassphrase = (title: string): string | null => {
-      if (typeof globalThis !== 'undefined' && 'prompt' in globalThis) {
-        return (globalThis as unknown as { prompt: (m: string) => string | null }).prompt(title);
-      }
-      return null;
-    };
-    Alert.alert('Copia de seguridad cifrada', 'Backups con PBKDF2 + AES-GCM.', [
-      {
-        text: 'Exportar',
-        onPress: async () => {
-          const passphrase = askPassphrase('Contraseña para cifrar el backup (mín. 4):');
-          if (!passphrase || passphrase.length < 4) {
-            Alert.alert('Cancelado', 'Se requiere contraseña.');
-            return;
-          }
-          try {
-            const json = await exportUserDataJSON(passphrase);
-            await Clipboard.setStringAsync(json);
-            Alert.alert('Backup listo', 'Ciphertext copiado. Guarda también tu contraseña.');
-          } catch (e: any) {
-            Alert.alert('Error', e?.message || 'No se pudo exportar.');
-          }
-        },
-      },
-      {
-        text: 'Importar',
-        onPress: async () => {
-          const str = await Clipboard.getStringAsync();
-          const passphrase = askPassphrase('Contraseña del backup (si está cifrado):') || undefined;
-          try {
-            const count = await importUserDataJSON(str, passphrase);
-            Alert.alert('Restaurado', `Se restauraron ${count} registros locales.`);
-            await loadHomeData();
-          } catch (e: any) {
-            Alert.alert('Error', e?.message || 'Backup inválido o contraseña incorrecta.');
-          }
-        },
-      },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
-  };
+  const visibleTabs = useMemo(() => {
+    if (!isMvpMode) return CATEGORY_TABS;
+    return CATEGORY_TABS.filter((t) => MVP_MODULE_CATEGORIES.has(t.key));
+  }, []);
+
+  useEffect(() => {
+    if (isMvpMode && !visibleTabs.some((t) => t.key === activeTab)) {
+      onChangeTab('explore');
+    }
+  }, [activeTab, onChangeTab, visibleTabs]);
 
   const go = (path: string) => () => router.push(path as any);
 
   const allModules: ModuleDef[] = useMemo(
     () => [
       ...STATIC_MODULES,
+      {
+        title: 'Cuestionario express',
+        description: '25 ítems · ~8 minutos · reanudable',
+        mark: '⚡',
+        category: 'explore',
+        onPress: () => router.push({ pathname: '/questionnaire', params: { mode: 'express' } } as any),
+      },
       { title: 'Bóveda Privada', description: 'Álbum de fotos cifrado AES-GCM', mark: '🖼️', category: 'vault', route: '/private-album' },
       { title: 'Cuenta & Bóveda', description: 'Acceso Zero-Knowledge', mark: '🔑', category: 'vault', route: '/auth' },
       { title: 'Backup Cifrado', description: 'Exportar / importar en JSON', mark: '📦', category: 'vault', route: '/backup' },
@@ -97,16 +99,24 @@ export function ModuleGrid({
       { title: 'Instalar App', description: 'PWA en el dispositivo', mark: '📱', category: 'vault', onPress: onShowPWAInstallModal },
       { title: 'Accesibilidad', description: 'Contraste y tipografía', mark: '♿', category: 'vault', onPress: onShowA11yModal },
     ],
-    [onShowPWAInstallModal, onShowA11yModal]
+    [onShowPWAInstallModal, onShowA11yModal, router]
   );
 
   const filteredModules = useMemo(() => {
-    // First filter out STUB screens (hidden from navigation)
-    let list = allModules.filter((m) => !m.route || isScreenVisible(m.route));
+    let list = allModules.filter((m) => {
+      if (m.route && !isScreenVisible(m.route)) return false;
+      if (!isMvpMode) return true;
+      if (!MVP_MODULE_CATEGORIES.has(m.category)) return false;
+      if (m.category === 'social' || m.category === 'ai' || m.category === 'scenes') return false;
+      if (!m.route) return true;
+      if (MVP_CORE_ROUTES.has(m.route)) return true;
+      if (MVP_SUITE_BLOCK.has(m.route)) return false;
+      return m.category === 'explore' || m.category === 'vault';
+    });
 
-    // Filter by tab if search is empty
     if (!searchQuery.trim()) {
-      list = list.filter((m) => m.category === activeTab);
+      const tab = visibleTabs.some((t) => t.key === activeTab) ? activeTab : 'explore';
+      list = list.filter((m) => m.category === tab);
     } else {
       const q = searchQuery.toLowerCase();
       list = list.filter(
@@ -116,16 +126,20 @@ export function ModuleGrid({
       );
     }
 
-    // Hide vault modules if vault is locked and active tab is vault
     if (activeTab === 'vault' && !vaultUnlocked && !searchQuery.trim()) {
-      return list.filter((m) => m.route === '/auth');
+      return list.filter((m) => m.route === '/auth' || m.route === '/backup');
     }
 
     return list;
-  }, [allModules, activeTab, searchQuery, vaultUnlocked]);
+  }, [allModules, activeTab, searchQuery, vaultUnlocked, visibleTabs]);
 
   return (
     <View style={styles.container}>
+      {isMvpMode ? (
+        <Text style={styles.mvpBanner}>
+          Modo MVP: cuestionario, invitación y reporte. Suite social/IA oculta (EXPO_PUBLIC_MVP=0 para verla).
+        </Text>
+      ) : null}
       <View style={styles.searchWrap}>
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
@@ -144,11 +158,7 @@ export function ModuleGrid({
       </View>
 
       {!searchQuery.trim() ? (
-        <CategoryTabs
-          tabs={CATEGORY_TABS}
-          activeKey={activeTab}
-          onTabChange={onChangeTab}
-        />
+        <CategoryTabs tabs={visibleTabs} activeKey={activeTab} onTabChange={onChangeTab} />
       ) : (
         <Text style={styles.searchLabel}>
           Resultados de búsqueda ({filteredModules.length}):
@@ -176,6 +186,13 @@ export function ModuleGrid({
 
 const styles = StyleSheet.create({
   container: { marginTop: spacing.xs },
+  mvpBanner: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    lineHeight: 16,
+    marginBottom: spacing.sm,
+  },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',

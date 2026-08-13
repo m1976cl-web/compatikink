@@ -43,6 +43,7 @@ import { useVaultSubscription } from '@/hooks/useVaultSubscription';
 import { useQuickInvite } from '@/hooks/useQuickInvite';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
+import { isMvpMode } from '@/lib/featureFlags';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -137,7 +138,7 @@ export default function HomeScreen() {
 
         <ProfileBar />
 
-        <FetishSuiteSection />
+        {!isMvpMode ? <FetishSuiteSection /> : null}
 
         {!profile ? (
           <GuestJoinSection

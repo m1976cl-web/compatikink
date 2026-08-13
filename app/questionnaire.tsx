@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   Switch,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { RatingPicker } from '@/components/RatingPicker';
@@ -35,6 +35,7 @@ import {
   Activity,
   ActivityMood,
   MOOD_LABELS,
+  ActivityResponse,
 } from '@/types';
 import { ActivityTooltipModal } from '@/components/ActivityTooltipModal';
 import { createSession } from '@/lib/sessions';
@@ -42,9 +43,16 @@ import { CATEGORY_ORDER, ACTIVITIES, getAllActivities, getCategoryLabel, getActi
 import { CustomActivityModal } from '@/components/CustomActivityModal';
 import { SwipeDeckView } from '@/components/SwipeDeckView';
 import { getCurrentProfile, saveProfile, getCustomActivities } from '@/lib/storage';
+import { EXPRESS_ACTIVITY_IDS, EXPRESS_COUNT } from '@/data/expressQuestionnaire';
+import {
+  loadQuestionnaireDraft,
+  saveQuestionnaireDraft,
+  clearQuestionnaireDraft,
+} from '@/lib/questionnaireDraft';
 
 export default function QuestionnaireScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ mode?: string }>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState('');
   const [pronouns, setPronouns] = useState('');
@@ -62,6 +70,13 @@ export default function QuestionnaireScreen() {
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyLevel | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [tooltipActivity, setTooltipActivity] = useState<Activity | null>(null);
+  const [questionnaireMode, setQuestionnaireMode] = useState<'full' | 'express'>(
+    params.mode === 'express' ? 'express' : 'full'
+  );
+  const [draftResponses, setDraftResponses] = useState<ActivityResponse[] | undefined>(undefined);
+  const [draftIndex, setDraftIndex] = useState(0);
+  const [hasDraft, setHasDraft] = useState(false);
+  const draftLoaded = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -75,9 +90,33 @@ export default function QuestionnaireScreen() {
       }
       const customs = await getCustomActivities();
       setCustomActivities(customs);
-    })();
-  }, []);
 
+      if (!draftLoaded.current) {
+        draftLoaded.current = true;
+        const draft = await loadQuestionnaireDraft();
+        if (draft?.responses?.length) {
+          setHasDraft(true);
+          if (draft.nickname) setNickname(draft.nickname);
+          if (draft.pronouns) setPronouns(draft.pronouns);
+          if (draft.experienceLevel) setExperienceLevel(draft.experienceLevel as ExperienceLevel);
+          if (draft.userNotes) setUserNotes(draft.userNotes);
+          if (draft.guestNickname) setGuestNickname(draft.guestNickname);
+          if (draft.guestNotes) setGuestNotes(draft.guestNotes);
+          if (draft.enabledCategories?.length) setEnabledCategories(draft.enabledCategories);
+          if (draft.difficultyFilter) setDifficultyFilter(draft.difficultyFilter);
+          if (draft.mode) setQuestionnaireMode(draft.mode);
+          setDraftResponses(draft.responses);
+          setDraftIndex(draft.currentIndex ?? 0);
+        }
+      }
+
+      if (params.mode === 'express') {
+        setQuestionnaireMode('express');
+      }
+    })();
+  }, [params.mode]);
+
+  const activityIdFilter = questionnaireMode === 'express' ? EXPRESS_ACTIVITY_IDS : null;
   const toggleCategory = (cat: ActivityCategory) => {
     setEnabledCategories((prev) => {
       if (prev.includes(cat)) {
@@ -138,12 +177,26 @@ export default function QuestionnaireScreen() {
         : undefined;
 
       const session = await createSession(name, finalResponses, privateGuestNotes, initiatorProfile);
+      await clearQuestionnaireDraft();
       router.replace({ pathname: '/invite', params: { token: session.initiatorToken } });
     } catch (e) {
       Alert.alert('Error', 'No se pudo guardar. Revisa tu conexión o configuración.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const startExpress = () => {
+    if (!nickname.trim()) {
+      Alert.alert('Nick requerido', 'Por favor ingresa tu nick para continuar.');
+      return;
+    }
+    setQuestionnaireMode('express');
+    setStep('questions');
+  };
+
+  const resumeDraft = () => {
+    setStep('questions');
   };
 
   if (step === 'intro') {
@@ -219,9 +272,18 @@ export default function QuestionnaireScreen() {
                 Alert.alert('Nick requerido', 'Por favor ingresa tu nick para continuar.');
                 return;
               }
+              setQuestionnaireMode('full');
               setStep('categories');
             }} 
           />
+          <Button
+            title={`Express · ${EXPRESS_COUNT} preguntas (~8 min)`}
+            variant="secondary"
+            onPress={startExpress}
+          />
+          {hasDraft ? (
+            <Button title="Reanudar borrador guardado" variant="ghost" onPress={resumeDraft} />
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     );
@@ -405,9 +467,23 @@ export default function QuestionnaireScreen() {
       customActivities={customActivities}
       difficultyFilter={difficultyFilter}
       searchQuery={searchQuery}
+      activityIdFilter={activityIdFilter}
+      initialResponses={draftResponses}
+      initialIndex={draftIndex}
+      questionnaireMode={questionnaireMode}
+      profileMeta={{
+        nickname,
+        pronouns,
+        experienceLevel,
+        userNotes,
+        guestNickname,
+        guestNotes,
+        enabledCategories,
+        difficultyFilter,
+      }}
       onFinish={handleFinish}
       loading={loading}
-      onBack={() => setStep('categories')}
+      onBack={() => setStep(questionnaireMode === 'express' ? 'intro' : 'categories')}
     />
   );
 }
@@ -419,6 +495,11 @@ function QuestionnaireActiveFlow({
   customActivities,
   difficultyFilter,
   searchQuery,
+  activityIdFilter,
+  initialResponses,
+  initialIndex,
+  questionnaireMode,
+  profileMeta,
   onFinish,
   loading,
   onBack,
@@ -428,15 +509,64 @@ function QuestionnaireActiveFlow({
   customActivities: Activity[];
   difficultyFilter: DifficultyLevel | 'all';
   searchQuery: string;
+  activityIdFilter: string[] | null;
+  initialResponses?: ActivityResponse[];
+  initialIndex?: number;
+  questionnaireMode: 'full' | 'express';
+  profileMeta: {
+    nickname: string;
+    pronouns: string;
+    experienceLevel?: ExperienceLevel;
+    userNotes: string;
+    guestNickname: string;
+    guestNotes: string;
+    enabledCategories: ActivityCategory[];
+    difficultyFilter: DifficultyLevel | 'all';
+  };
   onFinish: (responses: any[]) => void;
   loading: boolean;
   onBack: () => void;
 }) {
-  const q = useQuestionnaire(undefined, enabledCategories, customActivities, difficultyFilter, searchQuery);
+  const q = useQuestionnaire(
+    initialResponses,
+    enabledCategories,
+    customActivities,
+    difficultyFilter,
+    searchQuery,
+    activityIdFilter
+  );
   const [fastMode, setFastMode] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
   const [viewMode, setViewMode] = useState<'swipe' | 'list'>('swipe');
+  const hydratedIndex = useRef(false);
 
+  useEffect(() => {
+    if (!hydratedIndex.current && typeof initialIndex === 'number' && initialIndex > 0) {
+      hydratedIndex.current = true;
+      q.goTo(initialIndex);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot hydrate
+  }, [initialIndex]);
+
+  // Autosave draft (sealed when vault unlocked via writeJsonStorage)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      void saveQuestionnaireDraft({
+        nickname: profileMeta.nickname,
+        pronouns: profileMeta.pronouns,
+        experienceLevel: profileMeta.experienceLevel,
+        userNotes: profileMeta.userNotes,
+        guestNickname: profileMeta.guestNickname,
+        guestNotes: profileMeta.guestNotes,
+        enabledCategories: profileMeta.enabledCategories,
+        difficultyFilter: profileMeta.difficultyFilter,
+        mode: questionnaireMode,
+        currentIndex: q.currentIndex,
+        responses: Object.values(q.responses),
+      });
+    }, 700);
+    return () => clearTimeout(t);
+  }, [q.currentIndex, q.responses, questionnaireMode, profileMeta]);
   if (viewMode === 'swipe') {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
