@@ -95,17 +95,20 @@ export default function QuickProfileScreen() {
       Alert.alert('Nombre requerido', 'Ingresa un nick para continuar.');
       return;
     }
-    if (pin && pin.length < 4) {
-      Alert.alert('PIN inválido', 'El PIN debe tener al menos 4 dígitos.');
+    const pinValue = pin.trim();
+    if (pinValue.length < 4) {
+      Alert.alert('PIN requerido', 'El PIN debe tener al menos 4 dígitos para cifrar tu perfil.');
       return;
     }
 
     setSaving(true);
     try {
+      // Let "Guardando…" paint before PBKDF2 blocks the main thread (~310k iters).
+      await new Promise<void>((resolve) => setTimeout(resolve, 50));
+
       const finalResponses = Object.values(responses);
       const cleanNick = nickname.trim();
       const existing = await getProfile(cleanNick);
-      const pinValue = pin.trim();
 
       const createdBadges: FetishBadge[] = [
         { id: `role-${primaryRole}`, label: primaryRole, category: 'role', color: '#c084fc', icon: '🎭' },
@@ -126,15 +129,15 @@ export default function QuickProfileScreen() {
         baseResponses: finalResponses,
       };
 
-      if (!existing && pinValue.length >= 4) {
+      if (!existing) {
         const { registerProfile } = await import('@/lib/storage');
         await registerProfile({
           ...profilePayload,
           pin: pinValue,
           createdSessionIds: [],
           receivedSessionIds: [],
-        } as any);
-      } else if (existing && pinValue.length >= 4 && !existing.pinSalt) {
+        } as UserProfile);
+      } else if (!existing.pinSalt) {
         const { setupVaultForNewProfile, VAULT_VERSION } = await import('@/lib/cryptoVault');
         const meta = await setupVaultForNewProfile(cleanNick, pinValue);
         await saveProfile({
@@ -147,25 +150,29 @@ export default function QuickProfileScreen() {
         });
         await setCurrentProfile(cleanNick);
       } else {
+        const { loginProfile } = await import('@/lib/storage');
+        const unlocked = await loginProfile(existing.nickname, pinValue);
+        if (!unlocked) {
+          Alert.alert('PIN incorrecto', 'Ese nick ya tiene bóveda. Usa el PIN correcto o elige otro apodo.');
+          return;
+        }
         await saveProfile({
-          ...(existing || {}),
+          ...unlocked,
           ...profilePayload,
-          createdSessionIds: existing?.createdSessionIds ?? [],
-          receivedSessionIds: existing?.receivedSessionIds ?? [],
-        } as any);
+          createdSessionIds: unlocked.createdSessionIds ?? [],
+          receivedSessionIds: unlocked.receivedSessionIds ?? [],
+        });
         await setCurrentProfile(cleanNick);
       }
 
       const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
       await AsyncStorage.setItem('onboarding_done', 'true');
 
-      Alert.alert(
-        '¡Perfil Creado! 🎉',
-        `¡Bienvenido/a, ${cleanNick}! Tu perfil con insignias y protocolos de seguridad está listo.`,
-        [{ text: 'Continuar', onPress: () => router.replace('/') }]
-      );
-    } catch {
-      Alert.alert('Error', 'No se pudo guardar el perfil.');
+      // Web Alert ignores button onPress — navigate immediately after success.
+      router.replace('/');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'No se pudo guardar el perfil.';
+      Alert.alert('Error', message);
     } finally {
       setSaving(false);
     }
@@ -433,7 +440,7 @@ export default function QuickProfileScreen() {
           disabled={saving}
         >
           <Text style={styles.primaryBtnText}>
-            {saving ? 'Guardando...' : '¡Crear mi Perfil Cifrado! 🚀'}
+            {saving ? 'Cifrando bóveda (PBKDF2)…' : '¡Crear mi Perfil Cifrado! 🚀'}
           </Text>
         </TouchableOpacity>
       </ScrollView>

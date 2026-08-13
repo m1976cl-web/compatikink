@@ -243,11 +243,15 @@ interface ProfileSecrets {
   baseResponses?: ActivityResponse[];
   createdSessionIds?: string[];
   receivedSessionIds?: string[];
+  hardLimits?: string[];
+  softLimits?: string[];
+  bio?: string;
+  fetlifeHandle?: string;
 }
 
-/** Persist sensitive profile fields as ck1 when vault unlocked; keep public meta readable. */
-async function sealProfileSecrets(profile: UserProfile): Promise<UserProfile> {
-  const publicProfile: UserProfile = {
+/** Public / non-response fields kept readable while vault is locked. */
+function publicMetaFromProfile(profile: UserProfile): UserProfile {
+  return {
     nickname: profile.nickname,
     pinSalt: profile.pinSalt,
     pinVerifier: profile.pinVerifier,
@@ -255,13 +259,34 @@ async function sealProfileSecrets(profile: UserProfile): Promise<UserProfile> {
     isLocalAdmin: profile.isLocalAdmin,
     pronouns: profile.pronouns,
     experienceLevel: profile.experienceLevel,
+    role: profile.role,
+    safetyProtocols: profile.safetyProtocols,
+    safewords: profile.safewords,
+    fetishBadges: profile.fetishBadges,
+    verificationBadges: profile.verificationBadges,
+    location: profile.location,
+    avatarUrl: profile.avatarUrl,
+    supabaseUserId: profile.supabaseUserId,
+    autoLockTimeout: profile.autoLockTimeout,
+    duressMeta: profile.duressMeta,
+    secretsCipher: profile.secretsCipher,
   };
+}
+
+/** Persist sensitive profile fields as ck1 when vault unlocked; keep public meta readable. */
+async function sealProfileSecrets(profile: UserProfile): Promise<UserProfile> {
+  const publicProfile: UserProfile = publicMetaFromProfile(profile);
+  delete publicProfile.secretsCipher;
 
   const secrets: ProfileSecrets = {
     notes: profile.notes,
     baseResponses: profile.baseResponses,
     createdSessionIds: profile.createdSessionIds,
     receivedSessionIds: profile.receivedSessionIds,
+    hardLimits: profile.hardLimits,
+    softLimits: profile.softLimits,
+    bio: profile.bio,
+    fetlifeHandle: profile.fetlifeHandle,
   };
 
   const key = VaultSession.getKeyOrNull();
@@ -279,16 +304,7 @@ async function openProfileSecrets(profile: UserProfile): Promise<UserProfile> {
     const key = VaultSession.getKeyOrNull();
     if (!key) {
       // Locked: return public meta only
-      return {
-        nickname: profile.nickname,
-        pinSalt: profile.pinSalt,
-        pinVerifier: profile.pinVerifier,
-        vaultVersion: profile.vaultVersion,
-        isLocalAdmin: profile.isLocalAdmin,
-        pronouns: profile.pronouns,
-        experienceLevel: profile.experienceLevel,
-        secretsCipher: profile.secretsCipher,
-      };
+      return publicMetaFromProfile(profile);
     }
     try {
       const secrets = await openWithKey<ProfileSecrets>(profile.secretsCipher, key);
@@ -298,6 +314,10 @@ async function openProfileSecrets(profile: UserProfile): Promise<UserProfile> {
         baseResponses: secrets.baseResponses,
         createdSessionIds: secrets.createdSessionIds,
         receivedSessionIds: secrets.receivedSessionIds,
+        hardLimits: secrets.hardLimits,
+        softLimits: secrets.softLimits,
+        bio: secrets.bio,
+        fetlifeHandle: secrets.fetlifeHandle,
       };
     } catch {
       return profile;

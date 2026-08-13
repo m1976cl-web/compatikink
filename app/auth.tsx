@@ -150,7 +150,6 @@ export default function AuthScreen() {
         if (!unlocked.supabaseUserId) {
           await linkSupabaseUserToProfile(unlocked.nickname, oauthUser.id);
         }
-        Alert.alert('Bóveda abierta', `Hola, ${unlocked.nickname}.`);
         router.replace('/');
         return;
       }
@@ -165,12 +164,13 @@ export default function AuthScreen() {
           return;
         }
         await linkSupabaseUserToProfile(unlocked.nickname, oauthUser.id);
-        Alert.alert('Cuenta vinculada', `Google quedó ligado a ${unlocked.nickname}.`);
         router.replace('/');
         return;
       }
 
-      const created = await registerProfile({
+      // Let loading label paint before PBKDF2 blocks the UI thread.
+      await new Promise<void>((resolve) => setTimeout(resolve, 50));
+      await registerProfile({
         nickname: nick,
         pin,
         supabaseUserId: oauthUser.id,
@@ -179,7 +179,7 @@ export default function AuthScreen() {
         createdSessionIds: [],
         receivedSessionIds: [],
       });
-      Alert.alert('Bóveda creada', `Bienvenido/a, ${created.nickname}. Guarda tu PIN: Google no lo recupera.`);
+      // Web Alert ignores button onPress — go home as soon as the vault exists.
       router.replace('/');
     } catch (e: any) {
       Alert.alert('Error', e?.message || 'No se pudo abrir la bóveda.');
@@ -386,7 +386,7 @@ export default function AuthScreen() {
             <Button
               title={
                 loading
-                  ? 'Abriendo…'
+                  ? 'Cifrando bóveda…'
                   : linkedProfile
                     ? 'Desbloquear bóveda'
                     : 'Crear bóveda y continuar'
