@@ -4,26 +4,25 @@
  * Google solo identifica la cuenta. La DEK de la bóveda sigue derivándose del PIN (ZK).
  */
 
-## Estado del backend
+## Proyecto Supabase (fuente de verdad)
 
-Proyecto restaurado (2026-08-13):
-
-- URL: `https://pkcuhoudvkvtunjlpidb.supabase.co`
+- URL: `https://piegesepycvipfzjbraz.supabase.co`
 - Redirect de Google Cloud / Supabase callback:
-  `https://pkcuhoudvkvtunjlpidb.supabase.co/auth/v1/callback`
+  `https://piegesepycvipfzjbraz.supabase.co/auth/v1/callback`
 
 ## 1. Google Cloud Console
 
 1. APIs & Services → Credentials → Create OAuth client ID → **Web application**.
 2. Authorized redirect URIs → añade exactamente:
-   `https://pkcuhoudvkvtunjlpidb.supabase.co/auth/v1/callback`
+   `https://piegesepycvipfzjbraz.supabase.co/auth/v1/callback`
 3. Copia Client ID y Client Secret.
 
 ## 2. Supabase Dashboard
 
-1. Authentication → Providers → **Google** → Enable.
-2. Pega Client ID / Secret.
-3. Authentication → URL Configuration:
+1. Abre el proyecto `piegesepycvipfzjbraz`.
+2. Authentication → Providers → **Google** → Enable.
+3. Pega Client ID / Secret.
+4. Authentication → URL Configuration:
    - **Site URL:** `https://m1976cl-web.github.io/compatikink`
    - **Redirect URLs** (allow list):
      - `https://m1976cl-web.github.io/compatikink`
@@ -33,19 +32,18 @@ Proyecto restaurado (2026-08-13):
 
 ## 3. Variables de entorno
 
-Local (archivo `.env`, no se comitea) — usa URL + **anon/publishable** del proyecto
-`pkcuhoudvkvtunjlpidb` (Dashboard → Settings → API):
+Local (archivo `.env`, no se comitea) — Dashboard → Settings → API:
 
 ```env
-EXPO_PUBLIC_SUPABASE_URL=https://pkcuhoudvkvtunjlpidb.supabase.co
+EXPO_PUBLIC_SUPABASE_URL=https://piegesepycvipfzjbraz.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon key del dashboard>
 EXPO_PUBLIC_MVP=1
 ```
 
 GitHub Actions (repo → Settings → Secrets and variables → Actions):
 
-- `EXPO_PUBLIC_SUPABASE_URL`
-- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `EXPO_PUBLIC_SUPABASE_URL` = `https://piegesepycvipfzjbraz.supabase.co`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY` = anon key del mismo proyecto
 
 El job `build` del CI las inyecta para que Pages tenga OAuth real.
 
