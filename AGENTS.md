@@ -59,6 +59,7 @@ No refactors cosméticos en estos archivos sin necesidad de seguridad o bugfix.
 4. Cuestionario express  
 5. Split `lib/storage.ts`  
 6. Biometría + PIN 6+  
+7. Google Sign-In (OAuth + PIN) — ver `docs/GOOGLE_AUTH.md`  
 
 Detalle: `ROADMAP.md`, `docs/IMPROVEMENT_REVIEW.md`.
 

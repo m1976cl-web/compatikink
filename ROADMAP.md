@@ -34,6 +34,7 @@ Horizonte 3 (futuro):  suite social real (solo con tracción del core)
 - [x] Quick Invite usa `createSession` (ZK remoto) + TTL UI 48h  
 - [x] Feature flags MVP (`EXPO_PUBLIC_MVP=1` default) — oculta FetishSuite + social/AI  
 - [x] Cuestionario express (~25 ítems) + borrador reanudable (`questionnaire_draft_v1`)  
+- [x] Google Sign-In (código) — activar provider + secrets; ver `docs/GOOGLE_AUTH.md`  
 - [ ] Deep links AASA / assetlinks  
 - [ ] Reporte accionable (guión 10 min unificado)  
 

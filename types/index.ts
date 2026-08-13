@@ -159,6 +159,8 @@ export interface UserProfile {
   bio?: string;
   location?: string;
   avatarUrl?: string;
+  /** Supabase Auth user id (Google / email). Not a vault key — identity only. */
+  supabaseUserId?: string;
 }
 
 export type SessionStatus = 'draft' | 'waiting' | 'complete';

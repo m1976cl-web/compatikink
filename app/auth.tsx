@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import type { User } from '@supabase/supabase-js';
 import { Button } from '@/components/Button';
 import { AppHeader } from '@/components/AppHeader';
 import {
@@ -28,13 +29,23 @@ import {
   getSecurityAuditLogs,
   addSecurityAuditLog,
   SecurityAuditLogItem,
+  registerProfile,
+  loginProfile,
+  listAllProfiles,
 } from '@/lib/storage';
 import {
   AutoLockManager,
   AutoLockTimeout,
   createDuressMeta,
-  VaultSession,
 } from '@/lib/cryptoVault';
+import {
+  startGoogleOAuth,
+  suggestedNicknameFromUser,
+  resolveVaultProfileForUser,
+  signOutGoogle,
+  linkSupabaseUserToProfile,
+} from '@/lib/googleAuth';
+import { UserProfile } from '@/types';
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -46,6 +57,13 @@ export default function AuthScreen() {
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Google OAuth → vault PIN gate
+  const [oauthUser, setOauthUser] = useState<User | null>(null);
+  const [linkedProfile, setLinkedProfile] = useState<UserProfile | null>(null);
+  const [vaultNick, setVaultNick] = useState('');
+  const [vaultPin, setVaultPin] = useState('');
+  const [oauthBooting, setOauthBooting] = useState(true);
+
   // Security Settings States
   const [autoLockOpt, setAutoLockOpt] = useState<AutoLockTimeout>('5m');
   const [duressPinInput, setDuressPinInput] = useState('');
@@ -53,9 +71,40 @@ export default function AuthScreen() {
   const [auditLogs, setAuditLogs] = useState<SecurityAuditLogItem[]>([]);
   const [currentNick, setCurrentNick] = useState<string | null>(null);
 
+  const syncOauthSession = useCallback(async (user: User | null) => {
+    setOauthUser(user);
+    if (!user) {
+      setLinkedProfile(null);
+      return;
+    }
+    const linked = await resolveVaultProfileForUser(user);
+    setLinkedProfile(linked);
+    setVaultNick(linked?.nickname || suggestedNicknameFromUser(user));
+  }, []);
+
   useEffect(() => {
     loadSecurityData();
-  }, []);
+    let unsub: (() => void) | undefined;
+
+    (async () => {
+      try {
+        if (supabase) {
+          const { data } = await supabase.auth.getSession();
+          await syncOauthSession(data.session?.user ?? null);
+          const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            await syncOauthSession(session?.user ?? null);
+          });
+          unsub = () => sub.subscription.unsubscribe();
+        }
+      } finally {
+        setOauthBooting(false);
+      }
+    })();
+
+    return () => {
+      unsub?.();
+    };
+  }, [syncOauthSession]);
 
   const loadSecurityData = async () => {
     const prof = await getCurrentProfile();
@@ -64,6 +113,79 @@ export default function AuthScreen() {
       if (prof.autoLockTimeout) setAutoLockOpt(prof.autoLockTimeout);
       const logs = await getSecurityAuditLogs(prof.nickname);
       setAuditLogs(logs);
+    }
+  };
+
+  const handleGooglePress = async () => {
+    setLoading(true);
+    try {
+      const { error } = await startGoogleOAuth();
+      if (error) Alert.alert('Google Sign-In', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVaultAfterGoogle = async () => {
+    if (!oauthUser) return;
+    const nick = vaultNick.trim();
+    const pin = vaultPin.trim();
+    if (!nick) {
+      Alert.alert('Nick requerido', 'Elige un apodo para tu bóveda local.');
+      return;
+    }
+    if (pin.length < 4) {
+      Alert.alert('PIN requerido', 'El PIN de la bóveda debe tener al menos 4 dígitos.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (linkedProfile) {
+        const unlocked = await loginProfile(linkedProfile.nickname, pin);
+        if (!unlocked) {
+          Alert.alert('PIN incorrecto', 'No se pudo desbloquear la bóveda.');
+          return;
+        }
+        if (!unlocked.supabaseUserId) {
+          await linkSupabaseUserToProfile(unlocked.nickname, oauthUser.id);
+        }
+        Alert.alert('Bóveda abierta', `Hola, ${unlocked.nickname}.`);
+        router.replace('/');
+        return;
+      }
+
+      const existing = (await listAllProfiles()).find(
+        (p) => p.nickname.toLowerCase() === nick.toLowerCase()
+      );
+      if (existing?.pinSalt || existing?.pinVerifier) {
+        const unlocked = await loginProfile(existing.nickname, pin);
+        if (!unlocked) {
+          Alert.alert('PIN incorrecto', 'Ese nick ya existe. Usa el PIN correcto o elige otro apodo.');
+          return;
+        }
+        await linkSupabaseUserToProfile(unlocked.nickname, oauthUser.id);
+        Alert.alert('Cuenta vinculada', `Google quedó ligado a ${unlocked.nickname}.`);
+        router.replace('/');
+        return;
+      }
+
+      const created = await registerProfile({
+        nickname: nick,
+        pin,
+        supabaseUserId: oauthUser.id,
+        notes: oauthUser.email ? `Google: ${oauthUser.email}` : undefined,
+        baseResponses: [],
+        createdSessionIds: [],
+        receivedSessionIds: [],
+      });
+      Alert.alert('Bóveda creada', `Bienvenido/a, ${created.nickname}. Guarda tu PIN: Google no lo recupera.`);
+      router.replace('/');
+    } catch (e: any) {
+      Alert.alert('Error', e?.message || 'No se pudo abrir la bóveda.');
+    } finally {
+      setLoading(false);
+      setVaultPin('');
     }
   };
 
@@ -224,6 +346,84 @@ export default function AuthScreen() {
           title="Cuenta & Bóveda de Seguridad"
           subtitle="Cifrado Zero-Knowledge AES-GCM-256 + PBKDF2. El servidor solo almacena ciphertext inviolable."
         />
+
+        {oauthBooting ? (
+          <Text style={styles.oauthHint}>Comprobando sesión de Google…</Text>
+        ) : null}
+
+        {oauthUser ? (
+          <View style={styles.oauthBox}>
+            <Text style={styles.sectionTitle}>Google conectado</Text>
+            <Text style={styles.sectionDesc}>
+              {oauthUser.email || 'Cuenta Google'} — ahora abre o crea la bóveda con tu PIN. Google no
+              sustituye el PIN (arquitectura ZK).
+            </Text>
+            {!linkedProfile ? (
+              <>
+                <Text style={styles.fieldLabel}>Apodo de bóveda</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ej: Alex"
+                  placeholderTextColor={colors.textDim}
+                  value={vaultNick}
+                  onChangeText={setVaultNick}
+                  autoCapitalize="none"
+                />
+              </>
+            ) : (
+              <Text style={styles.oauthHint}>Perfil ligado: {linkedProfile.nickname}</Text>
+            )}
+            <Text style={styles.fieldLabel}>PIN de bóveda</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Mínimo 4 dígitos"
+              placeholderTextColor={colors.textDim}
+              value={vaultPin}
+              onChangeText={setVaultPin}
+              keyboardType="numeric"
+              secureTextEntry
+            />
+            <Button
+              title={
+                loading
+                  ? 'Abriendo…'
+                  : linkedProfile
+                    ? 'Desbloquear bóveda'
+                    : 'Crear bóveda y continuar'
+              }
+              onPress={handleVaultAfterGoogle}
+              disabled={loading}
+            />
+            <Button
+              title="Desconectar Google"
+              variant="ghost"
+              onPress={async () => {
+                await signOutGoogle();
+                setOauthUser(null);
+                setLinkedProfile(null);
+              }}
+            />
+          </View>
+        ) : (
+          <View style={styles.oauthBox}>
+            {isSupabaseConfigured ? (
+              <Button
+                title={loading ? 'Redirigiendo…' : 'Continuar con Google'}
+                onPress={handleGooglePress}
+                disabled={loading}
+              />
+            ) : (
+              <Text style={styles.oauthHint}>
+                Google Sign-In requiere Supabase (EXPO_PUBLIC_SUPABASE_URL / ANON_KEY). Ver
+                docs/GOOGLE_AUTH.md.
+              </Text>
+            )}
+            <Text style={styles.sectionDesc}>
+              Tras Google te pediremos el PIN local de la bóveda. La clave de cifrado nunca sale del
+              dispositivo.
+            </Text>
+          </View>
+        )}
 
         <View style={styles.tabsRow}>
           {(
@@ -453,6 +653,22 @@ const styles = StyleSheet.create({
   },
   tabTextActive: { color: colors.primary },
   form: { gap: spacing.md },
+  oauthBox: {
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+    padding: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  oauthHint: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginBottom: spacing.sm,
+    lineHeight: 16,
+  },
   fieldLabel: { ...typography.label },
   input: {
     backgroundColor: colors.surface,
