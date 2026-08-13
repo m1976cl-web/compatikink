@@ -18,7 +18,7 @@ export interface ScreenClassification {
 }
 
 export const SCREEN_REGISTRY: Record<string, ScreenClassification> = {
-  // ═══ READY (34 screens) — Fully functional ═══════════════════════
+  // ═══ READY — Core invite → guest → report (+ safety/vault) ════════
   '/dating':              { route: '/dating',              status: 'preview', badge: 'Demo local' },
   '/events-munches':      { route: '/events-munches',      status: 'preview', badge: 'Demo local' },
   '/fantasy-match':       { route: '/fantasy-match',       status: 'preview', badge: '🚧 Beta' },

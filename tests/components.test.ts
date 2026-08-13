@@ -125,13 +125,44 @@ async function testComponentLogic() {
   }
   console.log(`  ✅ 36 Intimacy Questions dataset verified (${INTIMACY_QUESTIONS_36.length} questions)`);
 
-  // ─── 9. Screen Registry: 60+ routes mapped ───────────────────────
+  // ─── 9. Screen Registry: core READY + honest suite PREVIEW ────────
   console.log('\n9. Testing Screen Registry classification...');
-  const { SCREEN_REGISTRY, SCREEN_STATS } = await import('../data/screenRegistry');
+  const { SCREEN_REGISTRY, SCREEN_STATS, getScreenStatus } = await import('../data/screenRegistry');
   const screenKeys = Object.keys(SCREEN_REGISTRY);
   assert.ok(screenKeys.length >= 60, `Must have >= 60 screens, got ${screenKeys.length}`);
-  assert.ok(SCREEN_STATS.ready >= 35, `Must have >= 35 READY screens, got ${SCREEN_STATS.ready}`);
-  console.log(`  ✅ Screen Registry verified (${screenKeys.length} screens, ${SCREEN_STATS.ready} READY)`);
+  // Core-first: suite screens are preview/demo; READY is the invite→report spine + safety.
+  assert.ok(
+    SCREEN_STATS.ready >= 15,
+    `Must have >= 15 READY (core) screens, got ${SCREEN_STATS.ready}`
+  );
+  assert.ok(
+    SCREEN_STATS.preview >= 20,
+    `Suite should stay PREVIEW/demo, got ${SCREEN_STATS.preview} preview`
+  );
+  assert.equal(
+    SCREEN_STATS.ready + SCREEN_STATS.preview + SCREEN_STATS.stub,
+    SCREEN_STATS.total,
+    'ready+preview+stub must equal total'
+  );
+  const coreReady = [
+    '/questionnaire',
+    '/invite',
+    '/report',
+    '/share',
+    '/auth',
+    '/backup',
+    '/pass-and-play',
+    '/onboarding',
+    '/privacy-policy',
+  ];
+  for (const route of coreReady) {
+    assert.equal(getScreenStatus(route).status, 'ready', `${route} must stay READY`);
+  }
+  assert.equal(getScreenStatus('/dating').status, 'preview', 'dating must be Demo/preview, not READY');
+  assert.equal(getScreenStatus('/kink-feed').status, 'preview', 'kink-feed must be Demo/preview');
+  console.log(
+    `  ✅ Screen Registry verified (${screenKeys.length} screens, ${SCREEN_STATS.ready} READY / ${SCREEN_STATS.preview} PREVIEW)`
+  );
 
   // ─── 10. Data Stores: Custom Activities logic ─────────────────────
   console.log('\n10. Testing Custom Activities data store...');
