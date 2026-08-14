@@ -108,6 +108,15 @@ export async function createSession(
       await persistLocalDekMirror(session);
       await saveInitiatorToken(token);
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const schemaMissing =
+        /PGRST202|Could not find the function|create_zk_session/i.test(msg) ||
+        /schema cache/i.test(msg);
+      if (schemaMissing) {
+        throw new Error(
+          'Supabase aún no tiene el schema ZK (falta create_zk_session). Ejecuta supabase/schema.sql en el SQL Editor del proyecto piegesepycvipfzjbraz. Ver docs/REMOTE_INVITES.md.'
+        );
+      }
       console.warn('Remote ZK session failed; falling back to local session.', err);
       session = await createLocalSession(nickname, responses, initiatorProfile, expiresAt);
       if (!session.inviteSecret) {
