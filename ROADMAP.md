@@ -8,18 +8,21 @@ Documentos relacionados:
 - [`docs/IMPROVEMENT_REVIEW.md`](./docs/IMPROVEMENT_REVIEW.md) — ideas de mejora priorizadas  
 - [`AGENTS.md`](./AGENTS.md) — handoff corto para agentes  
 - [`docs/SUPABASE_HARDENING.md`](./docs/SUPABASE_HARDENING.md) — detalle Lote C  
+- [`docs/BRAND_AND_DEPLOY.md`](./docs/BRAND_AND_DEPLOY.md) — nombre + plataformas públicas  
+- [`docs/PUBLIC_PROFILE_VS_VAULT.md`](./docs/PUBLIC_PROFILE_VS_VAULT.md) — FetLife-light vs ZK  
 
 ---
 
 ## Horizontes
 
 ```
-Horizonte 1 (actual):  feature flags MVP + deep links polish + reporte accionable
+Horizonte 1 (actual):  deep links polish + reporte accionable + dominio propio
 Horizonte 2 (próximo): storage split + biometría + PIN 6+
-Horizonte 3 (futuro):  suite social real (solo con tracción del core)
+Horizonte 3 (futuro):  public_profiles + comparar + DM E2E + media cifrada
 ```
 
-**Estrategia de producto:** core first (compatibilidad asimétrica + ZK). Suite dating/feed/AI = post-core.
+**Estrategia de producto:** core first (compatibilidad asimétrica + ZK). Suite dating/feed/AI = post-core.  
+**Marca recomendada:** CompatKink (ver `docs/BRAND_AND_DEPLOY.md`).
 
 ---
 
@@ -43,6 +46,16 @@ Horizonte 3 (futuro):  suite social real (solo con tracción del core)
 - [ ] Split `lib/storage.ts`  
 - [ ] Biometría + PIN 6+  
 - [ ] Rate limit por IP (Edge / WAF)  
+
+### H3 — Social post-core (diseño listo; no implementar sin tracción)
+
+Ver [`docs/PUBLIC_PROFILE_VS_VAULT.md`](./docs/PUBLIC_PROFILE_VS_VAULT.md):
+
+- [ ] `public_profiles` (nick, avatar, bio, rol, badges) opt-in + RLS  
+- [ ] CTA “Invitar a comparar” → `create_zk_session` existente  
+- [ ] DM E2E (solo ciphertext en servidor)  
+- [ ] Media cifrada (Storage + share con secreto) + política 18+  
+- [ ] Dominio propio + EAS stores (`docs/BRAND_AND_DEPLOY.md`)  
 
 ---
 

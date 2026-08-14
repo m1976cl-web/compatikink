@@ -53,13 +53,13 @@ No refactors cosméticos en estos archivos sin necesidad de seguridad o bugfix.
 - Tier 1–2 (gemini-proxy, office mode, aftercare, screen registry…)
 
 ### Pendiente prioritario
-1. P0: auditoría residual tokens/SQL coherencia + smoke tests  
-2. Feature flags MVP vs Beta  
-3. Deep links HTTPS  
-4. Cuestionario express  
-5. Split `lib/storage.ts`  
-6. Biometría + PIN 6+  
-7. Google Sign-In (OAuth + PIN) — ver `docs/GOOGLE_AUTH.md`  
+1. P0: auditoría residual tokens/SQL coherencia + smoke tests 
+2. Deep links HTTPS / AASA  
+3. Reporte accionable  
+4. Split `lib/storage.ts`  
+5. Biometría + PIN 6+  
+6. Dominio propio + marca fija — `docs/BRAND_AND_DEPLOY.md`  
+7. Social H3 (perfiles públicos / DM / media) — `docs/PUBLIC_PROFILE_VS_VAULT.md` (post-core)  
 
 Detalle: `ROADMAP.md`, `docs/IMPROVEMENT_REVIEW.md`.
 
