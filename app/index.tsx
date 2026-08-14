@@ -1,13 +1,6 @@
 /**
- * index.tsx — Dashboard principal de Compatikink.
- *
- * Refactorizado (Fase 2): Descompuesto en sub-componentes modulares en components/home/:
- *   - HeroSection          → Encabezado animado y CTAs principales
- *   - FetishSuiteSection   → Tarjetas de la Suite de Dating & Social Fetichista
- *   - GuestJoinSection     → Sección para unirse con código de invitado
- *   - QuickInviteForm      → Formulario de invitación rápida
- *   - ModuleGrid           → Buscador, pestañas por categoría y cuadrícula de módulos
- *   - HomeActions          → Acceso a parejas poly, tendencias, logout y borrado de pánico
+ * index.tsx — Dashboard principal (beta usable).
+ * MVP: un solo camino Responde → Invita → Reporte. Sin ruido social/AI.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -16,17 +9,12 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { OnboardingOverlay } from '@/components/OnboardingOverlay';
 import { RegisterProfileModal } from '@/components/RegisterProfileModal';
-import { PolyComparatorModal } from '@/components/PolyComparatorModal';
-import { CommunityTrendsModal } from '@/components/CommunityTrendsModal';
-import { SceneDebriefModal } from '@/components/SceneDebriefModal';
 import { AgeVerificationModal } from '@/components/AgeVerificationModal';
-import { PWAInstallPromptModal } from '@/components/PWAInstallPromptModal';
-import { AccessibilityModal } from '@/components/AccessibilityModal';
-import { SessionsPanel } from '@/components/SessionsPanel';
+import { SceneDebriefModal } from '@/components/SceneDebriefModal';
 
 import { HeroSection } from '@/components/home/HeroSection';
+import { CorePathBanner } from '@/components/home/CorePathBanner';
 import { ProfileBar } from '@/components/home/ProfileBar';
 import { FetishSuiteSection } from '@/components/home/FetishSuiteSection';
 import { GuestJoinSection } from '@/components/home/GuestJoinSection';
@@ -42,15 +30,14 @@ import { useHomeStore } from '@/stores/homeStore';
 import { useVaultSubscription } from '@/hooks/useVaultSubscription';
 import { useQuickInvite } from '@/hooks/useQuickInvite';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import { VaultLockGateAPI } from '@/lib/cryptoVault';
 import { isMvpMode } from '@/lib/featureFlags';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
 
-  // ── Data & Auth (via Zustand) ────────────────────────────────────────────────
-  const { profile, profilesList, sessions, sceneAgreements, loadHomeData, handleLogout, handlePanicWipe } = useHomeData();
+  const { profile, sessions, sceneAgreements, loadHomeData, handleLogout, handlePanicWipe } =
+    useHomeData();
   useVaultSubscription();
 
   const activeTab = useHomeStore((s) => s.activeTab || 'explore');
@@ -59,20 +46,17 @@ export default function HomeScreen() {
   const setSearchQuery = useHomeStore((s) => s.setSearchQuery || (() => {}));
   const vaultOpen = useHomeStore((s) => s.vaultOpen);
 
-  // ── Local UI State ───────────────────────────────────────────────────────────
   const [guestCode, setGuestCode] = useState('');
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [showPolyComparator, setShowPolyComparator] = useState(false);
-  const [showTrendsModal, setShowTrendsModal] = useState(false);
-  const [showPWAInstallModal, setShowPWAInstallModal] = useState(false);
-  const [showA11yModal, setShowA11yModal] = useState(false);
-  const [debriefTarget, setDebriefTarget] = useState<{ sessionId: string; activityId: string; activityName: string } | null>(null);
+  const [debriefTarget, setDebriefTarget] = useState<{
+    sessionId: string;
+    activityId: string;
+    activityName: string;
+  } | null>(null);
 
-  // ── Quick Invite Hook ────────────────────────────────────────────────────────
   const invite = useQuickInvite(profile, loadHomeData);
 
-  // ── Animations & Refs ────────────────────────────────────────────────────────
   const heroFade = useRef(new Animated.Value(0)).current;
   const heroSlide = useRef(new Animated.Value(18)).current;
   const scrollRef = useRef<ScrollView>(null);
@@ -87,7 +71,7 @@ export default function HomeScreen() {
         } else {
           setOnboardingChecked(true);
         }
-      } catch (e) {
+      } catch {
         setOnboardingChecked(true);
       }
     };
@@ -103,17 +87,43 @@ export default function HomeScreen() {
     ]).start();
   }, [onboardingChecked]);
 
-  const webBg = Platform.OS === 'web' ? ({ backgroundImage: gradients.inkRadialHint } as object) : undefined;
+  const webBg =
+    Platform.OS === 'web' ? ({ backgroundImage: gradients.inkRadialHint } as object) : undefined;
 
   if (!onboardingChecked) return null;
 
+  const hasResponses = Boolean(profile?.baseResponses && profile.baseResponses.length > 0);
+
+  const sessionsBlock = (
+    <SessionList
+      vaultOpen={vaultOpen}
+      sessions={sessions}
+      sceneAgreements={sceneAgreements}
+      profile={profile}
+      onRequestInvite={() => invite.setShowQuickInvite(true)}
+      onDebrief={setDebriefTarget}
+    />
+  );
+
+  const accountBlock = (
+    <HomeActions
+      sessions={sessions}
+      compact={isMvpMode}
+      onOpenPolyComparator={() => {}}
+      onOpenTrendsModal={() => {}}
+      onLogout={handleLogout}
+      onPanicWipe={handlePanicWipe}
+    />
+  );
+
   return (
     <SafeAreaView style={[styles.safe, webBg as any]} edges={['bottom']}>
-      <OnboardingOverlay onDone={() => {}} />
-      <RegisterProfileModal visible={showRegisterModal} onClose={() => setShowRegisterModal(false)} onSuccess={() => loadHomeData()} />
+      <RegisterProfileModal
+        visible={showRegisterModal}
+        onClose={() => setShowRegisterModal(false)}
+        onSuccess={() => loadHomeData()}
+      />
       <AgeVerificationModal />
-      <PWAInstallPromptModal visible={showPWAInstallModal} onClose={() => setShowPWAInstallModal(false)} />
-      <AccessibilityModal visible={showA11yModal} onClose={() => setShowA11yModal(false)} />
       {debriefTarget ? (
         <SceneDebriefModal
           visible={Boolean(debriefTarget)}
@@ -121,7 +131,10 @@ export default function HomeScreen() {
           sessionId={debriefTarget.sessionId}
           activityId={debriefTarget.activityId}
           activityName={debriefTarget.activityName}
-          onSaved={() => { setDebriefTarget(null); loadHomeData(); }}
+          onSaved={() => {
+            setDebriefTarget(null);
+            loadHomeData();
+          }}
         />
       ) : null}
 
@@ -133,41 +146,45 @@ export default function HomeScreen() {
           heroFade={heroFade}
           heroSlide={heroSlide}
           onOpenQuickInvite={() => invite.setShowQuickInvite(true)}
-          onScrollToGuest={() => scrollRef.current?.scrollTo({ y: Math.max(0, guestSectionY.current - 24), animated: true })}
+          onScrollToGuest={() =>
+            scrollRef.current?.scrollTo({
+              y: Math.max(0, guestSectionY.current - 24),
+              animated: true,
+            })
+          }
+        />
+
+        <CorePathBanner
+          hasProfile={Boolean(profile)}
+          hasResponses={hasResponses}
+          vaultOpen={vaultOpen}
+          onInvite={() => invite.setShowQuickInvite(true)}
         />
 
         <ProfileBar />
 
         {!isMvpMode ? <FetishSuiteSection /> : null}
 
-        {!profile ? (
-          <GuestJoinSection
-            guestCode={guestCode}
-            onChangeCode={setGuestCode}
-            onLayout={(e) => { guestSectionY.current = e.nativeEvent.layout.y; }}
-          />
-        ) : null}
+        <GuestJoinSection
+          guestCode={guestCode}
+          onChangeCode={setGuestCode}
+          onLayout={(e) => {
+            guestSectionY.current = e.nativeEvent.layout.y;
+          }}
+        />
 
         <QuickInviteForm invite={invite} />
 
-        {isDesktop ? (
+        {isMvpMode ? (
+          <>
+            {sessionsBlock}
+            {accountBlock}
+          </>
+        ) : isDesktop ? (
           <View style={styles.desktopGrid}>
             <View style={styles.desktopCol}>
-              <SessionList
-                vaultOpen={vaultOpen}
-                sessions={sessions}
-                sceneAgreements={sceneAgreements}
-                profile={profile}
-                onRequestInvite={() => invite.setShowQuickInvite(true)}
-                onDebrief={setDebriefTarget}
-              />
-              <HomeActions
-                sessions={sessions}
-                onOpenPolyComparator={() => setShowPolyComparator(true)}
-                onOpenTrendsModal={() => setShowTrendsModal(true)}
-                onLogout={handleLogout}
-                onPanicWipe={handlePanicWipe}
-              />
+              {sessionsBlock}
+              {accountBlock}
             </View>
             <View style={styles.desktopCol}>
               <ModuleGrid
@@ -175,70 +192,50 @@ export default function HomeScreen() {
                 onChangeTab={setActiveTab}
                 searchQuery={searchQuery}
                 onChangeSearch={setSearchQuery}
-                onShowPWAInstallModal={() => setShowPWAInstallModal(true)}
-                onShowA11yModal={() => setShowA11yModal(true)}
+                onShowPWAInstallModal={() => {}}
+                onShowA11yModal={() => {}}
               />
             </View>
           </View>
         ) : (
           <>
-            <SessionList
-              vaultOpen={vaultOpen}
-              sessions={sessions}
-              sceneAgreements={sceneAgreements}
-              profile={profile}
-              onRequestInvite={() => invite.setShowQuickInvite(true)}
-              onDebrief={setDebriefTarget}
-            />
-            <HomeActions
-              sessions={sessions}
-              onOpenPolyComparator={() => setShowPolyComparator(true)}
-              onOpenTrendsModal={() => setShowTrendsModal(true)}
-              onLogout={handleLogout}
-              onPanicWipe={handlePanicWipe}
-            />
+            {sessionsBlock}
+            {accountBlock}
             <ModuleGrid
               activeTab={activeTab}
               onChangeTab={setActiveTab}
               searchQuery={searchQuery}
               onChangeSearch={setSearchQuery}
-              onShowPWAInstallModal={() => setShowPWAInstallModal(true)}
-              onShowA11yModal={() => setShowA11yModal(true)}
+              onShowPWAInstallModal={() => {}}
+              onShowA11yModal={() => {}}
             />
           </>
         )}
 
         {!isSupabaseConfigured ? (
-          <Text style={styles.footnote}>Modo local: perfiles y reportes viven cifrados en este dispositivo.</Text>
-        ) : null}
+          <Text style={styles.footnote}>
+            Modo local: perfiles y reportes viven cifrados en este dispositivo.
+          </Text>
+        ) : (
+          <Text style={styles.footnote}>
+            Beta usable: solo Responde → Invita → Reporte. Ver docs/BETA_HAPPY_PATH.md
+          </Text>
+        )}
       </ScrollView>
-
-      {profile ? (
-        <PolyComparatorModal visible={showPolyComparator} onClose={() => setShowPolyComparator(false)} sessions={sessions} currentProfile={profile} />
-      ) : null}
-      <CommunityTrendsModal visible={showTrendsModal} onClose={() => setShowTrendsModal(false)} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  scroll: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xxl,
-    maxWidth: 1140,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  desktopGrid: { flexDirection: 'row', gap: spacing.xl, alignItems: 'flex-start' },
-  desktopCol: { flex: 1, minWidth: 0 },
+  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  desktopGrid: { flexDirection: 'row', gap: spacing.lg, alignItems: 'flex-start' },
+  desktopCol: { flex: 1, gap: spacing.lg, minWidth: 0 },
   footnote: {
-    fontFamily: fonts.body,
-    color: colors.textDim,
-    fontSize: 11,
-    textAlign: 'center',
     marginTop: spacing.lg,
-    lineHeight: 18,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.textDim,
+    textAlign: 'center',
   },
 });

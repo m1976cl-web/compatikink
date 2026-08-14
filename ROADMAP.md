@@ -10,19 +10,21 @@ Documentos relacionados:
 - [`docs/SUPABASE_HARDENING.md`](./docs/SUPABASE_HARDENING.md) — detalle Lote C  
 - [`docs/BRAND_AND_DEPLOY.md`](./docs/BRAND_AND_DEPLOY.md) — nombre + plataformas públicas  
 - [`docs/PUBLIC_PROFILE_VS_VAULT.md`](./docs/PUBLIC_PROFILE_VS_VAULT.md) — FetLife-light vs ZK  
+- [`docs/BETA_HAPPY_PATH.md`](./docs/BETA_HAPPY_PATH.md) — guion de prueba 15 min (beta usable)  
 
 ---
 
 ## Horizontes
 
 ```
-Horizonte 1 (actual):  deep links polish + reporte accionable + dominio propio
+Horizonte 1 (actual):  **beta usable** (happy path 15 min) + deep links + reporte
 Horizonte 2 (próximo): storage split + biometría + PIN 6+
 Horizonte 3 (futuro):  public_profiles + comparar + DM E2E + media cifrada
 ```
 
 **Estrategia de producto:** core first (compatibilidad asimétrica + ZK). Suite dating/feed/AI = post-core.  
-**Marca recomendada:** CompatKink (ver `docs/BRAND_AND_DEPLOY.md`).
+**Marca recomendada:** CompatKink (ver `docs/BRAND_AND_DEPLOY.md`).  
+**Pruebas humanas:** [`docs/BETA_HAPPY_PATH.md`](./docs/BETA_HAPPY_PATH.md) — no invitar testers externos hasta que el guion sea verde.
 
 ---
 
@@ -38,6 +40,9 @@ Horizonte 3 (futuro):  public_profiles + comparar + DM E2E + media cifrada
 - [x] Feature flags MVP (`EXPO_PUBLIC_MVP=1` default) — oculta FetishSuite + social/AI  
 - [x] Cuestionario express (~25 ítems) + borrador reanudable (`questionnaire_draft_v1`)  
 - [x] Google Sign-In (código) — activar provider + secrets; ver `docs/GOOGLE_AUTH.md`  
+- [x] Schema ZK aplicado en `piegesepycvipfzjbraz`  
+- [x] Sprint **beta usable**: home mínimo + `CorePathBanner` + happy path doc + reload vault  
+- [ ] Pasada humana E2E registrada en `docs/BETA_HAPPY_PATH.md`  
 - [ ] Deep links AASA / assetlinks  
 - [ ] Reporte accionable (guión 10 min unificado)  
 

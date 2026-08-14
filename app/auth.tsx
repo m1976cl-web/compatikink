@@ -46,6 +46,7 @@ import {
   linkSupabaseUserToProfile,
 } from '@/lib/googleAuth';
 import { UserProfile } from '@/types';
+import { notify } from '@/lib/notify';
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -120,7 +121,7 @@ export default function AuthScreen() {
     setLoading(true);
     try {
       const { error } = await startGoogleOAuth();
-      if (error) Alert.alert('Google Sign-In', error);
+      if (error) notify('Google Sign-In', error);
     } finally {
       setLoading(false);
     }
@@ -131,11 +132,11 @@ export default function AuthScreen() {
     const nick = vaultNick.trim();
     const pin = vaultPin.trim();
     if (!nick) {
-      Alert.alert('Nick requerido', 'Elige un apodo para tu bóveda local.');
+      notify('Nick requerido', 'Elige un apodo para tu bóveda local.');
       return;
     }
     if (pin.length < 4) {
-      Alert.alert('PIN requerido', 'El PIN de la bóveda debe tener al menos 4 dígitos.');
+      notify('PIN requerido', 'El PIN de la bóveda debe tener al menos 4 dígitos.');
       return;
     }
 
@@ -144,7 +145,7 @@ export default function AuthScreen() {
       if (linkedProfile) {
         const unlocked = await loginProfile(linkedProfile.nickname, pin);
         if (!unlocked) {
-          Alert.alert('PIN incorrecto', 'No se pudo desbloquear la bóveda.');
+          notify('PIN incorrecto', 'No se pudo desbloquear la bóveda.');
           return;
         }
         if (!unlocked.supabaseUserId) {
@@ -160,7 +161,10 @@ export default function AuthScreen() {
       if (existing?.pinSalt || existing?.pinVerifier) {
         const unlocked = await loginProfile(existing.nickname, pin);
         if (!unlocked) {
-          Alert.alert('PIN incorrecto', 'Ese nick ya existe. Usa el PIN correcto o elige otro apodo.');
+          notify(
+            'PIN incorrecto',
+            'Ese nick ya existe. Usa el PIN correcto o elige otro apodo.'
+          );
           return;
         }
         await linkSupabaseUserToProfile(unlocked.nickname, oauthUser.id);
@@ -182,7 +186,7 @@ export default function AuthScreen() {
       // Web Alert ignores button onPress — go home as soon as the vault exists.
       router.replace('/');
     } catch (e: any) {
-      Alert.alert('Error', e?.message || 'No se pudo abrir la bóveda.');
+      notify('Error', e?.message || 'No se pudo abrir la bóveda.');
     } finally {
       setLoading(false);
       setVaultPin('');

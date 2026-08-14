@@ -38,19 +38,19 @@ export function HeroSection({
       <Text style={styles.brand} accessibilityRole="header">
         Compatikink
       </Text>
-      <Text style={styles.mark}>Plataforma de Exploración & Afinidad Cifrada</Text>
+      <Text style={styles.mark}>Beta usable — compatibilidad privada</Text>
       <OctopusHost />
       <Text style={styles.headline}>
         {loggedIn
           ? `Hola, ${profile?.nickname}`
-          : 'Preferencias privadas. Compatibilidad consensuada.'}
+          : 'Responde. Invita. Lee el reporte.'}
       </Text>
       <Text style={styles.heroSupport}>
         {loggedIn
-          ? profile?.experienceLevel
-            ? `Nivel: ${profile.experienceLevel}`
-            : 'Tu espacio cifrado en este dispositivo.'
-          : 'Define límites, invita a alguien y recibe un reporte sin revelar respuestas individuales.'}
+          ? vaultOpen
+            ? 'Bóveda abierta. Sigue el banner: Responder → Invitar.'
+            : 'Desbloquea la bóveda con tu PIN para invitar.'
+          : 'Flujo corto para pruebas. Sin dating ni feed en esta beta.'}
       </Text>
       <View style={styles.ctaGroup}>
         {loggedIn ? (
@@ -61,9 +61,9 @@ export function HeroSection({
               style={styles.ctaPrimary}
             />
             <Button
-              title="Editar respuestas"
+              title="Responder (perfil rápido)"
               variant="secondary"
-              onPress={() => router.push('/questionnaire')}
+              onPress={() => router.push('/quick-profile')}
               style={styles.ctaSecondary}
             />
             <Button
@@ -78,8 +78,8 @@ export function HeroSection({
         ) : (
           <>
             <Button
-              title="Empezar"
-              onPress={() => router.push('/questionnaire')}
+              title="Empezar (perfil rápido)"
+              onPress={() => router.push('/quick-profile')}
               style={styles.ctaPrimary}
             />
             <Button

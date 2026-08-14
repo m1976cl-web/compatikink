@@ -7,6 +7,8 @@ import { Session } from '@/types';
 
 interface HomeActionsProps {
   sessions: Session[];
+  /** MVP beta: hide poly/trends noise. */
+  compact?: boolean;
   onOpenPolyComparator: () => void;
   onOpenTrendsModal: () => void;
   onLogout: () => void;
@@ -15,6 +17,7 @@ interface HomeActionsProps {
 
 export function HomeActions({
   sessions,
+  compact = false,
   onOpenPolyComparator,
   onOpenTrendsModal,
   onLogout,
@@ -23,18 +26,20 @@ export function HomeActions({
   return (
     <Section title="Cuenta">
       <View style={styles.interactivePanel}>
-        {sessions.filter((s) => s.status === 'complete').length >= 2 ? (
+        {!compact && sessions.filter((s) => s.status === 'complete').length >= 2 ? (
           <Button
             title="Comparar parejas"
             variant="secondary"
             onPress={onOpenPolyComparator}
           />
         ) : null}
-        <Button
-          title="Tendencias de comunidad"
-          variant="secondary"
-          onPress={onOpenTrendsModal}
-        />
+        {!compact ? (
+          <Button
+            title="Tendencias de comunidad"
+            variant="secondary"
+            onPress={onOpenTrendsModal}
+          />
+        ) : null}
         <Button title="Cerrar sesión" variant="ghost" onPress={onLogout} />
         <Button title="Borrado de pánico" variant="danger" onPress={onPanicWipe} />
       </View>
