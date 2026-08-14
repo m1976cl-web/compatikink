@@ -1,4 +1,4 @@
-const CACHE_NAME = 'compatikink-v3-cache';
+const CACHE_NAME = 'compatikink-v4-beta-usable';
 
 self.addEventListener('install', (event) => {
   // Activate immediately so deploys are not stuck behind an old worker.
