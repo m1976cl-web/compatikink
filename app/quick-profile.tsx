@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -7,16 +7,50 @@ import {
   TouchableOpacity,
   View,
   Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
-import { Activity, ActivityResponse, ExperienceLevel, Rating, RolePreference, UserProfile, FetishBadge } from '@/types';
+import { ActivityResponse, ExperienceLevel, Rating, RolePreference, UserProfile, FetishBadge } from '@/types';
 import { QUICK_PROFILE_ACTIVITIES } from '@/data/quickProfile';
-import { saveProfile, getCurrentProfile, setCurrentProfile, getProfile } from '@/lib/storage';
+import {
+  saveProfile,
+  setCurrentProfile,
+  getProfile,
+  registerProfile,
+  loginProfile,
+} from '@/lib/storage';
+import { setupVaultForNewProfile, VAULT_VERSION } from '@/lib/cryptoVault';
 import { PronounsPicker } from '@/components/PronounsPicker';
 import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { AppHeader } from '@/components/AppHeader';
+
+function notify(title: string, message: string) {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.alert(`${title}\n\n${message}`);
+    return;
+  }
+  Alert.alert(title, message);
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`${label} tardó demasiado (${Math.round(ms / 1000)}s). Reintenta.`)),
+          ms
+        );
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 const RATING_OPTIONS: { label: string; value: Rating; color: string }[] = [
   { label: 'Límite duro', value: 'hard_limit', color: colors.danger },
@@ -92,19 +126,19 @@ export default function QuickProfileScreen() {
 
   const handleSave = async () => {
     if (!nickname.trim()) {
-      Alert.alert('Nombre requerido', 'Ingresa un nick para continuar.');
+      notify('Nombre requerido', 'Ingresa un nick para continuar.');
       return;
     }
     const pinValue = pin.trim();
     if (pinValue.length < 4) {
-      Alert.alert('PIN requerido', 'El PIN debe tener al menos 4 dígitos para cifrar tu perfil.');
+      notify('PIN requerido', 'El PIN debe tener al menos 4 dígitos para cifrar tu perfil.');
       return;
     }
 
     setSaving(true);
     try {
-      // Let "Guardando…" paint before PBKDF2 blocks the main thread (~310k iters).
-      await new Promise<void>((resolve) => setTimeout(resolve, 50));
+      // Let progress label paint before PBKDF2 blocks the main thread (~310k iters).
+      await new Promise<void>((resolve) => setTimeout(resolve, 80));
 
       const finalResponses = Object.values(responses);
       const cleanNick = nickname.trim();
@@ -122,24 +156,40 @@ export default function QuickProfileScreen() {
         role: primaryRole,
         safetyProtocols: selectedProtocols,
         safewords: { green: safewordGreen, yellow: safewordYellow, red: safewordRed },
-        hardLimits: hardLimitsInput ? hardLimitsInput.split(',').map((s) => s.trim()).filter(Boolean) : existing?.hardLimits,
-        softLimits: softLimitsInput ? softLimitsInput.split(',').map((s) => s.trim()).filter(Boolean) : existing?.softLimits,
+        hardLimits: hardLimitsInput
+          ? hardLimitsInput
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : existing?.hardLimits,
+        softLimits: softLimitsInput
+          ? softLimitsInput
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : existing?.softLimits,
         fetishBadges: createdBadges,
         verificationBadges: ['Vault Identity'],
         baseResponses: finalResponses,
       };
 
       if (!existing) {
-        const { registerProfile } = await import('@/lib/storage');
-        await registerProfile({
-          ...profilePayload,
-          pin: pinValue,
-          createdSessionIds: [],
-          receivedSessionIds: [],
-        } as UserProfile);
+        await withTimeout(
+          registerProfile({
+            ...profilePayload,
+            pin: pinValue,
+            createdSessionIds: [],
+            receivedSessionIds: [],
+          } as UserProfile),
+          90_000,
+          'Crear bóveda'
+        );
       } else if (!existing.pinSalt) {
-        const { setupVaultForNewProfile, VAULT_VERSION } = await import('@/lib/cryptoVault');
-        const meta = await setupVaultForNewProfile(cleanNick, pinValue);
+        const meta = await withTimeout(
+          setupVaultForNewProfile(cleanNick, pinValue),
+          90_000,
+          'Configurar bóveda'
+        );
         await saveProfile({
           ...existing,
           ...profilePayload,
@@ -150,10 +200,13 @@ export default function QuickProfileScreen() {
         });
         await setCurrentProfile(cleanNick);
       } else {
-        const { loginProfile } = await import('@/lib/storage');
-        const unlocked = await loginProfile(existing.nickname, pinValue);
+        const unlocked = await withTimeout(
+          loginProfile(existing.nickname, pinValue),
+          90_000,
+          'Desbloquear bóveda'
+        );
         if (!unlocked) {
-          Alert.alert('PIN incorrecto', 'Ese nick ya tiene bóveda. Usa el PIN correcto o elige otro apodo.');
+          notify('PIN incorrecto', 'Ese nick ya tiene bóveda. Usa el PIN correcto o elige otro apodo.');
           return;
         }
         await saveProfile({
@@ -165,14 +218,17 @@ export default function QuickProfileScreen() {
         await setCurrentProfile(cleanNick);
       }
 
-      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-      await AsyncStorage.setItem('onboarding_done', 'true');
+      // Must match app/index.tsx + onboarding keys or home redirects back to onboarding.
+      await AsyncStorage.multiSet([
+        ['compatikink_onboarding_complete_v1', 'true'],
+        ['compatikink_age_verified_v1', 'true'],
+        ['onboarding_done', 'true'],
+      ]);
 
-      // Web Alert ignores button onPress — navigate immediately after success.
       router.replace('/');
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'No se pudo guardar el perfil.';
-      Alert.alert('Error', message);
+      notify('Error', message);
     } finally {
       setSaving(false);
     }
