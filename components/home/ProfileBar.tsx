@@ -1,7 +1,8 @@
-import { View, Text, TextInput, Alert, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useState } from 'react';
 import { useHomeStore } from '@/lib/stores/useHomeStore';
 import { loginProfile, logoutProfile } from '@/lib/storage';
+import { notify } from '@/lib/notify';
 import { colors, fonts, spacing } from '@/constants/theme';
 
 export function ProfileBar() {
@@ -11,7 +12,7 @@ export function ProfileBar() {
 
   const handleLogin = async () => {
     if (!loginNick.trim()) {
-      Alert.alert('Datos incompletos', 'Selecciona o ingresa tu nick.');
+      notify('Datos incompletos', 'Selecciona o ingresa tu nick.');
       return;
     }
     const res = await loginProfile(loginNick.trim(), loginPin);
@@ -19,7 +20,7 @@ export function ProfileBar() {
       setLoginPin('');
       await loadHomeData();
     } else {
-      Alert.alert('Error de login', 'Nick o PIN incorrecto.');
+      notify('Error de login', 'Nick o PIN incorrecto.');
     }
   };
 

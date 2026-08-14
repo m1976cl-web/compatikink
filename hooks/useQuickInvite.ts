@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
-import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { createSession } from '@/lib/sessions';
 import { UserProfile } from '@/types';
 import { useHomeStore } from '@/lib/stores/useHomeStore';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { VaultLockGateAPI } from '@/lib/cryptoVault';
+import { notify } from '@/lib/notify';
 
 export type ExpiryOption = '48h' | '7d' | 'none';
 
@@ -27,31 +27,45 @@ export function useQuickInvite(
 
   const createInvite = useCallback(
     async (guestNick: string, guestNotes: string, expiry: ExpiryOption) => {
-      if (!profile?.baseResponses?.length) {
-        Alert.alert('Sin respuestas', 'Responde tu cuestionario base primero.');
+      if (!profile?.nickname) {
+        notify('Perfil requerido', 'Crea o desbloquea tu perfil cifrado antes de invitar.');
+        return;
+      }
+
+      const responses = profile.baseResponses ?? [];
+      if (!responses.length) {
+        if (profile.secretsCipher && !VaultLockGateAPI.isUnlocked()) {
+          notify(
+            'Bóveda bloqueada',
+            'Tus respuestas están en la bóveda. Desbloquéala con tu PIN (barra de perfil) y vuelve a intentar.'
+          );
+          return;
+        }
+        notify(
+          'Sin respuestas',
+          'Completa el cuestionario o el perfil rápido primero para tener respuestas base.'
+        );
         return;
       }
       if (!guestNick.trim()) {
-        Alert.alert('Nombre requerido', 'Ingresa el nombre de la otra persona.');
+        notify('Nombre requerido', 'Ingresa el nombre de la otra persona.');
         return;
       }
 
       setCreatingInvite(true);
       try {
-        // Remote create_zk_session always applies server 48h TTL.
-        // Local-only sessions honor the chip selection.
+        // Chip expiry applies to local sessions (and remote→local fallback).
+        // Remote create_zk_session still uses server 48h TTL when it succeeds.
         let expiresAt: string | undefined;
-        if (!isSupabaseConfigured) {
-          if (expiry === '48h') {
-            expiresAt = new Date(Date.now() + 48 * 3600_000).toISOString();
-          } else if (expiry === '7d') {
-            expiresAt = new Date(Date.now() + 7 * 86400_000).toISOString();
-          }
+        if (expiry === '48h') {
+          expiresAt = new Date(Date.now() + 48 * 3600_000).toISOString();
+        } else if (expiry === '7d') {
+          expiresAt = new Date(Date.now() + 7 * 86400_000).toISOString();
         }
 
         const session = await createSession(
           profile.nickname,
-          profile.baseResponses,
+          responses,
           {
             nickname: guestNick.trim(),
             notes: guestNotes.trim(),
@@ -69,8 +83,10 @@ export function useQuickInvite(
           pathname: '/invite',
           params: { token: session.initiatorToken },
         });
-      } catch (e: any) {
-        Alert.alert('Error', e?.message || 'No se pudo crear la sesión de invitación.');
+      } catch (e: unknown) {
+        const message =
+          e instanceof Error ? e.message : 'No se pudo crear la sesión de invitación.';
+        notify('Error', message);
       } finally {
         setCreatingInvite(false);
       }

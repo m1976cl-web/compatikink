@@ -79,27 +79,44 @@ export async function createSession(
   let session: Session;
 
   if (isSupabaseConfigured) {
-    const inviteCode = generateInviteCode();
-    const token = generateToken();
-    const remote = await createRemoteZkSession(
-      inviteCode,
-      token,
-      dekWrapInvite,
-      initiatorCiphertext,
-      nickname
-    );
-    session = {
-      ...remote,
-      inviteSecret,
-      sessionDekB64: bytesToBase64(dekRaw),
-      initiatorNickname: nickname,
-      initiatorProfile: initiatorProfile ?? { nickname },
-      initiatorResponses: responses,
-      guestResponses: null,
-    };
-    // Keep a local mirror so initiator can decrypt after refresh without re-deriving
-    await persistLocalDekMirror(session);
-    await saveInitiatorToken(token);
+    try {
+      const inviteCode = generateInviteCode();
+      const token = generateToken();
+      const remotePromise = createRemoteZkSession(
+        inviteCode,
+        token,
+        dekWrapInvite,
+        initiatorCiphertext,
+        nickname
+      );
+      const remote = await Promise.race([
+        remotePromise,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout creando sesión remota')), 15_000)
+        ),
+      ]);
+      session = {
+        ...remote,
+        inviteSecret,
+        sessionDekB64: bytesToBase64(dekRaw),
+        initiatorNickname: nickname,
+        initiatorProfile: initiatorProfile ?? { nickname },
+        initiatorResponses: responses,
+        guestResponses: null,
+      };
+      // Keep a local mirror so initiator can decrypt after refresh without re-deriving
+      await persistLocalDekMirror(session);
+      await saveInitiatorToken(token);
+    } catch (err) {
+      console.warn('Remote ZK session failed; falling back to local session.', err);
+      session = await createLocalSession(nickname, responses, initiatorProfile, expiresAt);
+      if (!session.inviteSecret) {
+        session.inviteSecret = inviteSecret;
+        session.sessionDekB64 = bytesToBase64(dekRaw);
+        session.dekWrapInvite = dekWrapInvite;
+        session.initiatorCiphertext = initiatorCiphertext;
+      }
+    }
   } else {
     session = await createLocalSession(nickname, responses, initiatorProfile, expiresAt);
     // Local path already generates inviteSecret/DEK; ensure consistent
