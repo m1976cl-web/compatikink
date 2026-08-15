@@ -85,3 +85,11 @@ if (fs.existsSync(publicManifest)) {
   console.log('✅ Copied manifest.json to dist');
 }
 
+// 5. Deep link verification files (AASA / Digital Asset Links)
+const publicWellKnown = path.join(__dirname, '..', 'public', '.well-known');
+const distWellKnown = path.join(distDir, '.well-known');
+if (fs.existsSync(publicWellKnown)) {
+  copyRecursiveSync(publicWellKnown, distWellKnown);
+  console.log('✅ Copied .well-known (AASA + assetlinks) to dist');
+}
+

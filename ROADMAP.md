@@ -2,7 +2,7 @@
 
 **Ruta local:** `C:\KC\compatikink`  
 **Remoto:** https://github.com/m1976cl-web/compatikink  
-**Actualizado:** 2026-08-13  
+**Actualizado:** 2026-08-14  
 
 Documentos relacionados:
 - [`docs/IMPROVEMENT_REVIEW.md`](./docs/IMPROVEMENT_REVIEW.md) — ideas de mejora priorizadas  
@@ -11,6 +11,7 @@ Documentos relacionados:
 - [`docs/BRAND_AND_DEPLOY.md`](./docs/BRAND_AND_DEPLOY.md) — nombre + plataformas públicas  
 - [`docs/PUBLIC_PROFILE_VS_VAULT.md`](./docs/PUBLIC_PROFILE_VS_VAULT.md) — FetLife-light vs ZK  
 - [`docs/BETA_HAPPY_PATH.md`](./docs/BETA_HAPPY_PATH.md) — guion de prueba 15 min (beta usable)  
+- [`docs/DEEP_LINKS.md`](./docs/DEEP_LINKS.md) — AASA / assetlinks + fallback `?k=`  
 
 ---
 
@@ -43,8 +44,8 @@ Horizonte 3 (futuro):  public_profiles + comparar + DM E2E + media cifrada
 - [x] Schema ZK aplicado en `piegesepycvipfzjbraz`  
 - [x] Sprint **beta usable**: home mínimo + `CorePathBanner` + happy path doc + reload vault  
 - [ ] Pasada humana E2E registrada en `docs/BETA_HAPPY_PATH.md`  
-- [ ] Deep links AASA / assetlinks  
-- [ ] Reporte accionable (guión 10 min unificado)  
+- [x] Deep links AASA / assetlinks (`public/.well-known/` + `docs/DEEP_LINKS.md`) + invite `?k=` fallback  
+- [x] Reporte accionable (banner hard limits + guión 10 min)  
 
 ### P2 — Ingeniería
 

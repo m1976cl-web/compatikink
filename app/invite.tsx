@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View, Alert, Share, Image, TouchableOpacity, Modal } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Share, Image, TouchableOpacity, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,8 +15,14 @@ import {
 } from '@/constants/theme';
 import { getSessionByToken } from '@/lib/sessions';
 import { getGuestProfile } from '@/lib/storage';
+import { notify } from '@/lib/notify';
 import { Session, GuestProfile } from '@/types';
-import { createInviteWebUrl, createInviteSchemeUrl, generateQRCodeSVG } from '@/lib/linking';
+import {
+  createInviteWebUrl,
+  createInviteWebUrlQueryFallback,
+  createInviteSchemeUrl,
+  generateQRCodeSVG,
+} from '@/lib/linking';
 
 export default function InviteScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
@@ -53,14 +59,26 @@ export default function InviteScreen() {
   const copyCode = async () => {
     if (!session) return;
     await Clipboard.setStringAsync(session.inviteCode);
-    Alert.alert('Copiado', 'Código copiado al portapapeles.');
+    notify('Copiado', 'Código copiado al portapapeles.');
   };
 
   const copyLink = async () => {
     if (!session) return;
-    const webUrl = createInviteWebUrl(session.inviteCode, session.inviteSecret);
-    await Clipboard.setStringAsync(webUrl);
-    Alert.alert('Copiado', 'Enlace directo de invitación copiado al portapapeles.');
+    const secret = session.inviteSecret;
+    const primary = createInviteWebUrl(session.inviteCode, secret);
+    const fallback = secret
+      ? createInviteWebUrlQueryFallback(session.inviteCode, secret)
+      : null;
+    const payload = fallback
+      ? `${primary}\n\nSi WhatsApp corta el enlace, usa este respaldo (el secreto va en ?k=):\n${fallback}`
+      : primary;
+    await Clipboard.setStringAsync(payload);
+    notify(
+      'Enlace copiado',
+      secret
+        ? 'Incluye #k= (preferido) y un respaldo ?k= por si el chat trunca el fragmento. No borres la parte tras # o ?.'
+        : 'Enlace copiado al portapapeles.'
+    );
   };
 
   const shareInvite = async () => {
@@ -68,15 +86,21 @@ export default function InviteScreen() {
     const guestName = guestProfile?.nickname || 'alguien especial';
     const secret = session.inviteSecret;
     const webUrl = createInviteWebUrl(session.inviteCode, secret);
+    const webFallback = secret
+      ? createInviteWebUrlQueryFallback(session.inviteCode, secret)
+      : null;
     const schemeUrl = createInviteSchemeUrl(session.inviteCode, secret);
 
     const richMessage =
-      `*Compatikink* — Test de compatibilidad privado\n\n` +
+      `*CompatKink* — Test de compatibilidad privado\n\n` +
       `Hola${guestName !== 'alguien especial' ? `, ${guestName}` : ''}! Te invito a un test de compatibilidad privado.\n\n` +
       `Tu código:\n` +
       `  *${session.inviteCode}*\n\n` +
-      `Enlace directo Web (Zero-Knowledge):\n${webUrl}\n\n` +
-      `Abrir en App (Deep Link):\n${schemeUrl}\n\n` +
+      `Enlace web (preferido, secreto en #k= — no lo borres):\n${webUrl}\n` +
+      (webFallback
+        ? `\nRespaldo si WhatsApp corta el enlace (secreto en ?k=):\n${webFallback}\n`
+        : '') +
+      `\nAbrir en App:\n${schemeUrl}\n\n` +
       `Pasos:\n` +
       `1. Abre el enlace o entra a: https://m1976cl-web.github.io/compatikink/\n` +
       `2. Pulsa "Me invitaron" e introduce: *${session.inviteCode}*\n` +
@@ -87,7 +111,7 @@ export default function InviteScreen() {
       await Share.share({ message: richMessage });
     } catch {
       await Clipboard.setStringAsync(richMessage);
-      Alert.alert('Copiado', 'La invitación se ha copiado al portapapeles.');
+      notify('Copiado', 'La invitación se ha copiado al portapapeles.');
     }
   };
 

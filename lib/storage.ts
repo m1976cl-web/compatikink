@@ -213,12 +213,14 @@ export function buildInviteLink(inviteCode: string, inviteSecret?: string): stri
 }
 
 export function buildInviteMessage(inviteCode: string, inviteSecret?: string): string {
+  const webBase = `https://m1976cl-web.github.io/compatikink/guest/${inviteCode}`;
   const linkHint = inviteSecret
-    ? `\nEnlace (incluye secreto de cifrado):\ncompatikink://guest/${inviteCode}#k=${inviteSecret}\n`
+    ? `\nEnlace (secreto en #k= — no lo borres):\n${webBase}#k=${inviteSecret}\n` +
+      `\nRespaldo si el chat corta el enlace (?k=):\n${webBase}?k=${inviteSecret}\n`
     : '';
   return (
     `Hola, me gustaría explorar compatibilidad de preferencias de forma privada.\n\n` +
-    `1. Entra a Compatikink\n` +
+    `1. Entra a CompatKink\n` +
     `2. Introduce el código de invitación: ${inviteCode}\n` +
     linkHint +
     `\nTus respuestas viajan cifradas; el servidor solo ve ciphertext.`

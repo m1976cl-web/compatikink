@@ -151,21 +151,19 @@ export function generateReport(
     } else if (item.section === 'role_mismatch') {
       scoreSum += 50;
       scoreWeight += 1;
-    } else if (item.section === 'hard_limit_conflict') {
-      scoreSum += 0;
-      scoreWeight += 1;
     }
+    // hard_limit_conflict is a blocker banner, not a 0% average dilutor
   }
 
   const compatibilityScore =
     scoreWeight > 0 ? Math.round(scoreSum / scoreWeight) : 0;
 
   const conversationOrder = [
+    ...items.filter((i) => i.section === 'hard_limit_conflict').map((i) => i.activityId),
     ...items.filter((i) => i.section === 'mutual_match').map((i) => i.activityId),
     ...items.filter((i) => i.section === 'explore_together').map((i) => i.activityId),
     ...items.filter((i) => i.section === 'role_mismatch').map((i) => i.activityId),
     ...items.filter((i) => i.section === 'guest_only').map((i) => i.activityId),
-    ...items.filter((i) => i.section === 'hard_limit_conflict').map((i) => i.activityId),
   ];
 
   const initiatorCompass = calculateUserCompass(initiatorResponses);
@@ -365,10 +363,8 @@ export function calculateCategoryCompatibilities(items: ReportItem[]): Record<st
       } else if (item.section === 'role_mismatch') {
         scoreSum += 50;
         scoreWeight += 1;
-      } else if (item.section === 'hard_limit_conflict') {
-        scoreSum += 0;
-        scoreWeight += 1;
       }
+      // hard_limit_conflict excluded from category % (surfaced separately in UI)
     }
 
     result[cat] = scoreWeight > 0 ? Math.round(scoreSum / scoreWeight) : 100;

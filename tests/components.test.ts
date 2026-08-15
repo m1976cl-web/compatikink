@@ -207,11 +207,23 @@ async function testComponentLogic() {
   assert.equal(p3.inviteSecret, 'Key77');
   assert.equal(p3.isValid, true);
 
-  // Test Case 4: Web Query Fallback
+  // Test Case 4: Web Query Fallback (invite?code=)
   const p4 = linking.parseInviteLink('https://m1976cl-web.github.io/compatikink/invite?code=DEF456&k=Key88');
   assert.equal(p4.inviteCode, 'DEF456');
   assert.equal(p4.inviteSecret, 'Key88');
   assert.equal(p4.isValid, true);
+
+  // Test Case 4b: guest path with ?k= (WhatsApp-safe fallback)
+  const p4b = linking.parseInviteLink('https://m1976cl-web.github.io/compatikink/guest/DEF456?k=Key88');
+  assert.equal(p4b.inviteCode, 'DEF456');
+  assert.equal(p4b.inviteSecret, 'Key88');
+  assert.equal(p4b.isValid, true);
+  assert.ok(
+    typeof linking.createInviteWebUrlQueryFallback === 'function',
+    'createInviteWebUrlQueryFallback must be exported'
+  );
+  const fb = linking.createInviteWebUrlQueryFallback('DEF456', 'Key88');
+  assert.ok(fb.includes('/guest/DEF456') && fb.includes('?k=Key88'), 'query fallback embeds ?k=');
 
   // Test Case 5: Raw Code String Input
   const p5 = linking.parseInviteLink('  ghj001  ');

@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { VaultLockGate } from '@/components/VaultLockGate';
 import { ReportCard } from '@/components/ReportCard';
+import { ReportActionPanel } from '@/components/ReportActionPanel';
 import { CompatibilityInfographic } from '@/components/CompatibilityInfographic';
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { ScenePlannerModal } from '@/components/ScenePlannerModal';
@@ -31,12 +32,12 @@ import {
 import { getActivityById } from '@/data/activities';
 
 const SECTION_ORDER: ReportSectionType[] = [
+  'hard_limit_conflict',
   'mutual_match',
   'explore_together',
   'role_mismatch',
   'guest_only',
   'initiator_only',
-  'hard_limit_conflict',
 ];
 
 export default function ReportScreen() {
@@ -346,6 +347,8 @@ export default function ReportScreen() {
             ) : null}
           </>
         )}
+
+        <ReportActionPanel report={report} guestName={guestName} />
 
         <CompatibilityInfographic
           report={report}

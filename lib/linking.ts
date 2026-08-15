@@ -68,11 +68,23 @@ export function parseInviteLink(input: string): ParsedInviteLink {
 
 /**
  * Constructs a universal web URL for an invitation code and secret.
+ * Prefer `#k=` (fragment never hits the server). Use `createInviteWebUrlQueryFallback`
+ * when sharing via apps that strip fragments (e.g. some WhatsApp clients).
  */
 export function createInviteWebUrl(code: string, secret?: string): string {
   const cleanCode = encodeURIComponent(code.trim().toUpperCase());
   const base = `https://m1976cl-web.github.io/compatikink/guest/${cleanCode}`;
   return secret ? `${base}#k=${encodeURIComponent(secret)}` : base;
+}
+
+/**
+ * Same invite as {@link createInviteWebUrl} but secret in `?k=` so messengers that
+ * drop `#…` still work. Tradeoff: secret may appear in proxy/referrer logs.
+ */
+export function createInviteWebUrlQueryFallback(code: string, secret?: string): string {
+  const cleanCode = encodeURIComponent(code.trim().toUpperCase());
+  const base = `https://m1976cl-web.github.io/compatikink/guest/${cleanCode}`;
+  return secret ? `${base}?k=${encodeURIComponent(secret)}` : base;
 }
 
 /**

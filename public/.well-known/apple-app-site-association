@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.com.compatikink.app",
+        "paths": [
+          "/compatikink",
+          "/compatikink/*",
+          "/compatikink/guest/*",
+          "/compatikink/join/*",
+          "/compatikink/auth",
+          "/compatikink/invite*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.compatikink.app"]
+  }
+}
