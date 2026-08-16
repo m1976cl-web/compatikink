@@ -36,6 +36,7 @@ import {
 } from '@/lib/cryptoVault';
 import { getCurrentProfile, getProfile } from '@/lib/storage';
 import { triggerHaptic } from '@/lib/haptics';
+import { NoxHost } from '@/components/nox';
 
 export interface VaultLockGateProps {
   unlocked?: boolean;
@@ -276,12 +277,9 @@ export function VaultLockGate({
           },
         ]}
       >
-        {/* Ícono candado pulsante */}
-        <Animated.Text
-          style={[styles.lockIcon, { transform: [{ scale: lockPulse }] }]}
-        >
-          🔐
-        </Animated.Text>
+        <Animated.View style={{ transform: [{ scale: lockPulse }] }}>
+          <NoxHost scene="auth" variant="inline" caption={false} showName={false} />
+        </Animated.View>
 
         <Text style={styles.brandMark}>Compatikink</Text>
         <Text style={styles.title}>{title}</Text>
@@ -350,10 +348,6 @@ const styles = StyleSheet.create({
   formWrap: {
     width: '100%',
     alignItems: 'center',
-  },
-  lockIcon: {
-    fontSize: 42,
-    marginBottom: spacing.sm,
   },
   brandMark: {
     fontFamily: fonts.display,

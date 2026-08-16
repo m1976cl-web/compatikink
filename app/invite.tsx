@@ -5,6 +5,7 @@ import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { AppHeader } from '@/components/AppHeader';
+import { NoxHost } from '@/components/nox';
 import {
   colors,
   fonts,
@@ -23,8 +24,10 @@ import {
   createInviteSchemeUrl,
   generateQRCodeSVG,
 } from '@/lib/linking';
+import { useTranslation } from '@/lib/i18n';
 
 export default function InviteScreen() {
+  const { t } = useTranslation();
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
@@ -143,14 +146,15 @@ export default function InviteScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <AppHeader
           brand
-          title="Comparte el código"
-          subtitle="Cuando complete el test, recibirás el reporte automáticamente."
+          title={t('invite.share_title')}
+          subtitle={t('invite.share_sub')}
         />
+        <NoxHost scene="invite" variant="banner" />
 
         <View style={styles.codeBox}>
-          <Text style={styles.codeLabel}>Código de invitación</Text>
+          <Text style={styles.codeLabel}>{t('invite.code_label')}</Text>
           <Text style={styles.code}>{session.inviteCode}</Text>
-          <Text style={styles.codeHint}>Un solo uso · Privado</Text>
+          <Text style={styles.codeHint}>{t('invite.one_use')}</Text>
           {expiryText ? (
             <Text
               style={[
@@ -167,11 +171,12 @@ export default function InviteScreen() {
         </View>
 
         <View style={styles.shareRow}>
-          <Button title="Copiar código" onPress={copyCode} style={{ flex: 1 }} />
-          <Button title="Copiar enlace" onPress={copyLink} variant="secondary" style={{ flex: 1 }} />
+          <Button title={t('invite.copy_code')} onPress={copyCode} style={{ flex: 1 }} />
+          <Button title={t('invite.copy_link')} onPress={copyLink} variant="secondary" style={{ flex: 1 }} />
         </View>
 
-        <Button title="Compartir invitación completa" onPress={shareInvite} variant="secondary" />
+        <Text style={styles.hint}>{t('invite.whatsapp_warn')}</Text>
+        <Button title={t('invite.share_full')} onPress={shareInvite} variant="secondary" />
 
         <TouchableOpacity style={styles.qrCard} onPress={() => setShowQrModal(true)}>
           <Text style={styles.qrCardTitle}>Código QR (Local Offline)</Text>

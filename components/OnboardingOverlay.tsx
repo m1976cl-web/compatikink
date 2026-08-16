@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
+import { NoxHost } from '@/components/nox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ONBOARDING_KEY = 'onboarding_done';
@@ -98,7 +99,7 @@ export function OnboardingOverlay({ onDone }: Props) {
       <View style={styles.overlay}>
         <Animated.View style={[styles.panel, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <Text style={styles.brand}>Compatikink</Text>
-          <Text style={styles.noxMark}>Nox</Text>
+          <NoxHost scene="landing" variant="compact" caption={false} />
 
           <View style={styles.dotsRow}>
             {STEPS.map((_, i) => (
@@ -151,13 +152,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     letterSpacing: 2,
     marginBottom: spacing.xs,
-  },
-  noxMark: {
-    fontFamily: fonts.displayItalic,
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
-    letterSpacing: 3,
-    marginBottom: spacing.md,
   },
   dotsRow: {
     flexDirection: 'row',

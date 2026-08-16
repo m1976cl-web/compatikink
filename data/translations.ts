@@ -1,6 +1,9 @@
-export type SupportedLocale = 'es' | 'en';
+import { CORE_UI, type SupportedLocale } from './localeCore';
+import { PT_CATALOG } from './localePtCatalog';
 
-export const TRANSLATIONS: Record<SupportedLocale, Record<string, string>> = {
+export type { SupportedLocale };
+
+const CATALOG: Record<'es' | 'en', Record<string, string>> = {
   es: {
     // General & Navigation
     'app.title': 'CompatKink',
@@ -729,4 +732,10 @@ export const TRANSLATIONS: Record<SupportedLocale, Record<string, string>> = {
     'activity.ls_contract.name': 'BDSM Contracts & Agreements',
     'activity.ls_contract.desc': 'Written agreement laying out roles, hard limits, and review schedules.',
   },
+};
+
+export const TRANSLATIONS: Record<SupportedLocale, Record<string, string>> = {
+  es: { ...CATALOG.es, ...CORE_UI.es },
+  en: { ...CATALOG.en, ...CORE_UI.en },
+  pt: { ...CATALOG.en, ...PT_CATALOG, ...CORE_UI.pt },
 };

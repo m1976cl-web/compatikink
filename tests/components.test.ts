@@ -111,6 +111,8 @@ async function testComponentLogic() {
   assert.ok(typeof i18n.getCurrentLocale === 'function');
   await i18n.setLocale('en');
   assert.equal(i18n.getCurrentLocale(), 'en');
+  await i18n.setLocale('pt');
+  assert.equal(i18n.getCurrentLocale(), 'pt');
   await i18n.setLocale('es');
   assert.equal(i18n.getCurrentLocale(), 'es');
   console.log('  ✅ LanguageSelector i18n integration verified');
@@ -236,6 +238,34 @@ async function testComponentLogic() {
   assert.ok(svgData.startsWith('data:image/svg+xml;utf8,'), 'QR Code must be local SVG data URL');
   assert.ok(svgData.includes('%3Csvg'), 'QR SVG must contain valid SVG tag');
   console.log('  ✅ Deep Linking & Offline QR Code generator verified');
+
+  // ─── 13. Nox host scene registry ──────────────────────────────────
+  console.log('\n13. Testing NoxHost scene registry...');
+  const nox = await import('../components/nox/scenes');
+  assert.ok(Array.isArray(nox.NOX_SCENE_IDS), 'NOX_SCENE_IDS must be an array');
+  const expectedScenes = [
+    'landing',
+    'onboarding',
+    'home',
+    'auth',
+    'questionnaire',
+    'invite',
+    'guest',
+    'report',
+    'manual',
+    'share',
+    'privacy',
+  ];
+  for (const id of expectedScenes) {
+    assert.ok(nox.NOX_SCENE_IDS.includes(id as (typeof nox.NOX_SCENE_IDS)[number]), `missing scene ${id}`);
+    const meta = nox.getNoxScene(id);
+    assert.ok(meta.caption.length > 8, `${id} caption too short`);
+    assert.ok(meta.a11y.toLowerCase().includes('nox'), `${id} a11y must mention Nox`);
+  }
+  assert.equal(nox.getNoxScene('not-a-scene').caption, nox.NOX_SCENES.landing.caption, 'unknown scene falls back to landing');
+  assert.equal(nox.isNoxSceneId('invite'), true);
+  assert.equal(nox.isNoxSceneId('dating'), false);
+  console.log(`  ✅ NoxHost registry verified (${nox.NOX_SCENE_IDS.length} scenes)`);
 }
 
 testComponentLogic()

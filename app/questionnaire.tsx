@@ -23,6 +23,7 @@ import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import { AppHeader } from '@/components/AppHeader';
+import { NoxHost } from '@/components/nox';
 import {
   CATEGORY_LABELS,
   CATEGORY_EMOJIS,
@@ -49,8 +50,10 @@ import {
   saveQuestionnaireDraft,
   clearQuestionnaireDraft,
 } from '@/lib/questionnaireDraft';
+import { useTranslation } from '@/lib/i18n';
 
 export default function QuestionnaireScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ mode?: string }>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -205,14 +208,18 @@ export default function QuestionnaireScreen() {
         <ScrollView contentContainerStyle={styles.intro}>
           <AppHeader
             brand
-            title="Antes de empezar"
-            subtitle="Responderás de forma privada. Tus respuestas solo se cruzarán cuando ambos terminen."
+            title={t('q.intro_title')}
+            subtitle={t('q.intro_sub')}
           />
+          <NoxHost scene="questionnaire" variant="banner" />
+
+          <Text style={styles.introTextSmall}>{t('q.scale_help')}</Text>
+          <Text style={styles.introTextSmall}>{t('q.express_help')}</Text>
 
           <View style={styles.divider} />
-          <Text style={styles.sectionSubTitle}>1. Tu Perfil (Iniciador)</Text>
+          <Text style={styles.sectionSubTitle}>{t('q.you_section')}</Text>
 
-          <Text style={styles.label}>Tu nick o nombre *</Text>
+          <Text style={styles.label}>{t('q.your_nick')}</Text>
           <TextInput
             style={styles.input}
             placeholder="Ej: Alex"
@@ -221,16 +228,16 @@ export default function QuestionnaireScreen() {
             onChangeText={setNickname}
           />
 
-          <Text style={styles.label}>Pronombres (opcional)</Text>
+          <Text style={styles.label}>{t('q.pronouns')}</Text>
           <PronounsPicker value={pronouns} onChange={setPronouns} />
 
-          <Text style={[styles.label, styles.fieldGap]}>Nivel de experiencia (opcional)</Text>
+          <Text style={[styles.label, styles.fieldGap]}>{t('q.experience')}</Text>
           <ExperiencePicker value={experienceLevel} onChange={setExperienceLevel} />
 
-          <Text style={[styles.label, styles.fieldGap]}>Sobre ti / Límites generales (opcional)</Text>
+          <Text style={[styles.label, styles.fieldGap]}>{t('q.about_you')}</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Ej: Prefiero avanzar gradualmente. Límites en zonas sensibles..."
+            placeholder={t('q.about_ph')}
             placeholderTextColor={colors.textMuted}
             value={userNotes}
             onChangeText={setUserNotes}
@@ -240,12 +247,10 @@ export default function QuestionnaireScreen() {
 
           <View style={styles.divider} />
 
-          <Text style={styles.sectionSubTitle}>2. Ficha Privada de la Otra Persona</Text>
-          <Text style={styles.introTextSmall}>
-            Define un apodo y añade notas privadas (límites conocidos, contexto...). Solo tú verás esta información en tu reporte.
-          </Text>
+          <Text style={styles.sectionSubTitle}>{t('q.guest_section')}</Text>
+          <Text style={styles.introTextSmall}>{t('q.guest_help')}</Text>
 
-          <Text style={styles.label}>Su nick o nombre (opcional)</Text>
+          <Text style={styles.label}>{t('q.their_nick')}</Text>
           <TextInput
             style={styles.input}
             placeholder="Ej: Sam"
@@ -254,7 +259,7 @@ export default function QuestionnaireScreen() {
             onChangeText={setGuestNickname}
           />
 
-          <Text style={styles.label}>Notas privadas sobre la otra persona (opcional)</Text>
+          <Text style={styles.label}>{t('q.their_notes')}</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Ej: Nos conocimos en Tinder. Interés en cuerdas..."
@@ -266,7 +271,7 @@ export default function QuestionnaireScreen() {
           />
 
           <Button 
-            title="Siguiente: Filtrar Categorías" 
+            title={t('q.next_cats')} 
             onPress={() => {
               if (!nickname.trim()) {
                 Alert.alert('Nick requerido', 'Por favor ingresa tu nick para continuar.');
@@ -277,12 +282,12 @@ export default function QuestionnaireScreen() {
             }} 
           />
           <Button
-            title={`Express · ${EXPRESS_COUNT} preguntas (~8 min)`}
+            title={t('q.express', { n: String(EXPRESS_COUNT) })}
             variant="secondary"
             onPress={startExpress}
           />
           {hasDraft ? (
-            <Button title="Reanudar borrador guardado" variant="ghost" onPress={resumeDraft} />
+            <Button title={t('q.resume')} variant="ghost" onPress={resumeDraft} />
           ) : null}
         </ScrollView>
       </SafeAreaView>

@@ -5,6 +5,7 @@ import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { AppHeader } from '@/components/AppHeader';
+import { NoxHost } from '@/components/nox';
 import { VaultLockGate } from '@/components/VaultLockGate';
 import { colors, fonts, fontSize, spacing, typography } from '@/constants/theme';
 import { filterReportForSharing, generateReport } from '@/lib/compatibility';
@@ -94,6 +95,7 @@ export default function ShareScreen() {
           title="¿Qué compartir?"
           subtitle="Tú controlas qué ve la otra persona. Tus intereses no compartidos no se incluyen por defecto."
         />
+        <NoxHost scene="share" variant="compact" />
 
         <VaultLockGate
           unlocked={unlocked}

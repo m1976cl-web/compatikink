@@ -2,13 +2,14 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Platform, StyleSheet, View, Text } from 'react-native';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { fontAssets } from '@/constants/fonts';
 import { OfficeModeModal } from '@/components/OfficeModeModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { GlobalSearchModal } from '@/components/GlobalSearchModal';
 import { NetworkStatusToast } from '@/components/NetworkStatusToast';
 import { colors, fonts, gradients } from '@/constants/theme';
+import { initLocale } from '@/lib/i18n';
 
 import { ThemeProvider } from '@/lib/themeContext';
 
@@ -27,6 +28,10 @@ function LazyFallback() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(fontAssets);
+
+  useEffect(() => {
+    void initLocale();
+  }, []);
 
   // On Web, never block rendering on font loading to prevent infinite spinner
   if (!fontsLoaded && !fontError && Platform.OS !== 'web') {

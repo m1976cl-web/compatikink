@@ -15,9 +15,13 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { Button } from '@/components/Button';
+import { NoxHost } from '@/components/nox';
+import type { NoxSceneId } from '@/components/nox';
 import { colors, fonts, fontSize, radii, spacing, typography, glowShadowPrimary } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
+
+const ONBOARDING_SCENES: NoxSceneId[] = ['onboarding', 'landing', 'auth', 'home'];
 
 const ROLES = [
   { id: 'dom', label: 'Dom/Dominante', emoji: '👑' },
@@ -310,6 +314,7 @@ export default function OnboardingScreen() {
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            <NoxHost scene={ONBOARDING_SCENES[step] ?? 'onboarding'} variant="banner" />
             {step === 0 && renderStep0()}
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}

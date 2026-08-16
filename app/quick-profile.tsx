@@ -26,6 +26,7 @@ import { setupVaultForNewProfile, VAULT_VERSION } from '@/lib/cryptoVault';
 import { PronounsPicker } from '@/components/PronounsPicker';
 import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { AppHeader } from '@/components/AppHeader';
+import { NoxHost } from '@/components/nox';
 
 function notify(title: string, message: string) {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -244,6 +245,7 @@ export default function QuickProfileScreen() {
               title="Perfil Rápido con Insignias"
               subtitle="Configura tu nick, rol principal (Dom/Sub/Switch), protocolos SSC/RACK y 10 preguntas clave."
             />
+            <NoxHost scene="questionnaire" variant="compact" />
             <View style={styles.pillRow}>
               <View style={styles.pill}><Text style={styles.pillText}>~2 minutos</Text></View>
               <View style={styles.pill}><Text style={styles.pillText}>Bóveda Cifrada</Text></View>

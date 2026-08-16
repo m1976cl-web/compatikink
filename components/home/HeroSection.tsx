@@ -2,10 +2,12 @@ import React from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/Button';
-import { OctopusHost } from '@/components/OctopusHost';
+import { NoxHost } from '@/components/nox';
 import { colors, fonts, fontSize, spacing, typography } from '@/constants/theme';
 import { UserProfile } from '@/types';
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
+import { useTranslation } from '@/lib/i18n';
+import { LanguageSelector } from '@/components/ui/LanguageSelector';
 
 interface HeroSectionProps {
   loggedIn: boolean;
@@ -27,6 +29,7 @@ export function HeroSection({
   onScrollToGuest,
 }: HeroSectionProps) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <Animated.View
@@ -35,39 +38,42 @@ export function HeroSection({
         { opacity: heroFade, transform: [{ translateY: heroSlide }] },
       ]}
     >
+      <View style={styles.langRow}>
+        <LanguageSelector />
+      </View>
       <Text style={styles.brand} accessibilityRole="header">
-        Compatikink
+        CompatKink
       </Text>
-      <Text style={styles.mark}>Beta usable — compatibilidad privada</Text>
-      <OctopusHost />
+      <Text style={styles.mark}>{t('home.mark')}</Text>
+      <NoxHost scene="home" variant="compact" />
       <Text style={styles.headline}>
         {loggedIn
-          ? `Hola, ${profile?.nickname}`
-          : 'Responde. Invita. Lee el reporte.'}
+          ? t('home.hello', { name: profile?.nickname || '' })
+          : t('home.headline')}
       </Text>
       <Text style={styles.heroSupport}>
         {loggedIn
           ? vaultOpen
-            ? 'Bóveda abierta. Sigue el banner: Responder → Invitar.'
-            : 'Desbloquea la bóveda con tu PIN para invitar.'
-          : 'Flujo corto para pruebas. Sin dating ni feed en esta beta.'}
+            ? t('home.support_open')
+            : t('home.support_locked')
+          : t('home.support_guest')}
       </Text>
       <View style={styles.ctaGroup}>
         {loggedIn ? (
           <>
             <Button
-              title="Crear invitación"
+              title={t('home.cta_invite')}
               onPress={onOpenQuickInvite}
               style={styles.ctaPrimary}
             />
             <Button
-              title="Responder (perfil rápido)"
+              title={t('home.cta_respond')}
               variant="secondary"
               onPress={() => router.push('/quick-profile')}
               style={styles.ctaSecondary}
             />
             <Button
-              title={vaultOpen ? 'Bloquear bóveda' : 'Abrir bóveda'}
+              title={vaultOpen ? t('home.cta_lock') : t('home.cta_unlock')}
               variant="ghost"
               onPress={() => {
                 if (vaultOpen) VaultLockGateAPI.lock();
@@ -78,18 +84,18 @@ export function HeroSection({
         ) : (
           <>
             <Button
-              title="Empezar (perfil rápido)"
+              title={t('home.cta_start')}
               onPress={() => router.push('/quick-profile')}
               style={styles.ctaPrimary}
             />
             <Button
-              title="Me invitaron"
+              title={t('home.cta_invited')}
               variant="secondary"
               onPress={onScrollToGuest}
               style={styles.ctaSecondary}
             />
             <Button
-              title="Entrar a bóveda"
+              title={t('home.cta_vault')}
               variant="ghost"
               onPress={() => router.push('/auth')}
             />
@@ -102,6 +108,7 @@ export function HeroSection({
 
 const styles = StyleSheet.create({
   hero: { marginBottom: spacing.xxl, paddingTop: spacing.md },
+  langRow: { alignItems: 'flex-end', marginBottom: spacing.sm },
   brand: {
     fontFamily: fonts.display,
     fontSize: fontSize.brand,

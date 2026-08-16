@@ -45,6 +45,19 @@ async function testI18nEngine() {
   assert.equal(getActivitySafetyTip(agePlayAct), 'Requires deep negotiation and clear boundaries. Always strictly between adults.');
   console.log('  ✅ Activity Catalog helper functions translate dynamically across locales');
 
+  console.log('\n5. Testing Portuguese locale + core copy...');
+  await setLocale('pt');
+  assert.equal(getCurrentLocale(), 'pt');
+  assert.equal(t('vault.locked'), 'Cofre bloqueado 🔒');
+  assert.equal(t('landing.title'), 'Compatibilidade íntima, assimétrica e privada');
+  assert.equal(t('path.step1'), '1. Responder');
+  assert.equal(t('rating.hard_limit'), 'Limite rígido');
+  assert.equal(getCategoryLabel('bondage'), 'Ataduras');
+  assert.equal(getActivityName(ropeAct), 'Cordas (shibari)');
+  assert.ok(t('talk.bo_rope').includes('circulação') || t('talk.bo_rope').includes('Circulação'));
+  assert.equal(t('home.hello', { name: 'Alex' }), 'Olá, Alex');
+  console.log('  ✅ Portuguese UI + catalog + talk tips resolve');
+
   // Reset to default
   await setLocale('es');
 }

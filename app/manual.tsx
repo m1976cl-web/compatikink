@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { colors, fontSize, spacing, glowShadowPrimary, fonts, radii, typography } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
+import { NoxHost } from '@/components/nox';
 import { useResponsive } from '@/hooks/useResponsive';
 import {
   MANUAL_AREAS,
@@ -137,6 +138,8 @@ export default function UserManualScreen() {
             </Text>
           </View>
         </View>
+
+        <NoxHost scene="manual" variant="compact" />
 
         {/* Global Toast Notification */}
         {copiedToast && (

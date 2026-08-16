@@ -6,6 +6,7 @@ import { Button } from '@/components/Button';
 import { VaultLockGate } from '@/components/VaultLockGate';
 import { ReportCard } from '@/components/ReportCard';
 import { ReportActionPanel } from '@/components/ReportActionPanel';
+import { NoxHost } from '@/components/nox';
 import { CompatibilityInfographic } from '@/components/CompatibilityInfographic';
 import { SocialShareModal } from '@/components/SocialShareModal';
 import { ScenePlannerModal } from '@/components/ScenePlannerModal';
@@ -27,9 +28,10 @@ import {
   ReportSectionType,
   SceneAgreement,
   SECTION_DESCRIPTIONS,
-  SECTION_LABELS,
 } from '@/types';
 import { getActivityById } from '@/data/activities';
+import { useTranslation } from '@/lib/i18n';
+import { getSectionLabel } from '@/lib/localeLabels';
 
 const SECTION_ORDER: ReportSectionType[] = [
   'hard_limit_conflict',
@@ -41,6 +43,7 @@ const SECTION_ORDER: ReportSectionType[] = [
 ];
 
 export default function ReportScreen() {
+  const { t } = useTranslation();
   const { isDesktop } = useResponsive();
   const params = useLocalSearchParams<{ token?: string }>();
   const router = useRouter();
@@ -218,12 +221,13 @@ export default function ReportScreen() {
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <VaultLockGate showLockButton>
+        <NoxHost scene="report" variant="compact" />
         {isDesktop ? (
           <View style={styles.desktopSummaryContainer}>
             {/* Left Column: Overall Match % & Stats */}
             <View style={styles.desktopSummaryLeft}>
               <Text style={styles.score}>{displayScore}%</Text>
-              <Text style={styles.scoreLabel}>Compatibilidad general</Text>
+              <Text style={styles.scoreLabel}>{t('report.score_label')}</Text>
               <View style={styles.stats}>
                 <Stat value={report.mutualMatchCount} label="Matches" color={colors.success} />
                 <Stat value={report.exploreCount} label="Explorar" color={colors.info} />
@@ -293,7 +297,7 @@ export default function ReportScreen() {
                   <Text style={styles.confettiText}>🎉✨🔥💜✨🎉</Text>
                 </Animated.View>
               )}
-              <Text style={styles.scoreLabel}>Compatibilidad general</Text>
+              <Text style={styles.scoreLabel}>{t('report.score_label')}</Text>
               <View style={styles.stats}>
                 <Stat value={report.mutualMatchCount} label="Matches" color={colors.success} />
                 <Stat value={report.exploreCount} label="Explorar" color={colors.info} />
@@ -357,7 +361,7 @@ export default function ReportScreen() {
         />
 
         <Text style={styles.guestNote}>
-          Reporte privado vs. {guestName}. Solo tú ves las secciones marcadas como privadas.
+          {t('report.private_note', { name: guestName })}
         </Text>
 
         {/* Mood Filter Chip Bar */}
@@ -404,7 +408,7 @@ export default function ReportScreen() {
         ) : (
           grouped.map(({ section, items }) => (
             <View key={section} style={styles.section}>
-              <Text style={styles.sectionTitle}>{SECTION_LABELS[section]}</Text>
+              <Text style={styles.sectionTitle}>{getSectionLabel(section)}</Text>
               <Text style={styles.sectionDesc}>{SECTION_DESCRIPTIONS[section]}</Text>
               <View style={isDesktop ? styles.cardGridDesktop : undefined}>
                 {items.map((item) => (

@@ -23,6 +23,7 @@ import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import { AppHeader } from '@/components/AppHeader';
+import { NoxHost } from '@/components/nox';
 import { CATEGORY_LABELS, ExperienceLevel, UserProfile, ActivityCategory, Rating } from '@/types';
 import { getSessionByInviteCode, submitGuestResponses, parseInviteSecretFromUrl } from '@/lib/sessions';
 import { CATEGORY_ORDER, ACTIVITIES } from '@/data/activities';
@@ -166,6 +167,7 @@ export default function GuestQuestionnaireScreen() {
             title="Antes de responder"
             subtitle="Mayores de 18. Respuestas privadas. Quien te invitó verá la compatibilidad mutua."
           />
+          <NoxHost scene="guest" variant="banner" />
 
           <View style={styles.divider} />
 

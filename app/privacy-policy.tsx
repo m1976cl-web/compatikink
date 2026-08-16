@@ -10,6 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
+import { NoxHost } from '@/components/nox';
 import { useResponsive } from '@/hooks/useResponsive';
 import { purgeAllUserData } from '@/lib/storage';
 
@@ -55,6 +56,7 @@ export default function PrivacyPolicyScreen() {
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Privacidad & Control de Datos 🛡️</Text>
+          <NoxHost scene="privacy" variant="compact" />
           <Text style={styles.subtitle}>
             Cumplimiento GDPR Art. 9, Ley 21.719 y Especificación Zero-Knowledge AES-GCM-256
           </Text>

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
+import { NoxHost } from '@/components/nox';
 
 const AGE_KEY = 'age_verified_18_v1';
 
@@ -37,6 +38,7 @@ export function AgeVerificationModal() {
       <View style={styles.overlay}>
         <View style={styles.panel}>
           <Text style={styles.brand}>Compatikink</Text>
+          <NoxHost scene="onboarding" variant="compact" caption={false} />
           <Text style={styles.eyebrow}>Acceso restringido</Text>
           <Text style={styles.title}>Solo para mayores de 18 años</Text>
           <Text style={styles.desc}>

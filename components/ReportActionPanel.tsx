@@ -2,84 +2,57 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { CompatibilityReport, ReportItem } from '@/types';
+import { useTranslation } from '@/lib/i18n';
+import { getConversationPrompt } from '@/lib/localeLabels';
 
 interface Props {
   report: CompatibilityReport;
   guestName: string;
 }
 
-function buildTenMinuteScript(report: CompatibilityReport, guestName: string): string[] {
-  const hard = report.items.filter((i) => i.section === 'hard_limit_conflict');
+export function ReportActionPanel({ report, guestName }: Props) {
+  const { t } = useTranslation();
+  const hardItems = report.items.filter((i) => i.section === 'hard_limit_conflict');
   const mutual = report.items.filter((i) => i.section === 'mutual_match').slice(0, 3);
   const explore = report.items.filter((i) => i.section === 'explore_together').slice(0, 2);
 
-  const steps: string[] = [
-    '0–1 min — Check-in: “¿Cómo te sientes hablando de esto hoy? ¿Algo fuera de límites ahora mismo?”',
-  ];
-
-  if (hard.length > 0) {
-    steps.push(
-      `1–3 min — Límites duros primero (no negociables): ${hard
-        .map((i) => i.activityName)
-        .join(', ')}. Confirma en voz alta que no se cruzarán.`
-    );
+  const script: string[] = [t('report.script_0')];
+  if (hardItems.length > 0) {
+    script.push(t('report.script_hard', { list: hardItems.map((i) => i.activityName).join(', ') }));
   } else {
-    steps.push('1–3 min — Confirma que no hay conflictos de límite duro en este reporte.');
+    script.push(t('report.script_no_hard'));
   }
-
   if (mutual.length > 0) {
-    steps.push(
-      `3–7 min — Matches mutuos: elegid 1–2 de [${mutual
-        .map((i) => i.activityName)
-        .join(', ')}] y acordad intensidad + safeword.`
-    );
+    script.push(t('report.script_mutual', { list: mutual.map((i) => i.activityName).join(', ') }));
   } else {
-    steps.push('3–7 min — Si no hay matches fuertes, hablad de curiosidades compartidas sin presión.');
+    script.push(t('report.script_no_mutual'));
   }
-
   if (explore.length > 0) {
-    steps.push(
-      `7–9 min — Explorar con cuidado: ${explore
-        .map((i) => i.activityName)
-        .join(', ')}. Solo si ambos dicen sí explícito.`
-    );
+    script.push(t('report.script_explore', { list: explore.map((i) => i.activityName).join(', ') }));
   }
+  script.push(t('report.script_close', { name: guestName }));
 
-  steps.push(
-    `9–10 min — Cierre con ${guestName}: aftercare, qué repetir, qué aparcar. Nada de “presionar el %”.`
-  );
-
-  return steps;
-}
-
-export function ReportActionPanel({ report, guestName }: Props) {
-  const hardItems = report.items.filter((i) => i.section === 'hard_limit_conflict');
-  const script = buildTenMinuteScript(report, guestName);
-  const scoreNote =
-    hardItems.length > 0
-      ? 'El % no sustituye los límites: los conflictos duros se listan aparte y no “promedian” el score.'
-      : 'El % resume matches/explorar; usad el guión de abajo para conversar.';
+  const scoreNote = hardItems.length > 0 ? t('report.score_note_hard') : t('report.score_note_ok');
 
   return (
     <View style={styles.wrap}>
       {hardItems.length > 0 ? (
         <View style={styles.hardBanner} accessibilityRole="alert">
-          <Text style={styles.hardTitle}>Límites duros — leer antes del score</Text>
-          <Text style={styles.hardBody}>
-            Hay {hardItems.length} conflicto{hardItems.length === 1 ? '' : 's'} donde alguien marcó
-            límite duro. No los ignore el porcentaje.
-          </Text>
+          <Text style={styles.hardTitle}>{t('report.hard_title')}</Text>
+          <Text style={styles.hardBody}>{t('report.hard_body', { n: String(hardItems.length) })}</Text>
           {hardItems.map((item: ReportItem) => (
             <Text key={item.activityId} style={styles.hardItem}>
               • {item.activityName}
-              {item.conversationPrompt ? ` — ${item.conversationPrompt}` : ''}
+              {getConversationPrompt(item.section, item.activityName)
+                ? ` — ${getConversationPrompt(item.section, item.activityName)}`
+                : ''}
             </Text>
           ))}
         </View>
       ) : null}
 
       <View style={styles.scriptBox}>
-        <Text style={styles.scriptTitle}>Guión de conversación (~10 min)</Text>
+        <Text style={styles.scriptTitle}>{t('report.script_title')}</Text>
         <Text style={styles.scoreNote}>{scoreNote}</Text>
         {script.map((line, idx) => (
           <Text key={idx} style={styles.scriptLine}>

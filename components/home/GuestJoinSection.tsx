@@ -1,11 +1,13 @@
 import React from 'react';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { Button } from '@/components/Button';
 import { Section } from '@/components/Section';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { parseInviteLink } from '@/lib/linking';
+import { useTranslation } from '@/lib/i18n';
+import { notify } from '@/lib/notify';
 
 interface GuestJoinSectionProps {
   guestCode: string;
@@ -15,11 +17,12 @@ interface GuestJoinSectionProps {
 
 export function GuestJoinSection({ guestCode, onChangeCode, onLayout }: GuestJoinSectionProps) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const handleJoin = (input: string) => {
     const parsed = parseInviteLink(input);
     if (!parsed.isValid) {
-      Alert.alert('Código inválido', 'Introduce un código o enlace de invitación válido.');
+      notify(t('guest.join_title'), t('guest.invalid'));
       return;
     }
     const { inviteCode, inviteSecret } = parsed;
@@ -46,27 +49,28 @@ export function GuestJoinSection({ guestCode, onChangeCode, onLayout }: GuestJoi
           return;
         }
       }
-      Alert.alert('Portapapeles', 'No se encontró un código o enlace de invitación válido en el portapapeles.');
+      notify(t('guest.join_title'), t('guest.clip_empty'));
     } catch {
-      Alert.alert('Error', 'No se pudo acceder al portapapeles.');
+      notify(t('guest.join_title'), t('guest.clip_error'));
     }
   };
 
   return (
     <View onLayout={onLayout}>
-      <Section title="Me invitaron" subtitle="Pega el código o el enlace completo (#k= / ?k=).">
+      <Section title={t('guest.join_title')} subtitle={t('guest.join_sub')}>
         <View style={styles.interactivePanel}>
+          <Text style={styles.blindNote}>{t('guest.blind_note')}</Text>
           <TextInput
             style={styles.inputInvite}
-            placeholder="Código o enlace de invitación"
+            placeholder={t('guest.placeholder')}
             placeholderTextColor={colors.textDim}
             value={guestCode}
             onChangeText={onChangeCode}
             autoCapitalize="characters"
           />
           <View style={styles.buttonRow}>
-            <Button title="Pegar y unirme" onPress={pasteAndJoin} variant="secondary" style={{ flex: 1 }} />
-            <Button title="Unirme" onPress={joinAsGuest} style={{ flex: 1 }} />
+            <Button title={t('guest.paste')} onPress={pasteAndJoin} variant="secondary" style={{ flex: 1 }} />
+            <Button title={t('guest.join')} onPress={joinAsGuest} style={{ flex: 1 }} />
           </View>
         </View>
       </Section>
@@ -91,5 +95,11 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  blindNote: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    lineHeight: 18,
   },
 });

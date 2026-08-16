@@ -1,15 +1,16 @@
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import {
-  CATEGORY_LABELS,
-  RATING_LABELS,
-  ReportItem,
-  ROLE_LABELS,
-  SECTION_LABELS,
-  MOOD_LABELS,
-} from '@/types';
+import { ReportItem, MOOD_LABELS } from '@/types';
 import { ratingEmoji } from '@/lib/compatibility';
-import { getActivityById } from '@/data/activities';
+import { getActivityById, getActivityTalkTip, getCategoryLabel } from '@/data/activities';
+import {
+  getConversationPrompt,
+  getMoodLabel,
+  getRatingLabel,
+  getRoleLabel,
+  getSectionLabel,
+} from '@/lib/localeLabels';
+import { useTranslation } from '@/lib/i18n';
 
 interface Props {
   item: ReportItem;
@@ -32,9 +33,12 @@ export function ReportCard({
     return null;
   }
 
+  const { t } = useTranslation();
   const isPlannable = item.section === 'mutual_match' || item.section === 'explore_together';
   const isHotMatch = item.section === 'mutual_match';
   const activity = getActivityById(item.activityId);
+  const talkTip = activity ? getActivityTalkTip(activity) : undefined;
+  const prompt = getConversationPrompt(item.section, item.activityName) || item.conversationPrompt;
 
   return (
     <View style={[styles.card, isHotMatch && styles.cardMatch]}>
@@ -42,12 +46,12 @@ export function ReportCard({
         <Text style={styles.activity}>{item.activityName}</Text>
         <View style={[styles.badge, isHotMatch && styles.badgeMatch]}>
           <Text style={[styles.badgeText, isHotMatch && styles.badgeTextMatch]}>
-            {isHotMatch ? '🔥 ' : ''}{SECTION_LABELS[item.section]}
+            {isHotMatch ? '🔥 ' : ''}{getSectionLabel(item.section)}
           </Text>
         </View>
       </View>
       <View style={styles.categoryRow}>
-        <Text style={styles.category}>{CATEGORY_LABELS[item.category]}</Text>
+        <Text style={styles.category}>{getCategoryLabel(item.category)}</Text>
         {activity?.moods && activity.moods.length > 0 ? (
           <View style={styles.moodsRow}>
             {activity.moods.map((m) => {
@@ -56,7 +60,7 @@ export function ReportCard({
               return (
                 <View key={m} style={styles.moodBadge}>
                   <Text style={styles.moodBadgeText}>
-                    {info.emoji} {info.label}
+                    {info.emoji} {getMoodLabel(m)}
                   </Text>
                 </View>
               );
@@ -66,22 +70,21 @@ export function ReportCard({
       </View>
       <View style={styles.row}>
         <Text style={styles.rating}>
-          Tú: {ratingEmoji(item.initiatorRating)} {RATING_LABELS[item.initiatorRating]}
+          {t('common.you')}: {ratingEmoji(item.initiatorRating)} {getRatingLabel(item.initiatorRating)}
         </Text>
         <Text style={styles.rating}>
-          Ellos: {ratingEmoji(item.guestRating)} {RATING_LABELS[item.guestRating]}
+          {t('common.them')}: {ratingEmoji(item.guestRating)} {getRatingLabel(item.guestRating)}
         </Text>
       </View>
       <Text style={styles.meta}>
-        Roles — Tú: {ROLE_LABELS[item.initiatorRole]} · Ellos: {ROLE_LABELS[item.guestRole]}
+        {t('common.roles')} — {t('common.you')}: {getRoleLabel(item.initiatorRole)} · {t('common.them')}: {getRoleLabel(item.guestRole)}
       </Text>
       <Text style={styles.meta}>
-        Intensidad — Tú: {item.initiatorIntensity} · Ellos: {item.guestIntensity}
+        {t('common.intensity')} — {t('common.you')}: {item.initiatorIntensity} · {t('common.them')}: {item.guestIntensity}
       </Text>
 
-      {item.conversationPrompt ? (
-        <Text style={styles.prompt}>💬 {item.conversationPrompt}</Text>
-      ) : null}
+      {prompt ? <Text style={styles.prompt}>💬 {prompt}</Text> : null}
+      {talkTip ? <Text style={styles.prompt}>🧭 {talkTip}</Text> : null}
 
       {isPlannable || onToggleWishlist ? (
         <View style={styles.planFooter}>

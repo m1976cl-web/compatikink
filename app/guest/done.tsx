@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { AppHeader } from '@/components/AppHeader';
+import { NoxHost } from '@/components/nox';
 import {
   colors,
   fonts,
@@ -60,6 +61,7 @@ export default function GuestDoneScreen() {
           title="Gracias"
           subtitle="Tus respuestas se enviaron de forma privada. Quien te invitó recibirá el análisis de compatibilidad."
         />
+        <NoxHost scene="guest" variant="compact" />
 
         {session ? (
           <View style={styles.panel}>

@@ -4,8 +4,10 @@ import { useHomeStore } from '@/lib/stores/useHomeStore';
 import { loginProfile, logoutProfile } from '@/lib/storage';
 import { notify } from '@/lib/notify';
 import { colors, fonts, spacing } from '@/constants/theme';
+import { useTranslation } from '@/lib/i18n';
 
 export function ProfileBar() {
+  const { t } = useTranslation();
   const { profile, loadHomeData } = useHomeStore();
   const [loginNick, setLoginNick] = useState('');
   const [loginPin, setLoginPin] = useState('');
@@ -32,9 +34,9 @@ export function ProfileBar() {
   if (profile) {
     return (
       <View style={styles.container}>
-        <Text style={styles.greeting}>Hola, {profile.nickname}</Text>
+        <Text style={styles.greeting}>{t('home.hello', { name: profile.nickname })}</Text>
         <TouchableOpacity onPress={handleLogout} style={styles.button}>
-          <Text style={styles.buttonText}>Cerrar sesión</Text>
+          <Text style={styles.buttonText}>{t('home.logout')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -44,14 +46,14 @@ export function ProfileBar() {
     <View style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="Nick"
+        placeholder={t('home.login_nick')}
         placeholderTextColor={colors.textMuted || '#888'}
         value={loginNick}
         onChangeText={setLoginNick}
       />
       <TextInput
         style={styles.input}
-        placeholder="PIN"
+        placeholder={t('home.login_pin')}
         placeholderTextColor={colors.textMuted || '#888'}
         value={loginPin}
         onChangeText={setLoginPin}
@@ -59,7 +61,7 @@ export function ProfileBar() {
         keyboardType="number-pad"
       />
       <TouchableOpacity onPress={handleLogin} style={styles.button}>
-        <Text style={styles.buttonText}>Entrar</Text>
+        <Text style={styles.buttonText}>{t('home.cta_vault')}</Text>
       </TouchableOpacity>
     </View>
   );

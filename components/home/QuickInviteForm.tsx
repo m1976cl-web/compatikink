@@ -4,42 +4,42 @@ import { Button } from '@/components/Button';
 import { Section } from '@/components/Section';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import { useQuickInvite } from '@/hooks/useQuickInvite';
+import { useTranslation } from '@/lib/i18n';
 
 interface QuickInviteFormProps {
   invite: ReturnType<typeof useQuickInvite>;
 }
 
 export function QuickInviteForm({ invite }: QuickInviteFormProps) {
+  const { t } = useTranslation();
   if (!invite.showQuickInvite) return null;
 
   return (
-    <Section title="Invitación rápida" subtitle="Usa tus respuestas base guardadas.">
+    <Section title={t('invite.form_title')} subtitle={t('invite.form_sub')}>
       <View style={styles.interactivePanel}>
-        <Text style={styles.label}>Apodo de la otra persona</Text>
+        <Text style={styles.label}>{t('invite.nick_label')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Ej: Sam"
+          placeholder={t('invite.nick_ph')}
           placeholderTextColor={colors.textDim}
           value={invite.quickGuestNick}
           onChangeText={invite.setQuickGuestNick}
         />
-        <Text style={styles.label}>Notas confidenciales (opcional)</Text>
+        <Text style={styles.label}>{t('invite.notes_label')}</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="Notas privadas…"
+          placeholder={t('invite.notes_ph')}
           placeholderTextColor={colors.textDim}
           value={invite.quickGuestNotes}
           onChangeText={invite.setQuickGuestNotes}
           multiline
         />
-        <Text style={styles.expiryHint}>
-          Remoto (Supabase): caducidad fija 48 h. Local: usa el chip elegido.
-        </Text>
+        <Text style={styles.expiryHint}>{t('invite.expiry_hint')}</Text>
         <View style={styles.expiryRow}>
           {[
-            { label: '48 h', value: '48h' as const },
-            { label: '7 días', value: '7d' as const },
-            { label: 'Sin límite', value: 'none' as const },
+            { label: t('invite.exp_48h'), value: '48h' as const },
+            { label: t('invite.exp_7d'), value: '7d' as const },
+            { label: t('invite.exp_none'), value: 'none' as const },
           ].map((opt) => (
             <TouchableOpacity
               key={opt.value}
@@ -62,13 +62,13 @@ export function QuickInviteForm({ invite }: QuickInviteFormProps) {
         </View>
         <View style={styles.formRow}>
           <Button
-            title={invite.creatingInvite ? 'Creando…' : 'Crear código'}
+            title={invite.creatingInvite ? t('invite.creating') : t('invite.create')}
             onPress={invite.handleQuickInvite}
             disabled={invite.creatingInvite}
             style={{ flex: 1 }}
           />
           <Button
-            title="Cancelar"
+            title={t('common.cancel')}
             variant="secondary"
             onPress={invite.reset}
             style={{ flex: 1 }}

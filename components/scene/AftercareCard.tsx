@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import { NoxHost } from '@/components/nox';
 
 interface Props {
   aftercareTimerSeconds: number;
@@ -16,6 +17,7 @@ export function AftercareCard({
   return (
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       <View style={styles.aftercareCard}>
+        <NoxHost scene="manual" variant="compact" />
         <Text style={styles.aftercareTitle}>🪷 Protocolo de Aftercare Nocturno (15 min)</Text>
         <Text style={styles.aftercareDesc}>
           Aterrizaje suave post-endorfinas. Mantén contacto cuerpo a cuerpo, hidratación y temperatura agradable.

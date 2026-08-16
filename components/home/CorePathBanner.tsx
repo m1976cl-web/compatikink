@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/Button';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import { useTranslation } from '@/lib/i18n';
 
 interface CorePathBannerProps {
   hasProfile: boolean;
@@ -22,41 +23,39 @@ export function CorePathBanner({
   onInvite,
 }: CorePathBannerProps) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.wrap} accessibilityRole="summary">
-      <Text style={styles.kicker}>Beta — un solo camino</Text>
-      <Text style={styles.title}>Responde → Invita → Lee el reporte</Text>
-      <Text style={styles.desc}>
-        Ignora el resto de pantallas. Si algo falla, limpia datos del sitio y usa ventana privada.
-        Guía: docs/BETA_HAPPY_PATH.md
-      </Text>
+      <Text style={styles.kicker}>{t('path.kicker')}</Text>
+      <Text style={styles.title}>{t('path.title')}</Text>
+      <Text style={styles.desc}>{t('path.desc')}</Text>
 
       {!hasProfile ? (
-        <Text style={styles.warn}>Primero crea o desbloquea tu perfil (PIN).</Text>
+        <Text style={styles.warn}>{t('path.need_profile')}</Text>
       ) : !vaultOpen ? (
-        <Text style={styles.warn}>Bóveda bloqueada: desbloquéala con tu PIN para usar respuestas.</Text>
+        <Text style={styles.warn}>{t('path.need_vault')}</Text>
       ) : !hasResponses ? (
-        <Text style={styles.warn}>Aún no hay respuestas base. Completa el paso 1.</Text>
+        <Text style={styles.warn}>{t('path.need_answers')}</Text>
       ) : (
-        <Text style={styles.ok}>Listo para invitar.</Text>
+        <Text style={styles.ok}>{t('path.ready')}</Text>
       )}
 
       <View style={styles.row}>
         <Button
-          title="1. Responder"
+          title={t('path.step1')}
           onPress={() => router.push('/quick-profile')}
           style={styles.btn}
         />
         <Button
-          title="2. Invitar"
+          title={t('path.step2')}
           variant="secondary"
           onPress={onInvite}
           disabled={!hasProfile}
           style={styles.btn}
         />
         <Button
-          title="3. Manual"
+          title={t('path.step3')}
           variant="ghost"
           onPress={() => router.push('/manual')}
           style={styles.btn}

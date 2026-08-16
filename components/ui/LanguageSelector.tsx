@@ -2,25 +2,26 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fontSize, radii, spacing } from '@/constants/theme';
 import { useTranslation } from '@/lib/i18n';
-import { SupportedLocale } from '@/data/translations';
+import { LOCALE_OPTIONS, SupportedLocale } from '@/data/localeCore';
 
 export function LanguageSelector() {
   const { locale, changeLanguage } = useTranslation();
 
   return (
-    <View style={styles.container}>
-      {(['es', 'en'] as SupportedLocale[]).map((l) => {
-        const isActive = locale === l;
+    <View style={styles.container} accessibilityRole="toolbar" accessibilityLabel="Language">
+      {LOCALE_OPTIONS.map((opt) => {
+        const isActive = locale === opt.id;
         return (
           <TouchableOpacity
-            key={l}
+            key={opt.id}
             style={[styles.btn, isActive && styles.btnActive]}
-            onPress={() => changeLanguage(l)}
+            onPress={() => changeLanguage(opt.id as SupportedLocale)}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityState={{ selected: isActive }}
+            accessibilityLabel={opt.label}
           >
-            <Text style={[styles.btnText, isActive && styles.btnTextActive]}>
-              {l === 'es' ? '🇪🇸 ES' : '🇬🇧 EN'}
-            </Text>
+            <Text style={[styles.btnText, isActive && styles.btnTextActive]}>{opt.short}</Text>
           </TouchableOpacity>
         );
       })}

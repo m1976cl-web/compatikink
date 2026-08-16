@@ -7,11 +7,12 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
+import { colors, fontSize, radii, spacing } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { useTranslation } from '@/lib/i18n';
+import { NoxHost } from '@/components/nox';
 
 export default function PublicLandingScreen() {
   const router = useRouter();
@@ -19,81 +20,55 @@ export default function PublicLandingScreen() {
   const { t } = useTranslation();
 
   return (
-    <ScreenContainer title="CompatKink — Private Intimate Compatibility" hideHeader>
+    <ScreenContainer title="CompatKink" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
-        {/* Top Navbar */}
         <View style={styles.navbar}>
-          <Text style={styles.brandTitle}>CompatKink 🖤</Text>
+          <Text style={styles.brandTitle}>CompatKink</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
             <LanguageSelector />
             <TouchableOpacity style={styles.appBtn} onPress={() => router.push('/')}>
-              <Text style={styles.appBtnText}>Abrir App 🚀</Text>
+              <Text style={styles.appBtnText}>{t('common.open_app')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          {/* HERO SECTION */}
           <View style={styles.heroSection}>
-            <Text style={styles.heroBadge}>🔐 Cifrado Client-Side Zero-Knowledge</Text>
-            <Text style={styles.heroTitle}>Compatibilidad Íntima Asimétrica & Privada</Text>
-            <Text style={styles.heroSubtitle}>
-              Explora preferencias BDSM, límites, roles y fetiches con tu pareja sin revelar respuestas no coincidentes a terceros ni a servidores.
-            </Text>
+            <Text style={styles.heroBadge}>{t('landing.badge')}</Text>
+            <NoxHost scene="landing" variant="hero" />
+            <Text style={styles.heroTitle}>{t('landing.title')}</Text>
+            <Text style={styles.heroSubtitle}>{t('landing.subtitle')}</Text>
 
             <View style={styles.heroCtaRow}>
               <TouchableOpacity style={styles.primaryCtaBtn} onPress={() => router.push('/onboarding')}>
-                <Text style={styles.primaryCtaBtnText}>Comenzar Cuestionario Privado 📋</Text>
+                <Text style={styles.primaryCtaBtnText}>{t('landing.cta_start')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.secondaryCtaBtn} onPress={() => router.push('/manual')}>
-                <Text style={styles.secondaryCtaBtnText}>Explorar Manual 📖</Text>
+                <Text style={styles.secondaryCtaBtnText}>{t('landing.cta_manual')}</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* FEATURE GRID */}
           <View style={styles.featuresGrid}>
-            <View style={styles.featureCard}>
-              <Text style={styles.featureEmoji}>🙈</Text>
-              <Text style={styles.featureTitle}>Privacidad Asimétrica</Text>
-              <Text style={styles.featureDesc}>
-                Solo se revelan las coincidencias mutuas. Los límites duros y desintereses individuales permanecen 100% ocultos.
-              </Text>
-            </View>
-
-            <View style={styles.featureCard}>
-              <Text style={styles.featureEmoji}>🔒</Text>
-              <Text style={styles.featureTitle}>Cifrado AES-GCM-256</Text>
-              <Text style={styles.featureDesc}>
-                Claves derivadas en tu propio dispositivo con PBKDF2 (100k iteraciones). Ni administradores pueden leer tus datos.
-              </Text>
-            </View>
-
-            <View style={styles.featureCard}>
-              <Text style={styles.featureEmoji}>🕊️</Text>
-              <Text style={styles.featureTitle}>PIN Canario Anti-Coerción</Text>
-              <Text style={styles.featureDesc}>
-                PIN secundario de descompresión que desbloquea un estado señuelo sintético ante situaciones de coacción física.
-              </Text>
-            </View>
-
-            <View style={styles.featureCard}>
-              <Text style={styles.featureEmoji}>⚡</Text>
-              <Text style={styles.featureTitle}>Modo Escena en Vivo</Text>
-              <Text style={styles.featureDesc}>
-                Asistente inmersivo con semáforo gigante, detector de palabra de seguridad por voz y protocolo de Aftercare de 15 min.
-              </Text>
-            </View>
+            {[
+              { emoji: '🙈', title: 'landing.feat1_title', desc: 'landing.feat1_desc' },
+              { emoji: '🔒', title: 'landing.feat2_title', desc: 'landing.feat2_desc' },
+              { emoji: '📋', title: 'landing.feat3_title', desc: 'landing.feat3_desc' },
+              { emoji: '➡️', title: 'landing.feat4_title', desc: 'landing.feat4_desc' },
+            ].map((feat) => (
+              <View key={feat.title} style={styles.featureCard}>
+                <Text style={styles.featureEmoji}>{feat.emoji}</Text>
+                <Text style={styles.featureTitle}>{t(feat.title)}</Text>
+                <Text style={styles.featureDesc}>{t(feat.desc)}</Text>
+              </View>
+            ))}
           </View>
 
-          {/* LEGAL & COMPLIANCE BARNER */}
           <View style={styles.legalBanner}>
-            <Text style={styles.legalBannerTitle}>⚖️ Cumplimiento Legal GDPR Art. 9 & Ley 21.719</Text>
-            <Text style={styles.legalBannerDesc}>
-              Tus preferencias íntimas son Datos de Categoría Especial. Garantizamos borrado irrecuperable en un clic ("Derecho al Olvido").
-            </Text>
+            <Text style={styles.legalBannerTitle}>{t('landing.legal_title')}</Text>
+            <Text style={styles.legalBannerDesc}>{t('landing.legal_desc')}</Text>
             <TouchableOpacity onPress={() => router.push('/privacy-policy')}>
-              <Text style={styles.legalLink}>Leer Política de Privacidad ➔</Text>
+              <Text style={styles.legalLink}>{t('landing.legal_link')} ➔</Text>
             </TouchableOpacity>
           </View>
 
@@ -115,11 +90,11 @@ const styles = StyleSheet.create({
 
   scroll: { gap: spacing.xl, paddingTop: spacing.md },
 
-  heroSection: { alignItems: 'center', textAlign: 'center', gap: spacing.sm, marginVertical: spacing.md },
+  heroSection: { alignItems: 'center', gap: spacing.sm, marginVertical: spacing.md },
   heroBadge: { color: colors.primary, backgroundColor: 'rgba(192, 132, 252, 0.1)', borderRadius: radii.pill, paddingHorizontal: 12, paddingVertical: 4, fontSize: 11, fontWeight: '800' },
   heroTitle: { color: colors.text, fontSize: 32, fontWeight: '900', textAlign: 'center', lineHeight: 38 },
   heroSubtitle: { color: colors.textMuted, fontSize: fontSize.sm, textAlign: 'center', maxWidth: 600, lineHeight: 22 },
-  heroCtaRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xs },
+  heroCtaRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.md, marginTop: spacing.xs },
   primaryCtaBtn: { backgroundColor: colors.primary, borderRadius: radii.lg, paddingHorizontal: 20, paddingVertical: 12 },
   primaryCtaBtnText: { color: colors.onPrimary, fontSize: fontSize.xs, fontWeight: '900' },
   secondaryCtaBtn: { backgroundColor: colors.surface, borderRadius: radii.lg, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: colors.border },

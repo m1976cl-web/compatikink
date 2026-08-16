@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import type { User } from '@supabase/supabase-js';
 import { Button } from '@/components/Button';
 import { AppHeader } from '@/components/AppHeader';
+import { NoxHost } from '@/components/nox';
 import {
   colors,
   fonts,
@@ -350,6 +351,7 @@ export default function AuthScreen() {
           title="Cuenta & Bóveda de Seguridad"
           subtitle="Cifrado Zero-Knowledge AES-GCM-256 + PBKDF2. El servidor solo almacena ciphertext inviolable."
         />
+        <NoxHost scene="auth" variant="banner" />
 
         {oauthBooting ? (
           <Text style={styles.oauthHint}>Comprobando sesión de Google…</Text>

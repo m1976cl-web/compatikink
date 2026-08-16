@@ -2,7 +2,7 @@
 
 **Ruta local:** `C:\KC\compatikink`  
 **Remoto:** https://github.com/m1976cl-web/compatikink  
-**Actualizado:** 2026-08-14  
+**Actualizado:** 2026-08-16  
 
 Documentos relacionados:
 - [`docs/IMPROVEMENT_REVIEW.md`](./docs/IMPROVEMENT_REVIEW.md) — ideas de mejora priorizadas  
@@ -46,6 +46,10 @@ Horizonte 3 (futuro):  public_profiles + comparar + DM E2E + media cifrada
 - [ ] Pasada humana E2E registrada en `docs/BETA_HAPPY_PATH.md`  
 - [x] Deep links AASA / assetlinks (`public/.well-known/` + `docs/DEEP_LINKS.md`) + invite `?k=` fallback  
 - [x] Reporte accionable (banner hard limits + guión 10 min)  
+- [x] i18n ES / EN / PT en happy path + catálogo + tips de conversación  
+- [x] Nox host art por escena (`components/nox/` + `assets/nox/*.webp`) en el camino core  
+
+
 
 ### P2 — Ingeniería
 

@@ -1,6 +1,8 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
-import { Rating, RATING_LABELS } from '@/types';
+import { Rating } from '@/types';
+import { getRatingLabel } from '@/lib/localeLabels';
+import { useTranslation } from '@/lib/i18n';
 
 const RATINGS: Rating[] = ['hard_limit', 'not_interested', 'curious', 'like', 'love'];
 
@@ -10,6 +12,7 @@ interface Props {
 }
 
 export function RatingPicker({ value, onChange }: Props) {
+  useTranslation();
   return (
     <View style={styles.container}>
       {RATINGS.map((rating) => (
@@ -19,7 +22,7 @@ export function RatingPicker({ value, onChange }: Props) {
           onPress={() => onChange(rating)}
         >
           <Text style={[styles.label, value === rating && styles.labelSelected]}>
-            {RATING_LABELS[rating]}
+            {getRatingLabel(rating)}
           </Text>
         </TouchableOpacity>
       ))}

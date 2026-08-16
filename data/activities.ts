@@ -294,3 +294,10 @@ export function getCategoryLabel(category: ActivityCategory): string {
   return translated !== key ? translated : CATEGORY_LABELS[category] ?? category;
 }
 
+/** Short negotiation prompt for express / report cards. */
+export function getActivityTalkTip(activity: Activity): string | undefined {
+  const key = `talk.${activity.id}`;
+  const translated = t(key);
+  return translated !== key ? translated : undefined;
+}
+
