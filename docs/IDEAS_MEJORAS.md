@@ -51,10 +51,18 @@
 - Visible solo para el iniciador. Ayuda a estructurar la primera conversación post-test.
 - Datos en `data/icebreakerQuestions.ts`, lógica en `lib/compatibility.ts`.
 
-### S3 — Foro de Buenas Prácticas (Preview)
-- Pantalla `app/communities.tsx` (ya existente) mejorada con hilos temáticos.
-- Contenido curado por el equipo inicialmente (no UGC).
-- Títulos de hilos: "Mi primera vez con límites", "Aftercare que funcionó", etc.
+### S3 — Foro de Buenas Prácticas & Comunidades Temáticas ✅ [COMPLETADO]
+- Pantalla `app/communities.tsx` enriquecida con 8 áreas temáticas especializadas:
+  - 🪢 *Shibari & Cuerdas* (yute, cáñamo, anatomía y nervio radial, tijeras EMT).
+  - 🪷 *Aftercare & Cuidado Emocional* (protocolos en 3 fases, kits, manejo de Topdrop/Subdrop).
+  - 🗝️ *D/s & Power Exchange* (contratos dinámicos, protocolos matutinos/nocturnos, servicio y castidad).
+  - 🧤 *Látex, Cuero & Fetiche Gear* (almacenamiento, abrillantadores Vivishine, lubricación y arneses).
+  - 🌿 *No Monogamia Ética & Poliamor* (compersión, gestión de NRE, metamores y salud sexual).
+  - ⚡ *Sensorial & BDSM* (curva de impacto progresivo, cera de baja temperatura, electro-estimulación).
+  - 🌱 *Principiantes & Primeros Pasos* (conversaciones sin tabúes, técnica de cuestionario asimétrico).
+  - 🌈 *Queer & Diversidad* (subversión de roles tradicionales, espacios seguros e inclusión).
+- Hilos de debate estructurados con respuestas comunitarias, sistema de likes, formulario de nuevo debate y moderación/denuncias integradas.
+- Persistencia local ZK (`lib/communityStorage.ts`) y dataset en `data/communitiesData.ts`.
 
 ### S4 — Modo Pasar y Jugar (Pass and Play) ✅ [COMPLETADO]
 - La pantalla `app/pass-and-play.tsx` se convierte en un modo donde dos personas usan el **mismo dispositivo** alternativamente con cortina de privacidad.
@@ -273,7 +281,7 @@
 | G3 | Tabla de clasificación | Alto | Medio | 🟢 Baja |
 | T2 | Pruebas E2E automatizadas | Alto | Alto | 🟢 Baja |
 | AI1-4 | Suite IA | Muy Alto | Alto | ⚫ Post-core |
-| S3 | Foro comunidades | Muy Alto | Medio | ⚫ Post-core |
+| S3 | Foro comunidades | Muy Alto | Medio | ✅ Completado |
 
 ---
 
