@@ -51,6 +51,9 @@ Ver [`docs/PUBLIC_PROFILE_VS_VAULT.md`](./docs/PUBLIC_PROFILE_VS_VAULT.md):
 - [ ] CTA “Invitar a comparar” → `create_zk_session` existente  
 - [ ] DM E2E (solo ciphertext en servidor)  
 - [ ] Media cifrada (Storage + share con secreto) + política 18+  
+- [ ] **Trust & Safety / Moderación**:
+  - [ ] Sistema de **Denuncias (Reports)** para usuario específico, posteo de feed o mensaje directo (con tipificación de motivos y cola de moderación).
+  - [ ] Sistema de **Bloqueo Mutuo Bidireccional (Mutual Block)**: el usuario bloqueado no puede ver el perfil de quien lo bloqueó y se bloquea recíprocamente la mensajería, invitaciones y visibilidad de posteos.  
 
 ---
 
