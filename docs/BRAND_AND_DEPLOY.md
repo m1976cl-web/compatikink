@@ -20,6 +20,8 @@
 | Nox | Marca lifestyle (ya es mascota UI); claim “compat privado” aparte |
 | ConsentPair | Listing más suave en stores (menos “kink” en el título) |
 
+> 📖 **Análisis ampliado de riesgos con el término "Kink", Radar de Geoproximidad y Blindaje Anti-Comercio:** Ver [`docs/BRAND_EXPANSION_AND_SAFETY_SPEC.md`](file:///C:/KC/docs/BRAND_EXPANSION_AND_SAFETY_SPEC.md).
+
 **No clonar** nombres Fet* / KinkLink-like: confusión de marca y legal.
 
 ### Checklist antes de gastar en branding
