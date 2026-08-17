@@ -6,7 +6,7 @@ import { Button } from '@/components/Button';
 import { VaultLockGate } from '@/components/VaultLockGate';
 import { ReportCard } from '@/components/ReportCard';
 import { CompatibilityInfographic } from '@/components/CompatibilityInfographic';
-import { SocialShareModal } from '@/components/SocialShareModal';
+import { ShareableMatchCardModal } from '@/components/report/ShareableMatchCardModal';
 import { ScenePlannerModal } from '@/components/ScenePlannerModal';
 import { SceneRouletteModal } from '@/components/SceneRouletteModal';
 import { SceneTimerModal } from '@/components/SceneTimerModal';
@@ -341,7 +341,7 @@ export default function ReportScreen() {
           <Button title="Volver al inicio" onPress={() => router.replace('/')} variant="ghost" />
 
           {/* Modals */}
-          <SocialShareModal
+          <ShareableMatchCardModal
             visible={showShareModal}
             onClose={() => setShowShareModal(false)}
             report={report}

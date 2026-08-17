@@ -40,10 +40,11 @@
 
 ## 🤝 Social Ligero (Sin Infraestructura Compleja)
 
-### S1 — Cards de Compatibilidad Compartibles
-- Al finalizar el reporte, generar una **tarjeta de imagen** (Canvas/SVG) con solo el score general y los emojis de las categorías.
-- Sin nombres ni datos sensibles. Solo "Compatibilidad: 87% 🔥".
-- Compartir por WhatsApp, Telegram, etc. vía `Share API`.
+### S1 — Cards de Compatibilidad Compartibles ✅ [COMPLETADO]
+- Al finalizar el reporte, genera una tarjeta visual estética (con formatos Story 9:16, Post 1:1 y Badge mínimo) con el score general, tier y categorías clave.
+- 100% Zero-Knowledge: sin nombres reales, sin respuestas específicas ni datos sensibles expuestos.
+- Compartir vía `Share API`, redes/mensajería y copiado al portapapeles.
+- Implementado en `components/report/ShareableMatchCardModal.tsx` e integrado en `app/report.tsx` y `app/pass-and-play.tsx`.
 
 ### S2 — Modo "Abre-hielos" (Icebreaker)
 - Sección con preguntas de conversación generadas según el reporte.
@@ -102,10 +103,11 @@
 - Ej: "🔐 94% de tus datos están protegidos en la Bóveda".
 - Calculado desde `backupStorage` y `profileStorage`.
 
-### P2 — Modo Privado Instantáneo (Panic Button en UI)
-- Botón flotante (FAB) configurable que lleva a una pantalla neutra (ej. calculadora o notas) en 1 tap.
-- Más accesible que el PIN canario actual (que es un flujo largo).
-- Implementar como overlay en `app/_layout.tsx`.
+### P2 — Modo Privado Instantáneo (Panic Button en UI) ✅ [COMPLETADO]
+- Botón flotante (FAB) configurable que activa una pantalla de camuflaje en 1 tap con bloqueo inmediato de la bóveda en RAM (`VaultLockGateAPI.lock()`).
+- Dos modos de camuflaje funcionales: **Calculadora Estándar** (con operaciones matemáticas reales) y **Notas / To-Do List** (con tareas marcables).
+- Desbloqueo secreto mediante PIN en calculadora (ej. `1976=`) o toque triple en el encabezado.
+- Implementado con overlay en `app/_layout.tsx` (`components/safety/PanicDisguiseModal.tsx` y `PanicFloatingButton.tsx`).
 
 ### P3 — Auditoría de Sesiones
 - En el perfil, lista de "últimas sesiones" con fecha, duración y estado (completada/expirada).
@@ -263,8 +265,8 @@
 | E3 | Glosario interactivo | Bajo | Medio | ✅ Completado |
 | G1 | Rachas de uso | Medio | Alto | ✅ Completado |
 | G4 | Desafíos diarios | Medio | Medio | ✅ Completado |
-| S1 | Cards compartibles | Medio | Alto | 🟡 Media |
-| P2 | Botón pánico FAB | Bajo | Alto | 🟡 Media |
+| S1 | Cards compartibles | Medio | Alto | ✅ Completado |
+| P2 | Botón pánico FAB | Bajo | Alto | ✅ Completado |
 | P5 | Denuncias y Bloqueo Mutuo | Medio | Muy Alto | ✅ Completado |
 | U2 | Haptic feedback | Bajo | Medio | ✅ Completado |
 | E1 | Biblioteca de artículos | Alto | Medio | 🟢 Baja |

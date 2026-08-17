@@ -8,6 +8,8 @@ import { OfficeModeModal } from '@/components/OfficeModeModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { GlobalSearchModal } from '@/components/GlobalSearchModal';
 import { NetworkStatusToast } from '@/components/NetworkStatusToast';
+import { PanicDisguiseModal } from '@/components/safety/PanicDisguiseModal';
+import { PanicFloatingButton } from '@/components/safety/PanicFloatingButton';
 import { colors, fonts, gradients } from '@/constants/theme';
 import { initLocale } from '@/lib/i18n';
 
@@ -107,6 +109,8 @@ export default function RootLayout() {
         <OfficeModeModal />
         <GlobalSearchModal />
         <NetworkStatusToast />
+        <PanicFloatingButton />
+        <PanicDisguiseModal />
       </ThemeProvider>
     </ErrorBoundary>
   );
