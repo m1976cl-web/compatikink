@@ -19,6 +19,13 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] Expansiones de contenido P0-P2 (36 preguntas intimidad, 42 ruleta, 31 actos diarios, 15 rituales, 161 actividades, 85 glosario)
 - [x] Radar Chart SVG en reporte de compatibilidad
 - [x] Gear Closet con fotos, wishlist y compatibilidad de juguetes
+- [ ] P3-1 Onboarding Wizard interactivo
+- [ ] P3-2 Sistema de Badges y ranking
+- [ ] P3-3 Galería de fotos y comparador de juguetes
+- [ ] P3-4 Deep Links y QR para invitaciones
+- [ ] P3-5 Mini‑guías educativas (Latex, cuidados)
+- [ ] P3-6 Notificaciones After‑care mejoradas
+- [ ] P3-7 Personalización de avatar y perfil de intereses
 - [x] Guía especializada de Látex (`/latex-guide`)
 - [x] Split modular de `lib/storage.ts` en `lib/storage/*`
 - [ ] Pasada humana E2E registrada en `docs/BETA_HAPPY_PATH.md`  
