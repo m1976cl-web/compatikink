@@ -51,15 +51,26 @@ No refactors cosméticos en estos archivos sin necesidad de seguridad o bugfix.
 - Lote C: expires, rate limit SQL, tokens CSPRNG, refreshSession RPC-only
 - Tests + CI + threat model + privacy policy
 - Tier 1–2 (gemini-proxy, office mode, aftercare, screen registry…)
+- Split modular `lib/storage.ts` → `lib/storage/*` y `lib/vaultUnified.ts`
+- **U4**: Barra de progreso animada de cuestionario con insignias de categoría y tiempo estimado
+- **U5**: Microinteracciones de feedback (animaciones en RatingPicker y ReportAnalysisLoader)
+- **S4**: Modo Pasar y Jugar presencial (Pass & Play) con cortina de privacidad
+- **E3**: Glosario interactivo (Término del Día, 5 categorías, favoritos ZK, términos relacionados, mini-quiz)
+- **U2**: Sistema integral de vibración y hápticos multi-nivel con switch de preferencias
+- **G1**: Contador de rachas (Streaks) con llama dinámica, 7 días de historial y widget animado
+- **P5**: Trust & Safety (denuncias tipificadas y bloqueo mutuo bidireccional en feed/dating/admin)
+- **G4**: Desafíos diarios (ciclo de 31 días, XP, racha y tarjeta interactiva en home)
+- **S1**: Cards de compatibilidad compartibles (formatos 9:16 Story, 1:1 Post y Badge, ZK-safe)
+- **P2**: Modo Privado Instantáneo / Botón de Pánico FAB (camuflaje Calculadora/Notas con bloqueo de bóveda)
+- **S3**: Foro y Comunidades de Buenas Prácticas (8 áreas temáticas especializadas, hilos y respuestas)
 
 ### Pendiente prioritario
 1. Pasada humana E2E — `docs/BETA_HAPPY_PATH.md`  
 2. Deep links HTTPS / AASA  
 3. Reporte accionable  
-4. Split `lib/storage.ts`  
-5. Biometría + PIN 6+  
-6. Dominio propio — `docs/BRAND_AND_DEPLOY.md`  
-7. Social H3 — `docs/PUBLIC_PROFILE_VS_VAULT.md` (post-core)  
+4. Biometría + PIN 6+  
+5. Dominio propio — `docs/BRAND_AND_DEPLOY.md`  
+6. Social H3 — `docs/PUBLIC_PROFILE_VS_VAULT.md` (post-core)  
 
 Detalle: `ROADMAP.md`, `docs/IMPROVEMENT_REVIEW.md`, `docs/BETA_HAPPY_PATH.md`.
 
