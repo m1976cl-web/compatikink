@@ -7,10 +7,9 @@ import {
   View,
   TextInput,
   Alert,
-  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, fontSize, spacing, fonts, radii, typography, glowShadowPrimary } from '@/constants/theme';
+import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import {
@@ -18,7 +17,6 @@ import {
   CommunityTopic,
   CommunityCategory,
   COMMUNITY_CATEGORY_LABELS,
-  TopicReply,
 } from '@/data/communitiesData';
 import {
   getAllCommunities,
@@ -35,6 +33,10 @@ import { BlockUserModal } from '@/components/safety/BlockUserModal';
 import { BlockedUsersManagerModal } from '@/components/safety/BlockedUsersManagerModal';
 import { triggerLightHaptic, triggerSelectionHaptic } from '@/lib/haptics';
 import { RouteFeatureGuard } from '@/components/RouteFeatureGuard';
+import { CommunityDirectoryCard } from '@/components/communities/CommunityDirectoryCard';
+import { CommunityTopicCard } from '@/components/communities/CommunityTopicCard';
+import { CommunityThreadView } from '@/components/communities/CommunityThreadView';
+import { CreateTopicForm } from '@/components/communities/CreateTopicForm';
 
 function CommunitiesScreenContent() {
   const router = useRouter();
@@ -49,13 +51,7 @@ function CommunitiesScreenContent() {
   // Navigation within forum
   const [selectedGroup, setSelectedGroup] = useState<CommunityGroup | null>(null);
   const [activeThreadTopic, setActiveThreadTopic] = useState<CommunityTopic | null>(null);
-
-  // Form states
   const [showCreateTopic, setShowCreateTopic] = useState(false);
-  const [newTopicTitle, setNewTopicTitle] = useState('');
-  const [newTopicContent, setNewTopicContent] = useState('');
-  const [newTopicTags, setNewTopicTags] = useState('');
-  const [replyInput, setReplyInput] = useState('');
 
   // Trust & Safety State
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
@@ -104,26 +100,15 @@ function CommunitiesScreenContent() {
     setLikedTopicIds(res.likedIds);
   };
 
-  const handleCreateTopicSubmit = async () => {
-    if (!selectedGroup || !newTopicTitle.trim() || !newTopicContent.trim()) {
-      Alert.alert('Campos incompletos', 'Por favor ingresa un título y contenido para el debate.');
-      return;
-    }
-
-    const tagsArr = newTopicTags
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
+  const handleCreateTopicSubmit = async (title: string, content: string, tags?: string[]) => {
+    if (!selectedGroup) return;
 
     await createCommunityTopic(selectedGroup.id, {
-      title: newTopicTitle,
-      content: newTopicContent,
-      tags: tagsArr.length > 0 ? tagsArr : undefined,
+      title,
+      content,
+      tags,
     });
 
-    setNewTopicTitle('');
-    setNewTopicContent('');
-    setNewTopicTags('');
     setShowCreateTopic(false);
     await loadData();
 
@@ -135,14 +120,10 @@ function CommunitiesScreenContent() {
     Alert.alert('¡Debate Publicado! 🚀', 'Tu tema ha sido agregado a la comunidad con cifrado Zero-Knowledge.');
   };
 
-  const handleSendReply = async () => {
-    if (!activeThreadTopic || !replyInput.trim() || !selectedGroup) return;
+  const handleSendReply = async (content: string) => {
+    if (!activeThreadTopic || !selectedGroup) return;
 
-    await addTopicReply(activeThreadTopic.id, {
-      content: replyInput,
-    });
-
-    setReplyInput('');
+    await addTopicReply(activeThreadTopic.id, { content });
     await loadData();
 
     // Refresh active thread
@@ -279,66 +260,18 @@ function CommunitiesScreenContent() {
 
             {/* Communities Grid / List */}
             <View style={{ gap: spacing.md, marginTop: spacing.xs }}>
-              {filteredCommunities.map((group) => {
-                const isJoined = joinedIds.includes(group.id);
-                const catInfo = COMMUNITY_CATEGORY_LABELS[group.category];
-
-                return (
-                  <View key={group.id} style={styles.groupCard}>
-                    {/* Top Row: Emoji, Name, Member Count & Join Button */}
-                    <View style={styles.groupHeaderRow}>
-                      <Text style={styles.groupEmoji}>{group.emoji}</Text>
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <View style={[styles.groupCatPill, { backgroundColor: `${catInfo.color}18`, borderColor: catInfo.color }]}>
-                            <Text style={[styles.groupCatPillText, { color: catInfo.color }]}>
-                              {catInfo.emoji} {catInfo.label}
-                            </Text>
-                          </View>
-                          <Text style={styles.groupStatsText}>👥 {group.memberCount} miembros</Text>
-                        </View>
-                        <Text style={styles.groupName}>{group.name}</Text>
-                      </View>
-
-                      <TouchableOpacity
-                        style={[styles.joinBtn, isJoined && styles.joinBtnActive]}
-                        onPress={() => handleToggleJoin(group.id)}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={[styles.joinBtnText, isJoined && styles.joinBtnTextActive]}>
-                          {isJoined ? 'Siguiendo ✓' : 'Seguir +'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    {/* Description */}
-                    <Text style={styles.groupDesc}>{group.description}</Text>
-
-                    {/* Tags */}
-                    <View style={styles.tagsRow}>
-                      {group.tags.map((tag, idx) => (
-                        <View key={idx} style={styles.tagChip}>
-                          <Text style={styles.tagChipText}>#{tag}</Text>
-                        </View>
-                      ))}
-                    </View>
-
-                    {/* Enter Forum Action */}
-                    <TouchableOpacity
-                      style={styles.enterForumBtn}
-                      onPress={() => {
-                        triggerLightHaptic();
-                        setSelectedGroup(group);
-                      }}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={styles.enterForumBtnText}>
-                        Explorar Foros y Debates ({group.topics.length} temas) 💬 →
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
+              {filteredCommunities.map((group) => (
+                <CommunityDirectoryCard
+                  key={group.id}
+                  group={group}
+                  isJoined={joinedIds.includes(group.id)}
+                  onToggleJoin={() => handleToggleJoin(group.id)}
+                  onEnter={() => {
+                    triggerLightHaptic();
+                    setSelectedGroup(group);
+                  }}
+                />
+              ))}
 
               {filteredCommunities.length === 0 && (
                 <View style={styles.emptyBox}>
@@ -380,128 +313,33 @@ function CommunitiesScreenContent() {
 
             {/* Create Topic Form Drawer */}
             {showCreateTopic && (
-              <View style={styles.createTopicForm}>
-                <Text style={styles.createFormTitle}>✍️ Iniciar Nuevo Tema de Discusión</Text>
-
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="Título del debate o pregunta clara..."
-                  placeholderTextColor={colors.textMuted}
-                  value={newTopicTitle}
-                  onChangeText={setNewTopicTitle}
-                />
-
-                <TextInput
-                  style={[styles.formInput, { minHeight: 90, textAlignVertical: 'top' }]}
-                  multiline
-                  placeholder="Escribe el contexto, tu duda o experiencia para la comunidad..."
-                  placeholderTextColor={colors.textMuted}
-                  value={newTopicContent}
-                  onChangeText={setNewTopicContent}
-                />
-
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="Etiquetas separadas por comas (ej. Seguridad, Yute, Cuidados)..."
-                  placeholderTextColor={colors.textMuted}
-                  value={newTopicTags}
-                  onChangeText={setNewTopicTags}
-                />
-
-                <TouchableOpacity style={styles.publishTopicBtn} onPress={handleCreateTopicSubmit}>
-                  <Text style={styles.publishTopicBtnText}>Publicar Debate en el Foro 🚀</Text>
-                </TouchableOpacity>
-              </View>
+              <CreateTopicForm
+                onSubmit={handleCreateTopicSubmit}
+                onCancel={() => setShowCreateTopic(false)}
+              />
             )}
 
             {/* Topics Feed */}
-            {filterBlockedItems(selectedGroup.topics, blockedUsers).map((topic) => {
-              const isLiked = likedTopicIds.includes(topic.id);
-
-              return (
-                <TouchableOpacity
-                  key={topic.id}
-                  style={[styles.topicCard, topic.isPinned && styles.topicCardPinned]}
-                  onPress={() => {
-                    triggerLightHaptic();
-                    setActiveThreadTopic(topic);
-                  }}
-                  activeOpacity={0.85}
-                >
-                  {/* Pinned Tag */}
-                  {topic.isPinned && (
-                    <View style={styles.pinnedPill}>
-                      <Text style={styles.pinnedPillText}>📌 TEMA DESTACADO / GUÍA OFICIAL</Text>
-                    </View>
-                  )}
-
-                  {/* Title & Author Row */}
-                  <View style={styles.topicHeader}>
-                    <Text style={styles.topicCardTitle}>{topic.title}</Text>
-                    <View style={styles.topicAuthorRow}>
-                      <Text style={{ fontSize: 13 }}>{topic.authorEmoji || '👤'}</Text>
-                      <Text style={styles.topicAuthorText}>{topic.author}</Text>
-                      {topic.authorRole && (
-                        <View style={styles.authorRoleBadge}>
-                          <Text style={styles.authorRoleBadgeText}>{topic.authorRole}</Text>
-                        </View>
-                      )}
-                      <Text style={styles.topicTimeText}>· {topic.timeAgo}</Text>
-                    </View>
-                  </View>
-
-                  {/* Content Preview */}
-                  <Text style={styles.topicContentPreview} numberOfLines={3}>
-                    {topic.content}
-                  </Text>
-
-                  {/* Tags */}
-                  <View style={styles.tagsRow}>
-                    {topic.tags.map((t, idx) => (
-                      <View key={idx} style={styles.tagChip}>
-                        <Text style={styles.tagChipText}>#{t}</Text>
-                      </View>
-                    ))}
-                  </View>
-
-                  {/* Footer: Replies & Likes */}
-                  <View style={styles.topicCardFooter}>
-                    <View style={styles.repliesPill}>
-                      <Text style={styles.repliesPillText}>💬 {topic.repliesCount || 0} aportes</Text>
-                    </View>
-
-                    <TouchableOpacity
-                      style={[styles.likePill, isLiked && styles.likePillActive]}
-                      onPress={(e) => {
-                        e.stopPropagation?.();
-                        handleToggleLike(topic.id);
-                      }}
-                    >
-                      <Text style={[styles.likePillText, isLiked && { color: '#f43f5e' }]}>
-                        {isLiked ? '❤️' : '🤍'} {topic.likes + (isLiked ? 1 : 0)}
-                      </Text>
-                    </TouchableOpacity>
-
-                    {/* Trust & Safety Actions */}
-                    <TouchableOpacity
-                      style={styles.topicSafetyBtn}
-                      onPress={(e) => {
-                        e.stopPropagation?.();
-                        setReportModalData({
-                          targetType: 'post',
-                          targetId: topic.id,
-                          targetAuthorName: topic.author,
-                          targetPreviewText: topic.content,
-                        });
-                      }}
-                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                    >
-                      <Text style={{ fontSize: 12 }}>🚩</Text>
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+            {filterBlockedItems(selectedGroup.topics, blockedUsers).map((topic) => (
+              <CommunityTopicCard
+                key={topic.id}
+                topic={topic}
+                isLiked={likedTopicIds.includes(topic.id)}
+                onSelect={() => {
+                  triggerLightHaptic();
+                  setActiveThreadTopic(topic);
+                }}
+                onToggleLike={() => handleToggleLike(topic.id)}
+                onReport={() => {
+                  setReportModalData({
+                    targetType: 'post',
+                    targetId: topic.id,
+                    targetAuthorName: topic.author,
+                    targetPreviewText: topic.content,
+                  });
+                }}
+              />
+            ))}
 
             <View style={{ height: 60 }} />
           </ScrollView>
@@ -509,91 +347,10 @@ function CommunitiesScreenContent() {
 
         {/* --- VIEW 3: THREAD DISCUSSION VIEW --- */}
         {activeThreadTopic && (
-          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-            {/* Original Post Banner Card */}
-            <View style={styles.threadOriginalPostCard}>
-              {activeThreadTopic.isPinned && (
-                <View style={styles.pinnedPill}>
-                  <Text style={styles.pinnedPillText}>📌 GUÍA DE BUENAS PRÁCTICAS</Text>
-                </View>
-              )}
-
-              <Text style={styles.threadTitle}>{activeThreadTopic.title}</Text>
-
-              <View style={styles.topicAuthorRow}>
-                <Text style={{ fontSize: 14 }}>{activeThreadTopic.authorEmoji || '👤'}</Text>
-                <Text style={styles.topicAuthorText}>{activeThreadTopic.author}</Text>
-                {activeThreadTopic.authorRole && (
-                  <View style={styles.authorRoleBadge}>
-                    <Text style={styles.authorRoleBadgeText}>{activeThreadTopic.authorRole}</Text>
-                  </View>
-                )}
-                <Text style={styles.topicTimeText}>· {activeThreadTopic.timeAgo}</Text>
-              </View>
-
-              <Text style={styles.threadFullContent}>{activeThreadTopic.content}</Text>
-
-              <View style={styles.tagsRow}>
-                {activeThreadTopic.tags.map((t, idx) => (
-                  <View key={idx} style={styles.tagChip}>
-                    <Text style={styles.tagChipText}>#{t}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Replies List */}
-            <View style={styles.repliesSection}>
-              <Text style={styles.repliesSectionTitle}>
-                💬 Respuestas de la Comunidad ({(activeThreadTopic.replies || []).length})
-              </Text>
-
-              {(activeThreadTopic.replies || []).map((rep) => (
-                <View key={rep.id} style={styles.replyCard}>
-                  <View style={styles.replyHeader}>
-                    <Text style={{ fontSize: 14 }}>{rep.authorEmoji || '👤'}</Text>
-                    <Text style={styles.replyAuthor}>{rep.author}</Text>
-                    {rep.authorRole && (
-                      <View style={styles.authorRoleBadge}>
-                        <Text style={styles.authorRoleBadgeText}>{rep.authorRole}</Text>
-                      </View>
-                    )}
-                    {rep.isVerified && (
-                      <View style={styles.verifiedBadge}>
-                        <Text style={styles.verifiedBadgeText}>✓ Verificado</Text>
-                      </View>
-                    )}
-                    <Text style={styles.topicTimeText}>· {rep.timeAgo}</Text>
-                  </View>
-                  <Text style={styles.replyContent}>{rep.content}</Text>
-                </View>
-              ))}
-
-              {(!activeThreadTopic.replies || activeThreadTopic.replies.length === 0) && (
-                <View style={styles.emptyRepliesBox}>
-                  <Text style={styles.emptyRepliesText}>Aún no hay respuestas en este debate. ¡Sé el primero en aportar!</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Reply Input Form */}
-            <View style={styles.replyInputBox}>
-              <Text style={styles.replyInputLabel}>✍️ Tu Aporte / Consejo para la Comunidad:</Text>
-              <TextInput
-                style={styles.replyInput}
-                multiline
-                placeholder="Escribe una respuesta constructiva y respetuosa..."
-                placeholderTextColor={colors.textMuted}
-                value={replyInput}
-                onChangeText={setReplyInput}
-              />
-              <TouchableOpacity style={styles.sendReplyBtn} onPress={handleSendReply}>
-                <Text style={styles.sendReplyBtnText}>Enviar Respuesta Cifrada 💬</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ height: 60 }} />
-          </ScrollView>
+          <CommunityThreadView
+            topic={activeThreadTopic}
+            onSendReply={handleSendReply}
+          />
         )}
 
         {/* Safety Modals */}
@@ -688,53 +445,6 @@ const styles = StyleSheet.create({
   catChipText: { color: colors.textMuted, fontSize: 11, fontFamily: fonts.bodySemi },
   catChipTextActive: { color: colors.primary, fontFamily: fonts.bodyBold },
 
-  groupCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.sm,
-    ...glowShadowPrimary,
-  },
-  groupHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  groupEmoji: { fontSize: 32 },
-  groupCatPill: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-  },
-  groupCatPillText: { fontSize: 9, fontFamily: fonts.bodyBold },
-  groupStatsText: { color: colors.textMuted, fontSize: 10, fontFamily: fonts.body },
-  groupName: { color: colors.text, fontFamily: fonts.displaySemi, fontSize: fontSize.md },
-  groupDesc: { color: colors.textMuted, fontFamily: fonts.body, fontSize: fontSize.xs, lineHeight: 18 },
-
-  joinBtn: { backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radii.md },
-  joinBtnActive: { backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
-  joinBtnText: { color: '#000', fontSize: 11, fontFamily: fonts.bodyBold },
-  joinBtnTextActive: { color: colors.textMuted },
-
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  tagChip: {
-    backgroundColor: colors.surfaceLight,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  tagChipText: { color: colors.textMuted, fontSize: 10, fontFamily: fonts.mono },
-
-  enterForumBtn: {
-    backgroundColor: colors.surfaceLight,
-    paddingVertical: 10,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: 2,
-  },
-  enterForumBtnText: { color: colors.primary, fontSize: fontSize.xs, fontFamily: fonts.bodyBold },
-
   // Group Detail & Topics
   topicActionHeader: {
     flexDirection: 'row',
@@ -750,122 +460,6 @@ const styles = StyleSheet.create({
   topicsSubHeader: { color: colors.textMuted, fontSize: 10, fontFamily: fonts.body },
   newTopicBtn: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.md },
   newTopicBtnText: { color: '#000', fontFamily: fonts.bodyBold, fontSize: 11 },
-
-  createTopicForm: {
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: radii.xl,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    gap: spacing.sm,
-  },
-  createFormTitle: { color: colors.primary, fontFamily: fonts.bodyBold, fontSize: fontSize.xs },
-  formInput: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 8,
-    color: colors.text,
-    fontSize: fontSize.xs,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  publishTopicBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: 10,
-    borderRadius: radii.md,
-    alignItems: 'center',
-  },
-  publishTopicBtnText: { color: '#000', fontFamily: fonts.bodyBold, fontSize: fontSize.xs },
-
-  topicCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.xs,
-  },
-  topicCardPinned: {
-    borderColor: 'rgba(192, 132, 252, 0.5)',
-    backgroundColor: 'rgba(192, 132, 252, 0.05)',
-  },
-  pinnedPill: {
-    backgroundColor: 'rgba(192, 132, 252, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-  },
-  pinnedPillText: { color: colors.primary, fontSize: 9, fontFamily: fonts.bodyBold },
-  topicHeader: { gap: 4 },
-  topicCardTitle: { color: colors.text, fontFamily: fonts.displaySemi, fontSize: fontSize.sm },
-  topicAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  topicAuthorText: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: 11 },
-  authorRoleBadge: { backgroundColor: colors.surfaceLight, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
-  authorRoleBadgeText: { color: colors.textMuted, fontSize: 9, fontFamily: fonts.bodySemi },
-  topicTimeText: { color: colors.textMuted, fontSize: 10 },
-  topicContentPreview: { color: colors.textMuted, fontFamily: fonts.body, fontSize: fontSize.xs, lineHeight: 18 },
-  topicCardFooter: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 4 },
-  repliesPill: { backgroundColor: colors.surfaceLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.sm },
-  repliesPillText: { color: colors.text, fontSize: 10, fontFamily: fonts.bodyBold },
-  likePill: { backgroundColor: colors.surfaceLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.sm },
-  likePillActive: { backgroundColor: 'rgba(244, 63, 94, 0.15)', borderWidth: 1, borderColor: '#f43f5e' },
-  likePillText: { fontSize: 10, fontFamily: fonts.bodySemi, color: colors.textMuted },
-  topicSafetyBtn: { padding: 4, marginLeft: 'auto' },
-
-  // Thread View
-  threadOriginalPostCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.md,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    gap: spacing.sm,
-  },
-  threadTitle: { color: colors.text, fontFamily: fonts.displaySemi, fontSize: fontSize.lg },
-  threadFullContent: { color: colors.text, fontFamily: fonts.body, fontSize: fontSize.sm, lineHeight: 22 },
-
-  repliesSection: { gap: spacing.xs },
-  repliesSectionTitle: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: fontSize.xs, marginBottom: 2 },
-  replyCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 4,
-  },
-  replyHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  replyAuthor: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: 11 },
-  verifiedBadge: { backgroundColor: 'rgba(56, 189, 248, 0.15)', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 },
-  verifiedBadgeText: { color: '#38bdf8', fontSize: 9, fontFamily: fonts.bodyBold },
-  replyContent: { color: colors.text, fontFamily: fonts.body, fontSize: fontSize.xs, lineHeight: 18 },
-  emptyRepliesBox: { padding: spacing.lg, alignItems: 'center', backgroundColor: colors.surface, borderRadius: radii.md },
-  emptyRepliesText: { color: colors.textMuted, fontSize: fontSize.xs },
-
-  replyInputBox: {
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.xs,
-  },
-  replyInputLabel: { color: colors.textMuted, fontSize: 11, fontFamily: fonts.bodyBold },
-  replyInput: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: radii.md,
-    padding: spacing.sm,
-    color: colors.text,
-    fontSize: fontSize.xs,
-    minHeight: 70,
-    textAlignVertical: 'top',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  sendReplyBtn: { backgroundColor: colors.primary, paddingVertical: 10, borderRadius: radii.md, alignItems: 'center' },
-  sendReplyBtnText: { color: '#000', fontFamily: fonts.bodyBold, fontSize: fontSize.xs },
 
   emptyBox: { alignItems: 'center', paddingVertical: spacing.xl, gap: 4 },
   emptyTitle: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: fontSize.sm },
