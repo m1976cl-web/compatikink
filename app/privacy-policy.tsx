@@ -13,6 +13,7 @@ import { ScreenContainer } from '@/components/ScreenContainer';
 import { NoxHost } from '@/components/nox';
 import { useResponsive } from '@/hooks/useResponsive';
 import { purgeAllUserData } from '@/lib/storage';
+import { PrivacySecurityAuditorCard } from '@/components/privacy/PrivacySecurityAuditorCard';
 
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
@@ -63,6 +64,9 @@ export default function PrivacyPolicyScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {/* P1: Privacy & Security Level Auditor Card */}
+          <PrivacySecurityAuditorCard />
+
           {/* Card 1: Zero Knowledge Summary */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>🔐 Garantía Zero-Knowledge (Cero Conocimiento)</Text>

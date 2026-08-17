@@ -63,6 +63,10 @@ No refactors cosméticos en estos archivos sin necesidad de seguridad o bugfix.
 - **S1**: Cards de compatibilidad compartibles (formatos 9:16 Story, 1:1 Post y Badge, ZK-safe)
 - **P2**: Modo Privado Instantáneo / Botón de Pánico FAB (camuflaje Calculadora/Notas con bloqueo de bóveda)
 - **S3**: Foro y Comunidades de Buenas Prácticas (8 áreas temáticas especializadas, hilos y respuestas)
+- **S2**: Modo Abre-hielos post-reporte (23 preguntas guiadas en 6 categorías, consejos y generador personalizado)
+- **E1**: Biblioteca de Artículos y Guías Educativas (6 artículos extensos, 6 categorías, lector inmersivo y bookmarks ZK)
+- **G5**: Sala de Trofeos interactiva (Vitrina de pedestales 3D con resplandor, modal de inspección táctil y compartir logros)
+- **P1**: Indicador de Nivel de Privacidad y Auditoría Criptográfica (Escudo 100% ZK, desglose de 5 capas y recomendaciones)
 
 ### Pendiente prioritario
 1. Pasada humana E2E — `docs/BETA_HAPPY_PATH.md`  

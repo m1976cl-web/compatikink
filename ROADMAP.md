@@ -30,6 +30,10 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] S1: Cards de compatibilidad compartibles (formatos 9:16 Story, 1:1 Post y Badge, exportación anónima y portapapeles)
 - [x] P2: Modo Privado Instantáneo / Botón de Pánico FAB (camuflaje en 1 tap con Calculadora funcional y Notas, bloqueo de bóveda en RAM)
 - [x] S3: Foro y Comunidades de Buenas Prácticas (8 áreas temáticas, debates estructurados, respuestas, likes y moderación ZK)
+- [x] S2: Modo Abre-hielos (Icebreaker) post-reporte (23 preguntas guiadas en 6 categorías, consejos y generador personalizado)
+- [x] E1: Biblioteca de Artículos y Guías Educativas (6 artículos extensos, 6 categorías, lector inmersivo y bookmarks ZK)
+- [x] G5: Sala de Trofeos interactiva (Vitrina de pedestales 3D con resplandor, modal de inspección táctil y compartir logros)
+- [x] P1: Indicador de Nivel de Privacidad y Auditoría Criptográfica (Escudo 100% ZK, desglose de 5 capas y recomendaciones)
 - [ ] P3-1 Onboarding Wizard interactivo
 - [ ] P3-2 Sistema de Badges y ranking
 - [ ] P3-3 Galería de fotos y comparador de juguetes

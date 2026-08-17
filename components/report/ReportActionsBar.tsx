@@ -10,6 +10,7 @@ export interface ReportActionsBarProps {
   onShowRoulette: () => void;
   onShowShare: () => void;
   onShowTimer: () => void;
+  onShowIcebreakers?: () => void;
   isDesktop?: boolean;
 }
 
@@ -20,6 +21,7 @@ export function ReportActionsBar({
   onShowRoulette,
   onShowShare,
   onShowTimer,
+  onShowIcebreakers,
   isDesktop = false,
 }: ReportActionsBarProps) {
   const handleExportPDF = () => {
@@ -35,6 +37,16 @@ export function ReportActionsBar({
         isDesktop ? styles.actionsDesktop : styles.actionsMobile,
       ]}
     >
+      {onShowIcebreakers && (
+        <TouchableOpacity
+          style={[styles.shareCardTrigger, { borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.18)' }]}
+          onPress={onShowIcebreakers}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.shareCardTriggerText, { color: '#38bdf8' }]}>🧊 Modo Abre-hielos</Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity
         style={[styles.shareCardTrigger, { borderColor: colors.primary, backgroundColor: 'rgba(192, 132, 252, 0.2)' }]}
         onPress={onShowGuide}

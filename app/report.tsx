@@ -7,6 +7,7 @@ import { VaultLockGate } from '@/components/VaultLockGate';
 import { ReportCard } from '@/components/ReportCard';
 import { CompatibilityInfographic } from '@/components/CompatibilityInfographic';
 import { ShareableMatchCardModal } from '@/components/report/ShareableMatchCardModal';
+import { IcebreakerModal } from '@/components/report/IcebreakerModal';
 import { ScenePlannerModal } from '@/components/ScenePlannerModal';
 import { SceneRouletteModal } from '@/components/SceneRouletteModal';
 import { SceneTimerModal } from '@/components/SceneTimerModal';
@@ -65,6 +66,7 @@ export default function ReportScreen() {
 
   // Modals State
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showIcebreakerModal, setShowIcebreakerModal] = useState(false);
   const [showRouletteModal, setShowRouletteModal] = useState(false);
   const [showTimerModal, setShowTimerModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
@@ -262,6 +264,7 @@ export default function ReportScreen() {
               report={report}
               guestName={guestName}
               onShowGuide={() => setShowGuideModal(true)}
+              onShowIcebreakers={() => setShowIcebreakerModal(true)}
               onShowRoulette={() => setShowRouletteModal(true)}
               onShowShare={() => setShowShareModal(true)}
               onShowTimer={() => setShowTimerModal(true)}
@@ -346,6 +349,13 @@ export default function ReportScreen() {
             onClose={() => setShowShareModal(false)}
             report={report}
             initiatorName="Tú"
+            guestName={guestName}
+          />
+
+          <IcebreakerModal
+            visible={showIcebreakerModal}
+            onClose={() => setShowIcebreakerModal(false)}
+            report={report}
             guestName={guestName}
           />
 

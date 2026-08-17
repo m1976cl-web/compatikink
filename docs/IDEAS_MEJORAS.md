@@ -31,10 +31,11 @@
 - Componente `components/gamification/DailyChallengeCard.tsx` integrado en el dashboard principal con microinteracciones y hápticos.
 - Notificación recordatoria configurable vía `lib/localNotifications.ts`.
 
-### G5 — Sala de Trofeos (Trophy Room)
-- Pantalla visual con todos los logros desbloqueados en formato galería.
-- Trofeos con animación de "brillo" al desbloquear por primera vez.
-- Compartir logro como imagen (sin contenido sensible) via `Share API`.
+### G5 — Sala de Trofeos (Trophy Room) ✅ [COMPLETADO]
+- Pantalla visual `app/achievements.tsx` con modo **Vitrina de Trofeos 3D** sobre pedestales de neón brillantes y resplandor dinámico por rareza.
+- Modal interactivo `TrophyInspectionModal.tsx` con detalles, rareza, categoría, descripción y frase de humor / flavor text.
+- Opciones para compartir logros en redes sociales y mensajería vía `Share API` y copiado al portapapeles.
+- Selector de modo de vista entre Vitrina de Trofeos y Lista Detallada de Hitos.
 
 ---
 
@@ -46,10 +47,11 @@
 - Compartir vía `Share API`, redes/mensajería y copiado al portapapeles.
 - Implementado en `components/report/ShareableMatchCardModal.tsx` e integrado en `app/report.tsx` y `app/pass-and-play.tsx`.
 
-### S2 — Modo "Abre-hielos" (Icebreaker)
-- Sección con preguntas de conversación generadas según el reporte.
-- Visible solo para el iniciador. Ayuda a estructurar la primera conversación post-test.
-- Datos en `data/icebreakerQuestions.ts`, lógica en `lib/compatibility.ts`.
+### S2 — Modo "Abre-hielos" (Icebreaker) ✅ [COMPLETADO]
+- Modal interactivo `components/report/IcebreakerModal.tsx` integrado en `app/report.tsx` y `ReportActionsBar.tsx`.
+- Colección de 23 preguntas guiadas en `data/icebreakerQuestions.ts` categorizadas en 6 áreas (*Apertura*, *Límites*, *Fantasías*, *Dinámicas/Roles*, *Seguridad*, *Aftercare*).
+- Generador inteligente `getTailoredIcebreakers()` que prioriza preguntas basadas en las categorías con mayor afinidad del reporte.
+- Consejos de escucha activa sin juicios y copiado al portapapeles.
 
 ### S3 — Foro de Buenas Prácticas & Comunidades Temáticas ✅ [COMPLETADO]
 - Pantalla `app/communities.tsx` enriquecida con 8 áreas temáticas especializadas:
@@ -77,10 +79,10 @@
 
 ## 📚 Contenido Educativo
 
-### E1 — Biblioteca de Artículos
-- Colección de artículos cortos (500-800 palabras) sobre: consentimiento, negociación, aftercare, seguridad física, salud mental.
-- Datos en `data/articles.ts` con campos: `id, title, category, body, readTimeMin, tags[]`.
-- UI en nueva pantalla `app/library.tsx` con búsqueda y filtros por categoría.
+### E1 — Biblioteca de Artículos ✅ [COMPLETADO]
+- Pantalla `app/library.tsx` con biblioteca educativa completa categorizada en 6 áreas (*Consentimiento & Negociación*, *Aftercare & Emocional*, *Seguridad & Anatomía*, *D/s & Poder*, *Vínculos & Poliamor*, *Látex & Gear*).
+- 6 artículos profundos y detallados en `data/articlesData.ts` con puntos clave para recordar, secciones estructuradas y términos relacionados del glosario.
+- Lector inmersivo a pantalla completa con tiempo estimado de lectura, bookmarks guardados ZK (`lib/articleStorage.ts`) y tracking de artículos leídos.
 
 ### E2 — Guías de Técnicas Específicas (Shibari, Cuero, Cera)
 - Expandir la guía de Látex (`app/latex-guide.tsx`) con un framework reutilizable.
@@ -106,10 +108,10 @@
 
 ## 🔐 Privacidad y Seguridad (UX)
 
-### P1 — Indicador de Nivel de Privacidad
-- Barra visual en la pantalla de perfil que muestre cuántos datos están cifrados vs. en texto plano.
-- Ej: "🔐 94% de tus datos están protegidos en la Bóveda".
-- Calculado desde `backupStorage` y `profileStorage`.
+### P1 — Indicador de Nivel de Privacidad ✅ [COMPLETADO]
+- Componente `components/privacy/PrivacySecurityAuditorCard.tsx` integrado en `app/privacy-policy.tsx`.
+- Motor de auditoría en `lib/privacyAuditor.ts` con cálculo en tiempo real del porcentaje de protección y estado de 5 capas críticas (PBKDF2, AES-GCM local, Zero-Knowledge remoto, Pánico FAB y PIN de coacción).
+- Sugerencias de blindaje criptográfico con enlace directo a configuración.
 
 ### P2 — Modo Privado Instantáneo (Panic Button en UI) ✅ [COMPLETADO]
 - Botón flotante (FAB) configurable que activa una pantalla de camuflaje en 1 tap con bloqueo inmediato de la bóveda en RAM (`VaultLockGateAPI.lock()`).
@@ -276,8 +278,10 @@
 | S1 | Cards compartibles | Medio | Alto | ✅ Completado |
 | P2 | Botón pánico FAB | Bajo | Alto | ✅ Completado |
 | P5 | Denuncias y Bloqueo Mutuo | Medio | Muy Alto | ✅ Completado |
-| U2 | Haptic feedback | Bajo | Medio | ✅ Completado |
-| E1 | Biblioteca de artículos | Alto | Medio | 🟢 Baja |
+| S2 | Modo Abre-hielos post-reporte | Bajo | Alto | ✅ Completado |
+| E1 | Biblioteca de artículos | Alto | Medio | ✅ Completado |
+| G5 | Sala de Trofeos interactiva | Medio | Alto | ✅ Completado |
+| P1 | Indicador de nivel de privacidad | Bajo | Alto | ✅ Completado |
 | G3 | Tabla de clasificación | Alto | Medio | 🟢 Baja |
 | T2 | Pruebas E2E automatizadas | Alto | Alto | 🟢 Baja |
 | AI1-4 | Suite IA | Muy Alto | Alto | ⚫ Post-core |
