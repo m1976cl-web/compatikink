@@ -1,5 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
+import { triggerSelectionHaptic } from '@/lib/haptics';
 
 interface Props {
   value: number;
@@ -17,7 +18,10 @@ export function IntensityPicker({ value, onChange }: Props) {
           <TouchableOpacity
             key={level}
             style={[styles.dot, value === level && styles.dotSelected]}
-            onPress={() => onChange(level)}
+            onPress={() => {
+              triggerSelectionHaptic();
+              onChange(level);
+            }}
           >
             <Text style={[styles.dotText, value === level && styles.dotTextSelected]}>
               {level}

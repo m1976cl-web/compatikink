@@ -122,10 +122,10 @@
 - Transiciones personalizadas entre pantallas usando `react-native-reanimated`.
 - Estilo slide-up para modales, fade para reportes, scale para badges.
 
-### U2 — Haptic Feedback
-- Vibración suave al: completar una pregunta, desbloquear un badge, confirmar un reto.
-- Usar `expo-haptics` con intensidades distintas por evento.
-- Solo en nativo (iOS/Android). No en web.
+### U2 — Haptic Feedback ✅ [COMPLETADO]
+- Vibración multi-nivel suave y adaptativa: selección (`selection`), impacto (`light`/`medium`/`heavy`), y notificaciones (`success`/`warning`/`error`).
+- Integrado en respuestas de cuestionario, ruleta kink, desbloqueo de insignias, pestañas y botones de selección.
+- Fallback web (`navigator.vibrate`) y preferencia configurable (`setHapticsEnabled`).
 
 ### U3 — Modo Accesibilidad
 - Tamaños de fuente ajustables (S/M/L/XL) persistidos en `profileStorage`.
@@ -250,7 +250,7 @@
 | G4 | Desafíos diarios | Medio | Medio | 🟡 Media |
 | S1 | Cards compartibles | Medio | Alto | 🟡 Media |
 | P2 | Botón pánico FAB | Bajo | Alto | 🟡 Media |
-| U2 | Haptic feedback | Bajo | Medio | 🟡 Media |
+| U2 | Haptic feedback | Bajo | Medio | ✅ Completado |
 | E1 | Biblioteca de artículos | Alto | Medio | 🟢 Baja |
 | G3 | Tabla de clasificación | Alto | Medio | 🟢 Baja |
 | T2 | Pruebas E2E automatizadas | Alto | Alto | 🟢 Baja |

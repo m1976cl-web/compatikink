@@ -1,21 +1,76 @@
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-function safeHapticsImpact(style: any) {
+const HAPTICS_PREF_KEY = 'compatikink_haptics_enabled_v1';
+let hapticsEnabledCache: boolean = true;
+
+// Preload haptic preference in memory
+AsyncStorage.getItem(HAPTICS_PREF_KEY)
+  .then((val) => {
+    if (val !== null) {
+      hapticsEnabledCache = val === 'true';
+    }
+  })
+  .catch(() => {});
+
+export async function isHapticsEnabled(): Promise<boolean> {
+  try {
+    const val = await AsyncStorage.getItem(HAPTICS_PREF_KEY);
+    if (val !== null) {
+      hapticsEnabledCache = val === 'true';
+      return hapticsEnabledCache;
+    }
+  } catch {}
+  return true;
+}
+
+export async function setHapticsEnabled(enabled: boolean): Promise<void> {
+  hapticsEnabledCache = enabled;
+  try {
+    await AsyncStorage.setItem(HAPTICS_PREF_KEY, String(enabled));
+  } catch {}
+}
+
+function safeHapticsImpact(style: 'light' | 'medium' | 'heavy') {
+  if (!hapticsEnabledCache) return;
   try {
     const Haptics = require('expo-haptics');
     if (Haptics && typeof Haptics.impactAsync === 'function') {
-      Haptics.impactAsync(style);
+      const styleMap: Record<string, any> = {
+        light: Haptics.ImpactFeedbackStyle?.Light ?? 'light',
+        medium: Haptics.ImpactFeedbackStyle?.Medium ?? 'medium',
+        heavy: Haptics.ImpactFeedbackStyle?.Heavy ?? 'heavy',
+      };
+      Haptics.impactAsync(styleMap[style] ?? styleMap.light);
     }
   } catch {
     // Ignore in non-native or node test environments
   }
 }
 
-function safeHapticsNotification(type: any) {
+function safeHapticsSelection() {
+  if (!hapticsEnabledCache) return;
+  try {
+    const Haptics = require('expo-haptics');
+    if (Haptics && typeof Haptics.selectionAsync === 'function') {
+      Haptics.selectionAsync();
+    }
+  } catch {
+    // Ignore
+  }
+}
+
+function safeHapticsNotification(type: 'success' | 'warning' | 'error') {
+  if (!hapticsEnabledCache) return;
   try {
     const Haptics = require('expo-haptics');
     if (Haptics && typeof Haptics.notificationAsync === 'function') {
-      Haptics.notificationAsync(type);
+      const typeMap: Record<string, any> = {
+        success: Haptics.NotificationFeedbackType?.Success ?? 'success',
+        warning: Haptics.NotificationFeedbackType?.Warning ?? 'warning',
+        error: Haptics.NotificationFeedbackType?.Error ?? 'error',
+      };
+      Haptics.notificationAsync(typeMap[type] ?? typeMap.success);
     }
   } catch {
     // Ignore
@@ -23,6 +78,7 @@ function safeHapticsNotification(type: any) {
 }
 
 export function triggerLightHaptic(): void {
+  if (!hapticsEnabledCache) return;
   try {
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
@@ -31,12 +87,11 @@ export function triggerLightHaptic(): void {
     } else {
       safeHapticsImpact('light');
     }
-  } catch {
-    // Ignore
-  }
+  } catch {}
 }
 
 export function triggerMediumHaptic(): void {
+  if (!hapticsEnabledCache) return;
   try {
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
@@ -45,23 +100,72 @@ export function triggerMediumHaptic(): void {
     } else {
       safeHapticsImpact('medium');
     }
-  } catch {
-    // Ignore
-  }
+  } catch {}
 }
 
-export function triggerSuccessHaptic(): void {
+export function triggerHeavyHaptic(): void {
+  if (!hapticsEnabledCache) return;
   try {
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
-        navigator.vibrate([15, 30, 20]);
+        navigator.vibrate(35);
+      }
+    } else {
+      safeHapticsImpact('heavy');
+    }
+  } catch {}
+}
+
+export function triggerSelectionHaptic(): void {
+  if (!hapticsEnabledCache) return;
+  try {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+        navigator.vibrate(5);
+      }
+    } else {
+      safeHapticsSelection();
+    }
+  } catch {}
+}
+
+export function triggerSuccessHaptic(): void {
+  if (!hapticsEnabledCache) return;
+  try {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+        navigator.vibrate([15, 40, 25]);
       }
     } else {
       safeHapticsNotification('success');
     }
-  } catch {
-    // Ignore
-  }
+  } catch {}
+}
+
+export function triggerWarningHaptic(): void {
+  if (!hapticsEnabledCache) return;
+  try {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+        navigator.vibrate([30, 50, 30]);
+      }
+    } else {
+      safeHapticsNotification('warning');
+    }
+  } catch {}
+}
+
+export function triggerErrorHaptic(): void {
+  if (!hapticsEnabledCache) return;
+  try {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+        navigator.vibrate([50, 40, 50, 40, 50]);
+      }
+    } else {
+      safeHapticsNotification('error');
+    }
+  } catch {}
 }
 
 interface HapticCallable {
@@ -77,7 +181,9 @@ interface HapticCallable {
 
 export const triggerHaptic: HapticCallable = Object.assign(
   function (style: 'light' | 'medium' | 'heavy' = 'light') {
-    if (style === 'medium' || style === 'heavy') {
+    if (style === 'heavy') {
+      triggerHeavyHaptic();
+    } else if (style === 'medium') {
       triggerMediumHaptic();
     } else {
       triggerLightHaptic();
@@ -86,10 +192,10 @@ export const triggerHaptic: HapticCallable = Object.assign(
   {
     light: () => triggerLightHaptic(),
     medium: () => triggerMediumHaptic(),
-    heavy: () => triggerMediumHaptic(),
-    selection: () => triggerLightHaptic(),
+    heavy: () => triggerHeavyHaptic(),
+    selection: () => triggerSelectionHaptic(),
     success: () => triggerSuccessHaptic(),
-    warning: () => triggerMediumHaptic(),
-    error: () => triggerMediumHaptic(),
+    warning: () => triggerWarningHaptic(),
+    error: () => triggerErrorHaptic(),
   }
 );

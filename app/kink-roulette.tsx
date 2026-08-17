@@ -18,6 +18,7 @@ import {
 } from '@/data/kinkRouletteData';
 import { addXpToPartnerLink, getPartnerLinks } from '@/lib/partnerJournal';
 import { schedule3PhaseAftercareProtocol } from '@/lib/localNotifications';
+import { triggerLightHaptic, triggerMediumHaptic, triggerSuccessHaptic, triggerSelectionHaptic } from '@/lib/haptics';
 
 export default function KinkRouletteScreen() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function KinkRouletteScreen() {
   const [completedList, setCompletedList] = useState<string[]>([]);
 
   const handleSpinRoulette = () => {
+    triggerLightHaptic();
     setIsSpinning(true);
     let pool = KINK_ROULETTE_CHALLENGES;
     if (selectedIntensity !== 'Todas') {
@@ -41,16 +43,19 @@ export default function KinkRouletteScreen() {
     const interval = setInterval(() => {
       const randomItem = pool[Math.floor(Math.random() * pool.length)];
       setCurrentChallenge(randomItem);
+      triggerLightHaptic();
       count++;
       if (count >= 10) {
         clearInterval(interval);
         setIsSpinning(false);
+        triggerMediumHaptic();
       }
     }, 100);
   };
 
   const handleClaimReward = async () => {
     if (!currentChallenge) return;
+    triggerSuccessHaptic();
     const links = await getPartnerLinks();
     if (links.length > 0) {
       await addXpToPartnerLink(links[0].id, currentChallenge.xpReward);

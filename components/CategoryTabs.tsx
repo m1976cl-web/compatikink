@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { colors, fonts, fontSize, spacing, radii } from '@/constants/theme';
+import { triggerSelectionHaptic } from '@/lib/haptics';
 
 export interface CategoryTab {
   key: string;
@@ -40,7 +41,10 @@ export function CategoryTabs({ tabs, activeKey, onTabChange }: CategoryTabsProps
                 isActive && styles.tabActive,
                 isActive && { borderBottomColor: tab.accent },
               ]}
-              onPress={() => onTabChange(tab.key)}
+              onPress={() => {
+                triggerSelectionHaptic();
+                onTabChange(tab.key);
+              }}
               activeOpacity={0.7}
             >
               <Text style={styles.tabIcon}>{tab.icon}</Text>

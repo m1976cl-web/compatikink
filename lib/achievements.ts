@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCurrentProfile, listMyLocalSessions, getWishlist, getGearItems } from './storage';
 import { getPartnerLinks, getJournalEntries } from './partnerJournal';
+import { triggerSuccessHaptic } from './haptics';
 
 export type AchievementCategory =
   | 'domination'
@@ -290,6 +291,9 @@ export async function checkAndUnlockAchievements(): Promise<Achievement[]> {
   if (newUnlocked.length >= 8) newUnlocked.push('grandmaster_fetishist');
 
   const unique = Array.from(new Set(newUnlocked));
+  if (unique.length > unlocked.length) {
+    triggerSuccessHaptic();
+  }
   await AsyncStorage.setItem(UNLOCKED_KEY, JSON.stringify(unique));
 
   return ALL_ACHIEVEMENTS.map((a) => ({

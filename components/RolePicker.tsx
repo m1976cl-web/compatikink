@@ -1,6 +1,7 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { RolePreference, ROLE_LABELS } from '@/types';
+import { triggerSelectionHaptic } from '@/lib/haptics';
 
 const ROLES: RolePreference[] = ['give', 'receive', 'both', 'flexible'];
 
@@ -16,7 +17,10 @@ export function RolePicker({ value, onChange }: Props) {
         <TouchableOpacity
           key={role}
           style={[styles.chip, value === role && styles.chipSelected]}
-          onPress={() => onChange(role)}
+          onPress={() => {
+            triggerSelectionHaptic();
+            onChange(role);
+          }}
         >
           <Text style={[styles.text, value === role && styles.textSelected]}>
             {ROLE_LABELS[role]}
