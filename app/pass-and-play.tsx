@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  TextInput,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -13,25 +11,29 @@ import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { getAllActivities } from '@/data/activities';
+import { QUICK_PROFILE_ACTIVITIES } from '@/data/quickProfile';
 import { ActivityResponse, Rating, RolePreference } from '@/types';
 import { createLocalSession, saveGuestProfile, saveLocalSessions, loadLocalSessions } from '@/lib/storage';
-
 import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
 import { INTIMACY_QUESTIONS_36 } from '@/data/intimacyQuestions';
+import { PassAndPlaySetup } from '@/components/pass-and-play/PassAndPlaySetup';
+import { PassAndPlayQuestionsStep } from '@/components/pass-and-play/PassAndPlayQuestionsStep';
+import { PassAndPlayCurtain } from '@/components/pass-and-play/PassAndPlayCurtain';
+import { IntimacyQuestions36Step } from '@/components/pass-and-play/IntimacyQuestions36Step';
 
 const STORAGE_KEY_INTIMACY_36 = 'intimacy_36_progress_v1';
 
 export default function PassAndPlayScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
-  const activities = getAllActivities();
 
   const [mode, setMode] = useState<'compat_test' | '36_questions'>('compat_test');
-  const [step, setStep] = useState<'p1_setup' | 'p1_questions' | 'curtain' | 'p2_setup' | 'p2_questions'>('p1_setup');
+  const [step, setStep] = useState<'p1_setup' | 'p1_questions' | 'curtain' | 'p2_questions'>('p1_setup');
+  const [questionMode, setQuestionMode] = useState<'express' | 'full'>('express');
+  const [curtainPin, setCurtainPin] = useState('');
   
   // 36 Questions Progress State
   const [q36Index, setQ36Index] = useState(0);
-  const [q36Notes, setQ36Notes] = useState<Record<number, string>>({});
 
   // Person 1
   const [p1Name, setP1Name] = useState('Persona 1');
@@ -43,51 +45,49 @@ export default function PassAndPlayScreen() {
   const [p2Index, setP2Index] = useState(0);
   const [p2Responses, setP2Responses] = useState<Record<string, ActivityResponse>>({});
 
+  // Determine current activity list (Express 10 items vs Full catalog)
+  const activitiesList = questionMode === 'express' ? QUICK_PROFILE_ACTIVITIES : getAllActivities();
+
   // Load saved 36 questions progress on mount
-  React.useEffect(() => {
-    readJsonStorage<{ index: number; notes: Record<number, string> }>(STORAGE_KEY_INTIMACY_36, { index: 0, notes: {} })
+  useEffect(() => {
+    readJsonStorage<{ index: number }>(STORAGE_KEY_INTIMACY_36, { index: 0 })
       .then((saved) => {
-        if (saved) {
-          setQ36Index(saved.index || 0);
-          setQ36Notes(saved.notes || {});
-        }
+        if (saved) setQ36Index(saved.index || 0);
       });
   }, []);
 
-  const handleNextQ36 = async (noteText?: string) => {
-    const nextNotes = { ...q36Notes, [q36Index]: noteText || '' };
+  const handleNextQ36 = async () => {
     const nextIndex = Math.min(q36Index + 1, INTIMACY_QUESTIONS_36.length - 1);
-    setQ36Notes(nextNotes);
     setQ36Index(nextIndex);
-    await writeJsonStorage(STORAGE_KEY_INTIMACY_36, { index: nextIndex, notes: nextNotes });
+    await writeJsonStorage(STORAGE_KEY_INTIMACY_36, { index: nextIndex });
   };
 
-  const handleP1Response = (rating: Rating) => {
-    const act = activities[p1Index];
+  const handleP1Response = (rating: Rating, role: RolePreference, intensity: 1 | 2 | 3 | 4 | 5) => {
+    const act = activitiesList[p1Index];
     setP1Responses((prev) => ({
       ...prev,
-      [act.id]: { activityId: act.id, rating, role: 'flexible', intensity: 3 },
+      [act.id]: { activityId: act.id, rating, role, intensity },
     }));
 
-    if (p1Index < activities.length - 1) {
+    if (p1Index < activitiesList.length - 1) {
       setP1Index((i) => i + 1);
     } else {
       setStep('curtain');
     }
   };
 
-  const handleP2Response = async (rating: Rating) => {
-    const act = activities[p2Index];
+  const handleP2Response = async (rating: Rating, role: RolePreference, intensity: 1 | 2 | 3 | 4 | 5) => {
+    const act = activitiesList[p2Index];
     const newP2 = {
       ...p2Responses,
-      [act.id]: { activityId: act.id, rating, role: 'flexible' as RolePreference, intensity: 3 as const },
+      [act.id]: { activityId: act.id, rating, role, intensity },
     };
     setP2Responses(newP2);
 
-    if (p2Index < activities.length - 1) {
+    if (p2Index < activitiesList.length - 1) {
       setP2Index((i) => i + 1);
     } else {
-      // Both finished! Create session and jump to report
+      // Both finished! Create ZK session and jump to report
       try {
         const finalP1 = Object.values(p1Responses);
         const finalP2 = Object.values(newP2);
@@ -112,8 +112,8 @@ export default function PassAndPlayScreen() {
     }
   };
 
-  const currentP1Act = activities[p1Index];
-  const currentP2Act = activities[p2Index];
+  const currentP1Act = activitiesList[p1Index];
+  const currentP2Act = activitiesList[p2Index];
 
   return (
     <ScreenContainer title="" hideHeader>
@@ -134,6 +134,7 @@ export default function PassAndPlayScreen() {
           <TouchableOpacity
             style={[styles.tab, mode === 'compat_test' && styles.tabActive]}
             onPress={() => setMode('compat_test')}
+            activeOpacity={0.8}
           >
             <Text style={[styles.tabText, mode === 'compat_test' && styles.tabTextActive]}>
               📱 Test de Compatibilidad
@@ -143,6 +144,7 @@ export default function PassAndPlayScreen() {
           <TouchableOpacity
             style={[styles.tab, mode === '36_questions' && styles.tabActive]}
             onPress={() => setMode('36_questions')}
+            activeOpacity={0.8}
           >
             <Text style={[styles.tabText, mode === '36_questions' && styles.tabTextActive]}>
               💬 36 Preguntas Íntimas
@@ -151,144 +153,61 @@ export default function PassAndPlayScreen() {
         </View>
 
         {mode === '36_questions' ? (
-          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-            <View style={styles.cardBox}>
-              <Text style={styles.cardTitle}>💬 36 Preguntas de Conversación Íntima Profunda</Text>
-              <Text style={styles.stepSub}>
-                Guía de diálogo presencial para explorar deseos, vulnerabilidad y acuerdos de seguridad.
-              </Text>
-
-              <View style={styles.questionCard}>
-                <Text style={styles.qIndexLabel}>Pregunta {q36Index + 1} de {INTIMACY_QUESTIONS_36.length}</Text>
-                <Text style={styles.qTextMain}>{INTIMACY_QUESTIONS_36[q36Index]}</Text>
-              </View>
-
-              <TouchableOpacity
-                style={styles.nextQBtn}
-                onPress={() => handleNextQ36()}
-              >
-                <Text style={styles.nextQBtnText}>
-                  {q36Index < INTIMACY_QUESTIONS_36.length - 1 ? 'Siguiente Pregunta ➔' : '✓ Completar Guía Íntima'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
+          <IntimacyQuestions36Step
+            q36Index={q36Index}
+            onNextQ36={handleNextQ36}
+          />
         ) : (
           <>
             {/* Step 1: P1 Setup */}
             {step === 'p1_setup' && (
-              <View style={styles.card}>
-                <Text style={styles.stepBadge}>PASO 1 DE 2 — INICIADOR</Text>
-                <Text style={styles.cardTitle}>Nombre de Persona 1</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ej: Alex"
-                  placeholderTextColor={colors.textMuted}
-                  value={p1Name}
-                  onChangeText={setP1Name}
-                />
-                <TouchableOpacity style={styles.btnPrimary} onPress={() => setStep('p1_questions')}>
-                  <Text style={styles.btnPrimaryText}>Iniciar mis Respuestas 🚀</Text>
-                </TouchableOpacity>
-              </View>
+              <PassAndPlaySetup
+                p1Name={p1Name}
+                setP1Name={setP1Name}
+                p2Name={p2Name}
+                setP2Name={setP2Name}
+                questionMode={questionMode}
+                setQuestionMode={setQuestionMode}
+                curtainPin={curtainPin}
+                setCurtainPin={setCurtainPin}
+                onStart={() => setStep('p1_questions')}
+              />
             )}
 
-        {/* Step 2: P1 Questions */}
-        {step === 'p1_questions' && currentP1Act && (
-          <View style={styles.card}>
-            <View style={styles.progressHeader}>
-              <Text style={styles.progressText}>
-                {p1Name} · Pregunta {p1Index + 1} de {activities.length}
-              </Text>
-            </View>
+            {/* Step 2: P1 Questions */}
+            {step === 'p1_questions' && currentP1Act && (
+              <PassAndPlayQuestionsStep
+                personName={p1Name}
+                currentIndex={p1Index}
+                totalCount={activitiesList.length}
+                activity={currentP1Act}
+                badgeColor={colors.primary}
+                onResponse={handleP1Response}
+              />
+            )}
 
-            <Text style={styles.actName}>{currentP1Act.name}</Text>
-            <Text style={styles.actDesc}>{currentP1Act.description}</Text>
+            {/* Step 3: Privacy Curtain between P1 and P2 */}
+            {step === 'curtain' && (
+              <PassAndPlayCurtain
+                p1Name={p1Name}
+                p2Name={p2Name}
+                curtainPin={curtainPin}
+                onUnlockP2Turn={() => setStep('p2_questions')}
+              />
+            )}
 
-            <View style={styles.ratingButtons}>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: '#4ade80' }]} onPress={() => handleP1Response('love')}>
-                <Text style={styles.rBtnText}>🔥 Me Encanta</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.primary }]} onPress={() => handleP1Response('like')}>
-                <Text style={styles.rBtnText}>💜 Me Interesa</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: '#38bdf8' }]} onPress={() => handleP1Response('curious')}>
-                <Text style={styles.rBtnText}>🤔 Curioso/a</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.border }]} onPress={() => handleP1Response('not_interested')}>
-                <Text style={styles.rBtnText}>⚪ No me llama</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.danger }]} onPress={() => handleP1Response('hard_limit')}>
-                <Text style={styles.rBtnText}>🛑 Límite Duro</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Step 3: Privacy Curtain between P1 and P2 */}
-        {step === 'curtain' && (
-          <View style={[styles.card, { alignItems: 'center', paddingVertical: spacing.xl }]}>
-            <Text style={{ fontSize: 56 }}>🙈📱</Text>
-            <Text style={styles.cardTitle}>¡Turno de Persona 1 Finalizado!</Text>
-            <Text style={styles.curtainDesc}>
-              Entrega el teléfono a <Text style={{ color: colors.accent, fontWeight: '800' }}>Persona 2</Text> sin mirar la pantalla para mantener la privacidad absoluta.
-            </Text>
-            <TouchableOpacity style={styles.btnPrimary} onPress={() => setStep('p2_setup')}>
-              <Text style={styles.btnPrimaryText}>Soy Persona 2, Comienzo Mi Turno 🚀</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Step 4: P2 Setup */}
-        {step === 'p2_setup' && (
-          <View style={styles.card}>
-            <Text style={[styles.stepBadge, { color: colors.accent }]}>PASO 2 DE 2 — PAREJA / INVITADO</Text>
-            <Text style={styles.cardTitle}>Nombre de Persona 2</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej: Sam"
-              placeholderTextColor={colors.textMuted}
-              value={p2Name}
-              onChangeText={setP2Name}
-            />
-            <TouchableOpacity style={[styles.btnPrimary, { backgroundColor: colors.accent }]} onPress={() => setStep('p2_questions')}>
-              <Text style={styles.btnPrimaryText}>Iniciar Respuestas de {p2Name} 🚀</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Step 5: P2 Questions */}
-        {step === 'p2_questions' && currentP2Act && (
-          <View style={styles.card}>
-            <View style={styles.progressHeader}>
-              <Text style={[styles.progressText, { color: colors.accent }]}>
-                {p2Name} · Pregunta {p2Index + 1} de {activities.length}
-              </Text>
-            </View>
-
-            <Text style={styles.actName}>{currentP2Act.name}</Text>
-            <Text style={styles.actDesc}>{currentP2Act.description}</Text>
-
-            <View style={styles.ratingButtons}>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: '#4ade80' }]} onPress={() => handleP2Response('love')}>
-                <Text style={styles.rBtnText}>🔥 Me Encanta</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.primary }]} onPress={() => handleP2Response('like')}>
-                <Text style={styles.rBtnText}>💜 Me Interesa</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: '#38bdf8' }]} onPress={() => handleP2Response('curious')}>
-                <Text style={styles.rBtnText}>🤔 Curioso/a</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.border }]} onPress={() => handleP2Response('not_interested')}>
-                <Text style={styles.rBtnText}>⚪ No me llama</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.rBtn, { borderColor: colors.danger }]} onPress={() => handleP2Response('hard_limit')}>
-                <Text style={styles.rBtnText}>🛑 Límite Duro</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-        </>
+            {/* Step 4: P2 Questions */}
+            {step === 'p2_questions' && currentP2Act && (
+              <PassAndPlayQuestionsStep
+                personName={p2Name}
+                currentIndex={p2Index}
+                totalCount={activitiesList.length}
+                activity={currentP2Act}
+                badgeColor={colors.accent}
+                onResponse={handleP2Response}
+              />
+            )}
+          </>
         )}
       </View>
     </ScreenContainer>
@@ -296,74 +215,18 @@ export default function PassAndPlayScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1, paddingHorizontal: spacing.md },
   containerDesktop: { maxWidth: 640, alignSelf: 'center', width: '100%' },
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
   backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
-  title: { color: colors.text, fontSize: fontSize.xl, fontWeight: '900' },
+  title: { color: colors.text, fontFamily: fonts.displaySemi, fontSize: fontSize.xl },
   subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
-
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    borderWidth: 1.5,
-    borderColor: colors.borderSubtle,
-    marginVertical: spacing.md,
-    gap: spacing.md,
-  },
-  stepBadge: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
-  cardTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800' },
-  input: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    color: colors.text,
-    fontSize: fontSize.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  btnPrimary: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-  },
-  btnPrimaryText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '800' },
-
-  progressHeader: { alignItems: 'center', marginBottom: spacing.xs },
-  progressText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
-  actName: { color: colors.primary, fontSize: fontSize.xl, fontWeight: '900', textAlign: 'center' },
-  actDesc: { color: colors.text, fontSize: fontSize.sm, textAlign: 'center', lineHeight: 20 },
-
-  ratingButtons: { gap: spacing.xs, width: '100%' },
-  rBtn: {
-    backgroundColor: colors.surfaceLight,
-    paddingVertical: 12,
-    borderRadius: radii.lg,
-    borderWidth: 1.5,
-    alignItems: 'center',
-  },
-  rBtnText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '700' },
-
-  curtainDesc: { color: colors.text, fontSize: fontSize.sm, textAlign: 'center', lineHeight: 22 },
 
   tabsRow: { flexDirection: 'row', gap: spacing.xs, marginVertical: spacing.sm },
   tab: { flex: 1, backgroundColor: colors.surface, borderRadius: radii.md, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  tabText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
-  tabTextActive: { color: '#fff', fontWeight: '900' },
-
-  scroll: { gap: spacing.md, paddingTop: spacing.xs },
-  cardBox: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, gap: spacing.md, borderWidth: 1, borderColor: colors.borderSubtle },
-  stepSub: { color: colors.textMuted, fontSize: fontSize.xs },
-  questionCard: { backgroundColor: colors.surfaceLight, borderRadius: radii.lg, padding: spacing.lg, gap: spacing.sm, borderWidth: 1, borderColor: colors.border },
-  qIndexLabel: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
-  qTextMain: { color: colors.text, fontSize: fontSize.md, fontWeight: '700', lineHeight: 26 },
-  nextQBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center' },
-  nextQBtnText: { color: '#fff', fontSize: fontSize.sm, fontWeight: '900' },
+  tabText: { color: colors.textMuted, fontFamily: fonts.bodySemi, fontSize: fontSize.xs },
+  tabTextActive: { color: colors.text, fontFamily: fonts.bodyBold },
 });

@@ -49,6 +49,9 @@ import {
 import { UserProfile } from '@/types';
 import { notify } from '@/lib/notify';
 
+import { getBiometricStatus, setBiometricEnabled } from '@/lib/biometrics';
+import { GoogleAuthButton } from '@/components/GoogleAuthButton';
+
 export default function AuthScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
@@ -72,6 +75,7 @@ export default function AuthScreen() {
   const [duressActionInput, setDuressActionInput] = useState<'decoy' | 'wipe'>('decoy');
   const [auditLogs, setAuditLogs] = useState<SecurityAuditLogItem[]>([]);
   const [currentNick, setCurrentNick] = useState<string | null>(null);
+  const [biometricEnabled, setBiometricEnabledState] = useState(false);
 
   const syncOauthSession = useCallback(async (user: User | null) => {
     setOauthUser(user);
@@ -86,6 +90,8 @@ export default function AuthScreen() {
 
   useEffect(() => {
     loadSecurityData();
+    getBiometricStatus().then((st) => setBiometricEnabledState(st.isEnabled));
+
     let unsub: (() => void) | undefined;
 
     (async () => {
@@ -530,7 +536,25 @@ export default function AuthScreen() {
                 </TouchableOpacity>
               </View>
 
-              <Button title="Guardar PIN de Coacción" onPress={handleSaveDuressPin} style={{ marginTop: 8 }} />
+              <View style={styles.divider} />
+
+              <Text style={styles.sectionTitle}>👆 Desbloqueo por Biometría (FaceID / Huella)</Text>
+              <Text style={styles.sectionDesc}>
+                Permite desbloquear la Bóveda usando el sensor biométrico del dispositivo.
+              </Text>
+              <TouchableOpacity
+                style={[styles.chip, biometricEnabled && styles.chipActive, { alignSelf: 'flex-start' }]}
+                onPress={async () => {
+                  const next = !biometricEnabled;
+                  await setBiometricEnabled(next);
+                  setBiometricEnabledState(next);
+                  Alert.alert('Biometría Actualizada', next ? 'Desbloqueo biométrico activado.' : 'Biometría desactivada.');
+                }}
+              >
+                <Text style={[styles.chipText, biometricEnabled && styles.chipTextActive]}>
+                  {biometricEnabled ? '🟢 Biometría Activada' : '🔴 Activar Biometría'}
+                </Text>
+              </TouchableOpacity>
 
               <View style={styles.divider} />
 
@@ -563,6 +587,16 @@ export default function AuthScreen() {
             </View>
           ) : (
             <>
+              <View style={{ marginBottom: spacing.md }}>
+                <GoogleAuthButton />
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: spacing.xs, gap: spacing.xs }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.borderSubtle || 'rgba(255,255,255,0.1)' }} />
+                <Text style={{ color: colors.textMuted || '#94a3b8', fontSize: 11 }}>o usar email y contraseña</Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.borderSubtle || 'rgba(255,255,255,0.1)' }} />
+              </View>
+
               <Text style={styles.fieldLabel}>Correo</Text>
               <TextInput
                 style={styles.input}

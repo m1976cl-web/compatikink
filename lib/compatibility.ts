@@ -372,3 +372,124 @@ export function calculateCategoryCompatibilities(items: ReportItem[]): Record<st
 
   return result;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P1.4 — GUIÓN DE CONVERSACIÓN GUIADO DE 10 MINUTOS (Accionable & ZK)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ConversationGuidePhase {
+  phase: number;
+  title: string;
+  durationMinutes: number;
+  icon: string;
+  objective: string;
+  suggestedQuestions: string[];
+  activities: {
+    activityId: string;
+    activityName: string;
+    category: ActivityCategory;
+    section: ReportSectionType;
+    prompt?: string;
+  }[];
+}
+
+export interface ConversationGuide {
+  totalDurationMinutes: number;
+  phases: ConversationGuidePhase[];
+  formattedMarkdown: string;
+}
+
+export function generate10MinConversationGuide(report: CompatibilityReport): ConversationGuide {
+  const mutuals = report.items.filter((i) => i.section === 'mutual_match');
+  const explores = report.items.filter((i) => i.section === 'explore_together');
+  const mismatches = report.items.filter((i) => i.section === 'role_mismatch');
+  const hardLimits = report.items.filter((i) => i.section === 'hard_limit_conflict');
+  const guestOnly = report.items.filter((i) => i.section === 'guest_only');
+
+  const phase1: ConversationGuidePhase = {
+    phase: 1,
+    title: 'Fase 1: Rompehielos & Coincidencias Mutuas',
+    durationMinutes: 2,
+    icon: '💬',
+    objective: 'Celebrar los deseos y actividades en las que ambos coinciden activamente.',
+    suggestedQuestions: [
+      '¿Qué coincidencia mutua fue la que más te sorprendió o entusiasmó?',
+      '¿Cuál de estas actividades compartidas te gustaría agendar primero?',
+    ],
+    activities: mutuals.slice(0, 5).map((i) => ({
+      activityId: i.activityId,
+      activityName: i.activityName,
+      category: i.category,
+      section: i.section,
+      prompt: i.conversationPrompt,
+    })),
+  };
+
+  const phase2: ConversationGuidePhase = {
+    phase: 2,
+    title: 'Fase 2: Exploración de Fantasías & Roles',
+    durationMinutes: 4,
+    icon: '🔮',
+    objective: 'Explorar curiosidades e intereses asimétricos con apertura y sin presiones.',
+    suggestedQuestions: [
+      '¿Bajo qué condiciones o ritmo te sentirías cómodo/a probando una curiosidad?',
+      '¿Cómo podemos ajustar la intensidad y los roles para que ambos disfrutemos?',
+    ],
+    activities: [...explores, ...mismatches, ...guestOnly].slice(0, 6).map((i) => ({
+      activityId: i.activityId,
+      activityName: i.activityName,
+      category: i.category,
+      section: i.section,
+      prompt: i.conversationPrompt,
+    })),
+  };
+
+  const phase3: ConversationGuidePhase = {
+    phase: 3,
+    title: 'Fase 3: Consentimiento, Límites & Safewords',
+    durationMinutes: 4,
+    icon: '🛡️',
+    objective: 'Alinear acuerdos, límites infranqueables y protocolo de cuidado posterior (Aftercare).',
+    suggestedQuestions: [
+      'Confirmemos vuestras Palabras de Seguridad (Rojo = Detener, Amarillo = Pausa/Bajar intensidad).',
+      '¿Qué necesita cada uno después de jugar? (Ej: abrazo, agua, silencio, conversación).',
+    ],
+    activities: hardLimits.slice(0, 5).map((i) => ({
+      activityId: i.activityId,
+      activityName: i.activityName,
+      category: i.category,
+      section: i.section,
+      prompt: i.conversationPrompt,
+    })),
+  };
+
+  const phases = [phase1, phase2, phase3];
+
+  let md = `# 🗣️ Guión de Conversación Guiado de 10 Minutos — CompatKink\n\n`;
+  md += `**Puntaje de Compatibilidad:** ${report.compatibilityScore}%\n`;
+  md += `**Coincidencias Mutuas:** ${report.mutualMatchCount} | **Por Explorar:** ${report.exploreCount}\n\n`;
+
+  for (const p of phases) {
+    md += `## ${p.icon} ${p.title} (${p.durationMinutes} min)\n`;
+    md += `> **Objetivo:** ${p.objective}\n\n`;
+    md += `### ❓ Preguntas Sugeridas:\n`;
+    for (const q of p.suggestedQuestions) {
+      md += `- ${q}\n`;
+    }
+    if (p.activities.length > 0) {
+      md += `\n### 📌 Actividades Destacadas:\n`;
+      for (const a of p.activities) {
+        md += `- **${a.activityName}** (${a.category}) ${a.prompt ? `— *${a.prompt}*` : ''}\n`;
+      }
+    }
+    md += `\n---\n\n`;
+  }
+
+  md += `🔒 *Este guión ha sido generado de forma 100% local en tu dispositivo con cifrado Zero-Knowledge.*`;
+
+  return {
+    totalDurationMinutes: 10,
+    phases,
+    formattedMarkdown: md,
+  };
+}

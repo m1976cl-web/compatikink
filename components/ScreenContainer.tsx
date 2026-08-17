@@ -10,6 +10,8 @@ import {
   typography,
 } from '@/constants/theme';
 
+import { useAppBackgroundProtection } from '@/hooks/useAppBackgroundProtection';
+
 interface Props {
   title: string;
   subtitle?: string;
@@ -24,7 +26,7 @@ interface Props {
 }
 
 /**
- * Screen shell with dynamic theme background (gradient on web, layered solid on native).
+ * Screen shell with dynamic theme background and OS-level privacy protection.
  */
 export function ScreenContainer({
   title,
@@ -36,6 +38,7 @@ export function ScreenContainer({
   hideHeader = false,
 }: Props) {
   const { palette } = useTheme();
+  const { isProtectedBackground } = useAppBackgroundProtection();
 
   const webBg =
     Platform.OS === 'web'
@@ -56,6 +59,15 @@ export function ScreenContainer({
         )}
         {children}
       </View>
+
+      {/* OS & Multitask Preview Privacy Shield */}
+      {isProtectedBackground ? (
+        <View style={styles.privacyShieldOverlay} pointerEvents="none">
+          <Text style={styles.privacyShieldIcon}>🛡️</Text>
+          <Text style={styles.privacyShieldTitle}>Protección de Vista Previa Activa</Text>
+          <Text style={styles.privacyShieldSub}>Bóveda Cifrada Zero-Knowledge Bloqueada</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -101,5 +113,29 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.bodyMuted,
     marginTop: spacing.sm,
+  },
+  privacyShieldOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#07050a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 99999,
+    gap: spacing.sm,
+    padding: spacing.xl,
+  },
+  privacyShieldIcon: {
+    fontSize: 48,
+  },
+  privacyShieldTitle: {
+    fontFamily: fonts.displaySemi,
+    fontSize: fontSize.lg,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  privacyShieldSub: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });

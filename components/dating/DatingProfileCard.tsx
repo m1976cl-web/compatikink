@@ -9,8 +9,13 @@ interface Props {
   score: number;
   roleScore: number;
   mutualMatches: string[];
+  hasCrushOnTarget?: boolean;
+  isMutualCrush?: boolean;
+  privateMediaCount?: number;
   onStartSession: (p: CommunityProfile) => void;
   onOpenChat: (p: CommunityProfile) => void;
+  onToggleCrush?: (p: CommunityProfile) => void;
+  onOpenAuthorizedMedia?: (p: CommunityProfile) => void;
 }
 
 export function DatingProfileCard({
@@ -18,8 +23,13 @@ export function DatingProfileCard({
   score,
   roleScore,
   mutualMatches,
+  hasCrushOnTarget = false,
+  isMutualCrush = false,
+  privateMediaCount = 0,
   onStartSession,
   onOpenChat,
+  onToggleCrush,
+  onOpenAuthorizedMedia,
 }: Props) {
   return (
     <View style={styles.profileCard}>
@@ -116,10 +126,10 @@ export function DatingProfileCard({
         </View>
       )}
 
-      {/* Safety Box */}
+      {/* Safety Protocols & Safewords */}
       <View style={styles.safetyBox}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <Text style={styles.safetyBoxTitle}>🛡️ Protocolos:</Text>
+          <Text style={styles.safetyBoxTitle}>🛡️ Protocolo Seguridad:</Text>
           {(item.safetyProtocols || ['SSC']).map((prot, idx) => (
             <View key={idx} style={styles.protocolChip}>
               <Text style={styles.protocolText}>{prot}</Text>
@@ -149,11 +159,36 @@ export function DatingProfileCard({
         </View>
       </View>
 
-      {/* Actions Row */}
+      {/* Actions Row with Request Features */}
       <View style={styles.actionsRow}>
         <TouchableOpacity style={styles.connectBtn} onPress={() => onStartSession(item)}>
-          <Text style={styles.connectBtnText}>🔥 Comparar Compatibilidad Completa 📊</Text>
+          <Text style={styles.connectBtnText}>⚡ Comparemos Nuestros Resultados 📊</Text>
         </TouchableOpacity>
+
+        <View style={styles.secondaryActionsGrid}>
+          {onToggleCrush ? (
+            <TouchableOpacity
+              style={[
+                styles.crushBtn,
+                isMutualCrush ? styles.crushMutualBtn : hasCrushOnTarget ? styles.crushActiveBtn : null,
+              ]}
+              onPress={() => onToggleCrush(item)}
+            >
+              <Text style={styles.crushBtnText}>
+                {isMutualCrush ? '💖⚡ ¡Match de Crush Mutuo!' : hasCrushOnTarget ? '💖 Crush Enviado (Ciego)' : '💖 Tengo un Crush'}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {onOpenAuthorizedMedia ? (
+            <TouchableOpacity
+              style={styles.mediaVaultBtn}
+              onPress={() => onOpenAuthorizedMedia(item)}
+            >
+              <Text style={styles.mediaVaultBtnText}>🔒 Álbum Privado Autorizado</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
 
         <TouchableOpacity style={styles.chatBtn} onPress={() => onOpenChat(item)}>
           <Text style={styles.chatBtnText}>💬 Enviar mensaje directo cifrado</Text>
@@ -310,4 +345,27 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   chatBtnText: { color: colors.text, fontSize: fontSize.xs, fontWeight: '700' },
+  secondaryActionsGrid: { flexDirection: 'row', gap: spacing.xs },
+  crushBtn: {
+    flex: 1,
+    backgroundColor: 'rgba(244, 63, 94, 0.12)',
+    borderWidth: 1,
+    borderColor: '#f43f5e',
+    paddingVertical: spacing.sm,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+  },
+  crushActiveBtn: { backgroundColor: 'rgba(244, 63, 94, 0.3)' },
+  crushMutualBtn: { backgroundColor: '#f43f5e', borderColor: '#ffffff' },
+  crushBtnText: { color: '#f43f5e', fontSize: 11, fontWeight: '800' },
+  mediaVaultBtn: {
+    flex: 1,
+    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    borderWidth: 1,
+    borderColor: colors.neonPurple,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+  },
+  mediaVaultBtnText: { color: colors.neonPurple, fontSize: 11, fontWeight: '800' },
 });

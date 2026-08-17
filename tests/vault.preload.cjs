@@ -58,6 +58,19 @@ fs.writeFileSync(
   `module.exports = { NativeModule: class {}, requireNativeModule: () => ({}) };`
 );
 
+const safeAreaStub = path.join(stubsDir, 'safe-area-context.js');
+fs.writeFileSync(
+  safeAreaStub,
+  `
+const React = require('react');
+module.exports = {
+  SafeAreaView: ({ children, style }) => children,
+  SafeAreaProvider: ({ children }) => children,
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+};
+`
+);
+
 const originalResolveFilename = Module._resolveFilename;
 Module._resolveFilename = function (request, parent, isMain, options) {
   if (
@@ -74,6 +87,9 @@ Module._resolveFilename = function (request, parent, isMain, options) {
   }
   if (request === 'expo-modules-core' || request.endsWith('expo-modules-core')) {
     return modulesCoreStub;
+  }
+  if (request === 'react-native-safe-area-context') {
+    return safeAreaStub;
   }
   if (request === 'react-native' || request.startsWith('react-native/')) {
     return originalResolveFilename.call(this, 'react-native-web', parent, isMain, options);

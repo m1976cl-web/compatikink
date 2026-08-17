@@ -1,55 +1,21 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableOpacity,
-  Switch,
-} from 'react-native';
+import { useState, useMemo, useEffect } from 'react';
+import { Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '@/components/Button';
-import { RatingPicker } from '@/components/RatingPicker';
-import { RolePicker } from '@/components/RolePicker';
-import { IntensityPicker } from '@/components/IntensityPicker';
-import { PronounsPicker } from '@/components/PronounsPicker';
-import { ExperiencePicker } from '@/components/ExperiencePicker';
-import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
-import { useQuestionnaire } from '@/hooks/useQuestionnaire';
-import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
-import { AppHeader } from '@/components/AppHeader';
-import { NoxHost } from '@/components/nox';
 import {
-  CATEGORY_LABELS,
-  CATEGORY_EMOJIS,
-  DIFFICULTY_LABELS,
   ExperienceLevel,
   UserProfile,
   ActivityCategory,
   DifficultyLevel,
-  Rating,
   Activity,
   ActivityMood,
-  MOOD_LABELS,
   ActivityResponse,
 } from '@/types';
-import { ActivityTooltipModal } from '@/components/ActivityTooltipModal';
 import { createSession } from '@/lib/sessions';
-import { CATEGORY_ORDER, ACTIVITIES, getAllActivities, getCategoryLabel, getActivityName, getActivityDescription } from '@/data/activities';
-import { CustomActivityModal } from '@/components/CustomActivityModal';
-import { SwipeDeckView } from '@/components/SwipeDeckView';
+import { CATEGORY_ORDER, getAllActivities } from '@/data/activities';
 import { getCurrentProfile, saveProfile, getCustomActivities } from '@/lib/storage';
-import { EXPRESS_ACTIVITY_IDS, EXPRESS_COUNT } from '@/data/expressQuestionnaire';
-import {
-  loadQuestionnaireDraft,
-  saveQuestionnaireDraft,
-  clearQuestionnaireDraft,
-} from '@/lib/questionnaireDraft';
+import { QuestionnaireIntroStep } from '@/components/questionnaire/QuestionnaireIntroStep';
+import { QuestionnaireCategoryStep } from '@/components/questionnaire/QuestionnaireCategoryStep';
+import { QuestionnaireQuestionsStep } from '@/components/questionnaire/QuestionnaireQuestionsStep';
 import { useTranslation } from '@/lib/i18n';
 
 export default function QuestionnaireScreen() {
@@ -65,21 +31,12 @@ export default function QuestionnaireScreen() {
   const [guestNickname, setGuestNickname] = useState('');
   const [guestNotes, setGuestNotes] = useState('');
   const [step, setStep] = useState<'intro' | 'categories' | 'questions'>('intro');
-  const [filterMode, setFilterMode] = useState<'categories' | 'moods'>('categories');
+  const [isExpressMode, setIsExpressMode] = useState(params.mode === 'express');
   const [enabledCategories, setEnabledCategories] = useState<ActivityCategory[]>([...CATEGORY_ORDER]);
   const [customActivities, setCustomActivities] = useState<Activity[]>([]);
-  const [showCustomModal, setShowCustomModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyLevel | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [tooltipActivity, setTooltipActivity] = useState<Activity | null>(null);
-  const [questionnaireMode, setQuestionnaireMode] = useState<'full' | 'express'>(
-    params.mode === 'express' ? 'express' : 'full'
-  );
-  const [draftResponses, setDraftResponses] = useState<ActivityResponse[] | undefined>(undefined);
-  const [draftIndex, setDraftIndex] = useState(0);
-  const [hasDraft, setHasDraft] = useState(false);
-  const draftLoaded = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -93,942 +50,130 @@ export default function QuestionnaireScreen() {
       }
       const customs = await getCustomActivities();
       setCustomActivities(customs);
-
-      if (!draftLoaded.current) {
-        draftLoaded.current = true;
-        const draft = await loadQuestionnaireDraft();
-        if (draft?.responses?.length) {
-          setHasDraft(true);
-          if (draft.nickname) setNickname(draft.nickname);
-          if (draft.pronouns) setPronouns(draft.pronouns);
-          if (draft.experienceLevel) setExperienceLevel(draft.experienceLevel as ExperienceLevel);
-          if (draft.userNotes) setUserNotes(draft.userNotes);
-          if (draft.guestNickname) setGuestNickname(draft.guestNickname);
-          if (draft.guestNotes) setGuestNotes(draft.guestNotes);
-          if (draft.enabledCategories?.length) setEnabledCategories(draft.enabledCategories);
-          if (draft.difficultyFilter) setDifficultyFilter(draft.difficultyFilter);
-          if (draft.mode) setQuestionnaireMode(draft.mode);
-          setDraftResponses(draft.responses);
-          setDraftIndex(draft.currentIndex ?? 0);
-        }
-      }
-
-      if (params.mode === 'express') {
-        setQuestionnaireMode('express');
-      }
     })();
-  }, [params.mode]);
+  }, []);
 
-  const activityIdFilter = questionnaireMode === 'express' ? EXPRESS_ACTIVITY_IDS : null;
-  const toggleCategory = (cat: ActivityCategory) => {
-    setEnabledCategories((prev) => {
-      if (prev.includes(cat)) {
-        if (prev.length === 1) return prev;
-        return prev.filter((c) => c !== cat);
-      } else {
-        return [...prev, cat];
+  const allActivities = useMemo(() => {
+    return getAllActivities();
+  }, [customActivities]);
+
+  const selectedQuestionsCount = useMemo(() => {
+    return allActivities.filter((a) => {
+      if (!enabledCategories.includes(a.category)) return false;
+      if (difficultyFilter !== 'all' && a.difficultyLevel !== difficultyFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q);
       }
-    });
+      return true;
+    }).length;
+  }, [allActivities, enabledCategories, difficultyFilter, searchQuery]);
+
+  const toggleCategory = (cat: ActivityCategory) => {
+    setEnabledCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
   };
 
   const toggleCategoriesByMood = (mood: ActivityMood) => {
-    const matchingCats = Array.from(
-      new Set(
-        getAllActivities(customActivities)
-          .filter((a) => a.moods?.includes(mood))
-          .map((a) => a.category)
-      )
-    );
+    const moodActivities = allActivities.filter((a) => a.moods?.includes(mood));
+    const moodCategories = Array.from(new Set(moodActivities.map((a) => a.category)));
+    const allSelected = moodCategories.every((c) => enabledCategories.includes(c));
 
-    const allSelected = matchingCats.every((c) => enabledCategories.includes(c));
     if (allSelected) {
-      setEnabledCategories((prev) => {
-        const next = prev.filter((c) => !matchingCats.includes(c));
-        return next.length > 0 ? next : prev;
-      });
+      setEnabledCategories((prev) => prev.filter((c) => !moodCategories.includes(c)));
     } else {
-      setEnabledCategories((prev) => Array.from(new Set([...prev, ...matchingCats])));
+      setEnabledCategories((prev) => Array.from(new Set([...prev, ...moodCategories])));
     }
   };
 
-  const selectedQuestionsCount = useMemo(() => {
-    return getAllActivities(customActivities).filter((a) => {
-      if (!enabledCategories.includes(a.category)) return false;
-      if (difficultyFilter !== 'all' && a.difficultyLevel && a.difficultyLevel !== difficultyFilter) return false;
-      return true;
-    }).length;
-  }, [enabledCategories, customActivities, difficultyFilter]);
-
-  const handleFinish = async (finalResponses: any[]) => {
-    const name = nickname.trim() || 'Anónimo';
+  const handleFinish = async (responses: ActivityResponse[]) => {
     setLoading(true);
     try {
-      const initiatorProfile: UserProfile = {
-        ...profile,
-        nickname: name,
-        pin: undefined,
-        pronouns: pronouns || undefined,
+      const updatedProfile: UserProfile = {
+        nickname: nickname.trim() || 'Iniciador',
+        pronouns: pronouns.trim() || undefined,
         experienceLevel,
         notes: userNotes.trim() || undefined,
-        baseResponses: finalResponses,
+        baseResponses: responses,
       };
+      await saveProfile(updatedProfile);
 
-      await saveProfile(initiatorProfile);
+      const session = await createSession(
+        updatedProfile.nickname,
+        responses,
+        guestNickname.trim() ? { nickname: guestNickname.trim(), notes: guestNotes.trim() } : undefined,
+        updatedProfile
+      );
 
-      const privateGuestNotes = guestNickname.trim() || guestNotes.trim()
-        ? { nickname: guestNickname.trim() || 'Invitado', notes: guestNotes.trim() }
-        : undefined;
-
-      const session = await createSession(name, finalResponses, privateGuestNotes, initiatorProfile);
-      await clearQuestionnaireDraft();
-      router.replace({ pathname: '/invite', params: { token: session.initiatorToken } });
-    } catch (e) {
-      Alert.alert('Error', 'No se pudo guardar. Revisa tu conexión o configuración.');
+      router.replace({
+        pathname: '/invite',
+        params: { token: session.initiatorToken, code: session.inviteCode },
+      });
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'No se pudo guardar el cuestionario');
     } finally {
       setLoading(false);
     }
   };
 
-  const startExpress = () => {
-    if (!nickname.trim()) {
-      Alert.alert('Nick requerido', 'Por favor ingresa tu nick para continuar.');
-      return;
-    }
-    setQuestionnaireMode('express');
-    setStep('questions');
-  };
-
-  const resumeDraft = () => {
-    setStep('questions');
-  };
-
   if (step === 'intro') {
     return (
-      <SafeAreaView style={styles.safe} edges={['bottom']}>
-        <ScrollView contentContainerStyle={styles.intro}>
-          <AppHeader
-            brand
-            title={t('q.intro_title')}
-            subtitle={t('q.intro_sub')}
-          />
-          <NoxHost scene="questionnaire" variant="banner" />
-
-          <Text style={styles.introTextSmall}>{t('q.scale_help')}</Text>
-          <Text style={styles.introTextSmall}>{t('q.express_help')}</Text>
-
-          <View style={styles.divider} />
-          <Text style={styles.sectionSubTitle}>{t('q.you_section')}</Text>
-
-          <Text style={styles.label}>{t('q.your_nick')}</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej: Alex"
-            placeholderTextColor={colors.textMuted}
-            value={nickname}
-            onChangeText={setNickname}
-          />
-
-          <Text style={styles.label}>{t('q.pronouns')}</Text>
-          <PronounsPicker value={pronouns} onChange={setPronouns} />
-
-          <Text style={[styles.label, styles.fieldGap]}>{t('q.experience')}</Text>
-          <ExperiencePicker value={experienceLevel} onChange={setExperienceLevel} />
-
-          <Text style={[styles.label, styles.fieldGap]}>{t('q.about_you')}</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder={t('q.about_ph')}
-            placeholderTextColor={colors.textMuted}
-            value={userNotes}
-            onChangeText={setUserNotes}
-            multiline
-            numberOfLines={3}
-          />
-
-          <View style={styles.divider} />
-
-          <Text style={styles.sectionSubTitle}>{t('q.guest_section')}</Text>
-          <Text style={styles.introTextSmall}>{t('q.guest_help')}</Text>
-
-          <Text style={styles.label}>{t('q.their_nick')}</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej: Sam"
-            placeholderTextColor={colors.textMuted}
-            value={guestNickname}
-            onChangeText={setGuestNickname}
-          />
-
-          <Text style={styles.label}>{t('q.their_notes')}</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Ej: Nos conocimos en Tinder. Interés en cuerdas..."
-            placeholderTextColor={colors.textMuted}
-            value={guestNotes}
-            onChangeText={setGuestNotes}
-            multiline
-            numberOfLines={3}
-          />
-
-          <Button 
-            title={t('q.next_cats')} 
-            onPress={() => {
-              if (!nickname.trim()) {
-                Alert.alert('Nick requerido', 'Por favor ingresa tu nick para continuar.');
-                return;
-              }
-              setQuestionnaireMode('full');
-              setStep('categories');
-            }} 
-          />
-          <Button
-            title={t('q.express', { n: String(EXPRESS_COUNT) })}
-            variant="secondary"
-            onPress={startExpress}
-          />
-          {hasDraft ? (
-            <Button title={t('q.resume')} variant="ghost" onPress={resumeDraft} />
-          ) : null}
-        </ScrollView>
-      </SafeAreaView>
+      <QuestionnaireIntroStep
+        nickname={nickname}
+        setNickname={setNickname}
+        pronouns={pronouns}
+        setPronouns={setPronouns}
+        experienceLevel={experienceLevel}
+        setExperienceLevel={setExperienceLevel}
+        userNotes={userNotes}
+        setUserNotes={setUserNotes}
+        guestNickname={guestNickname}
+        setGuestNickname={setGuestNickname}
+        guestNotes={guestNotes}
+        setGuestNotes={setGuestNotes}
+        onSelectExpressMode={() => {
+          setIsExpressMode(true);
+          setStep('questions');
+        }}
+        onSelectFullMode={() => {
+          setIsExpressMode(false);
+          setStep('categories');
+        }}
+      />
     );
   }
 
   if (step === 'categories') {
     return (
-      <SafeAreaView style={styles.safe} edges={['bottom']}>
-        <ScrollView contentContainerStyle={styles.intro}>
-          <Text style={styles.introTitle}>Filtro de Categorías y Ambientes</Text>
-          <Text style={styles.introText}>
-            Selecciona las categorías, ambientes o busca por palabra clave para personalizar las actividades que responderás.
-          </Text>
-
-          {/* Search Bar */}
-          <View style={styles.searchBox}>
-            <Text style={styles.searchIcon}>🔍</Text>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar por palabra clave (ej: cuerdas, masaje, cera)..."
-              placeholderTextColor={colors.textMuted}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery ? (
-              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
-                <Text style={styles.clearSearchText}>✕</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-
-          {/* Difficulty Level Filter */}
-          <View style={styles.difficultyRow}>
-            <Text style={styles.difficultyLabel}>🎯 Nivel de contenido:</Text>
-            <View style={styles.difficultyChips}>
-              <TouchableOpacity
-                style={[styles.diffChip, difficultyFilter === 'all' && styles.diffChipActive]}
-                onPress={() => setDifficultyFilter('all')}
-              >
-                <Text style={[styles.diffChipText, difficultyFilter === 'all' && styles.diffChipTextActive]}>
-                  Todos ({getAllActivities(customActivities).filter(a => enabledCategories.includes(a.category)).length})
-                </Text>
-              </TouchableOpacity>
-              {(['beginner', 'intermediate', 'advanced'] as DifficultyLevel[]).map((lvl) => {
-                const info = DIFFICULTY_LABELS[lvl];
-                const count = getAllActivities(customActivities).filter(
-                  (a) => enabledCategories.includes(a.category) && a.difficultyLevel === lvl
-                ).length;
-                const isActive = difficultyFilter === lvl;
-                return (
-                  <TouchableOpacity
-                    key={lvl}
-                    style={[styles.diffChip, isActive && { borderColor: info.color, backgroundColor: `${info.color}20` }]}
-                    onPress={() => setDifficultyFilter(isActive ? 'all' : lvl)}
-                  >
-                    <Text style={[styles.diffChipText, isActive && { color: info.color }]}>
-                      {info.emoji} {info.label} ({count})
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Filter Mode Selector Tabs */}
-          <View style={styles.filterTabContainer}>
-            <TouchableOpacity
-              style={[styles.filterTab, filterMode === 'categories' && styles.filterTabActive]}
-              onPress={() => setFilterMode('categories')}
-            >
-              <Text style={[styles.filterTabText, filterMode === 'categories' && styles.filterTabTextActive]}>
-                📁 Categorías ({enabledCategories.length}/{CATEGORY_ORDER.length})
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.filterTab, filterMode === 'moods' && styles.filterTabActive]}
-              onPress={() => setFilterMode('moods')}
-            >
-              <Text style={[styles.filterTabText, filterMode === 'moods' && styles.filterTabTextActive]}>
-                🎛️ Ambientes / Moods
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {filterMode === 'categories' ? (
-            <View style={styles.categoryGrid}>
-              {CATEGORY_ORDER.map((cat) => {
-                const active = enabledCategories.includes(cat);
-                return (
-                  <TouchableOpacity
-                    key={cat}
-                    activeOpacity={0.8}
-                    style={[styles.categoryCard, active && styles.categoryCardActive]}
-                    onPress={() => toggleCategory(cat)}
-                  >
-                    <Text style={[styles.categoryCardText, active && styles.categoryCardTextActive]}>
-                      {CATEGORY_EMOJIS[cat]} {getCategoryLabel(cat)}
-                    </Text>
-                    <Text style={styles.categoryCardSub}>
-                      {active ? '✓ Activa' : '✕ Omitida'} · {getAllActivities(customActivities).filter((a) => a.category === cat).length} actividades
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          ) : (
-            <View style={styles.moodsGrid}>
-              {(Object.keys(MOOD_LABELS) as ActivityMood[]).map((mKey) => {
-                const info = MOOD_LABELS[mKey];
-                const matchingCats = Array.from(
-                  new Set(
-                    getAllActivities(customActivities)
-                      .filter((a) => a.moods?.includes(mKey))
-                      .map((a) => a.category)
-                  )
-                );
-                const activeCount = matchingCats.filter((c) => enabledCategories.includes(c)).length;
-                const isFullyActive = matchingCats.length > 0 && activeCount === matchingCats.length;
-
-                return (
-                  <TouchableOpacity
-                    key={mKey}
-                    activeOpacity={0.85}
-                    style={[styles.moodCard, isFullyActive && styles.moodCardActive]}
-                    onPress={() => toggleCategoriesByMood(mKey)}
-                  >
-                    <View style={styles.moodCardHeader}>
-                      <Text style={styles.moodCardTitle}>
-                        {info.emoji} {info.label}
-                      </Text>
-                      <Text style={[styles.moodCardBadge, isFullyActive && styles.moodCardBadgeActive]}>
-                        {isFullyActive ? '✓ Activo' : `${activeCount}/${matchingCats.length} cats`}
-                      </Text>
-                    </View>
-                    <Text style={styles.moodCardDesc}>{info.description}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-
-          <View style={styles.divider} />
-
-          <Button
-            title="➕ Añadir actividad propia"
-            variant="secondary"
-            onPress={() => setShowCustomModal(true)}
-          />
-
-          <Button
-            title={`🃏 Comenzar en Modo Tarjetas Swipe (${selectedQuestionsCount} preguntas)`}
-            onPress={() => setStep('questions')}
-          />
-          <Button
-            title="Volver"
-            variant="ghost"
-            onPress={() => setStep('intro')}
-          />
-
-          <ActivityTooltipModal
-            visible={!!tooltipActivity}
-            activity={tooltipActivity}
-            onClose={() => setTooltipActivity(null)}
-          />
-
-          <CustomActivityModal
-            visible={showCustomModal}
-            onClose={() => setShowCustomModal(false)}
-            onActivityCreated={(newAct) => setCustomActivities((prev) => [...prev, newAct])}
-          />
-        </ScrollView>
-      </SafeAreaView>
+      <QuestionnaireCategoryStep
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        difficultyFilter={difficultyFilter}
+        setDifficultyFilter={setDifficultyFilter}
+        enabledCategories={enabledCategories}
+        toggleCategory={toggleCategory}
+        toggleCategoriesByMood={toggleCategoriesByMood}
+        customActivities={customActivities}
+        setCustomActivities={setCustomActivities}
+        selectedQuestionsCount={selectedQuestionsCount}
+        onStartQuestions={() => setStep('questions')}
+        onBack={() => setStep('intro')}
+      />
     );
   }
 
   return (
-    <QuestionnaireActiveFlow
+    <QuestionnaireQuestionsStep
       nickname={nickname}
       enabledCategories={enabledCategories}
       customActivities={customActivities}
       difficultyFilter={difficultyFilter}
       searchQuery={searchQuery}
-      activityIdFilter={activityIdFilter}
-      initialResponses={draftResponses}
-      initialIndex={draftIndex}
-      questionnaireMode={questionnaireMode}
-      profileMeta={{
-        nickname,
-        pronouns,
-        experienceLevel,
-        userNotes,
-        guestNickname,
-        guestNotes,
-        enabledCategories,
-        difficultyFilter,
-      }}
+      isExpressMode={isExpressMode}
       onFinish={handleFinish}
       loading={loading}
-      onBack={() => setStep(questionnaireMode === 'express' ? 'intro' : 'categories')}
+      onBack={() => setStep(isExpressMode ? 'intro' : 'categories')}
     />
   );
 }
-
-// Subcomponent to isolate the useQuestionnaire hook lifecycle
-function QuestionnaireActiveFlow({
-  nickname,
-  enabledCategories,
-  customActivities,
-  difficultyFilter,
-  searchQuery,
-  activityIdFilter,
-  initialResponses,
-  initialIndex,
-  questionnaireMode,
-  profileMeta,
-  onFinish,
-  loading,
-  onBack,
-}: {
-  nickname: string;
-  enabledCategories: ActivityCategory[];
-  customActivities: Activity[];
-  difficultyFilter: DifficultyLevel | 'all';
-  searchQuery: string;
-  activityIdFilter: string[] | null;
-  initialResponses?: ActivityResponse[];
-  initialIndex?: number;
-  questionnaireMode: 'full' | 'express';
-  profileMeta: {
-    nickname: string;
-    pronouns: string;
-    experienceLevel?: ExperienceLevel;
-    userNotes: string;
-    guestNickname: string;
-    guestNotes: string;
-    enabledCategories: ActivityCategory[];
-    difficultyFilter: DifficultyLevel | 'all';
-  };
-  onFinish: (responses: any[]) => void;
-  loading: boolean;
-  onBack: () => void;
-}) {
-  const q = useQuestionnaire(
-    initialResponses,
-    enabledCategories,
-    customActivities,
-    difficultyFilter,
-    searchQuery,
-    activityIdFilter
-  );
-  const [fastMode, setFastMode] = useState(true);
-  const [showDetails, setShowDetails] = useState(false);
-  const [viewMode, setViewMode] = useState<'swipe' | 'list'>('swipe');
-  const hydratedIndex = useRef(false);
-
-  useEffect(() => {
-    if (!hydratedIndex.current && typeof initialIndex === 'number' && initialIndex > 0) {
-      hydratedIndex.current = true;
-      q.goTo(initialIndex);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot hydrate
-  }, [initialIndex]);
-
-  // Autosave draft (sealed when vault unlocked via writeJsonStorage)
-  useEffect(() => {
-    const t = setTimeout(() => {
-      void saveQuestionnaireDraft({
-        nickname: profileMeta.nickname,
-        pronouns: profileMeta.pronouns,
-        experienceLevel: profileMeta.experienceLevel,
-        userNotes: profileMeta.userNotes,
-        guestNickname: profileMeta.guestNickname,
-        guestNotes: profileMeta.guestNotes,
-        enabledCategories: profileMeta.enabledCategories,
-        difficultyFilter: profileMeta.difficultyFilter,
-        mode: questionnaireMode,
-        currentIndex: q.currentIndex,
-        responses: Object.values(q.responses),
-      });
-    }, 700);
-    return () => clearTimeout(t);
-  }, [q.currentIndex, q.responses, questionnaireMode, profileMeta]);
-  if (viewMode === 'swipe') {
-    return (
-      <SafeAreaView style={styles.safe} edges={['bottom']}>
-        <SwipeDeckView
-          activities={q.activities}
-          responses={q.responses}
-          currentIndex={q.currentIndex}
-          onIndexChange={(idx) => q.goTo(idx)}
-          onResponseChange={(actId, resp) => {
-            q.setResponseForActivity(actId, resp);
-          }}
-          onFinish={() => onFinish(q.finalResponses)}
-          onSwitchToForm={() => setViewMode('list')}
-        />
-      </SafeAreaView>
-    );
-  }
-
-  const handleRatingSelect = (rating: Rating) => {
-    q.setRating(rating);
-    // If fastMode is active and it's either negative or we don't want to expand details, auto-advance
-    if (fastMode) {
-      if (rating === 'hard_limit' || rating === 'not_interested' || !showDetails) {
-        // Auto default positive interests
-        if (rating !== 'hard_limit' && rating !== 'not_interested') {
-          q.setRole('flexible');
-          q.setIntensity(3);
-        }
-        
-        // Brief timeout for visual feedback before auto-advancing
-        setTimeout(() => {
-          if (!q.isLast) {
-            q.goNext();
-          }
-        }, 120);
-      }
-    }
-  };
-
-  return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {/* Top Control Bar */}
-          <View style={styles.controlHeader}>
-            <TouchableOpacity onPress={onBack} style={styles.backLink}>
-              <Text style={styles.backLinkText}>← Salir</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setViewMode('swipe')} style={styles.modeSwitchBtn}>
-              <Text style={styles.modeSwitchText}>🃏 Modo Tarjetas</Text>
-            </TouchableOpacity>
-
-            <View style={styles.fastModeContainer}>
-              <Text style={styles.fastModeLabel}>Modo Rápido ⚡</Text>
-              <Switch
-                value={fastMode}
-                onValueChange={setFastMode}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={colors.text}
-              />
-            </View>
-          </View>
-
-
-          <ProgressBar progress={q.progress} />
-          <ProgressLabel current={q.currentIndex + 1} total={q.total} />
-
-          <Text style={styles.category}>{getCategoryLabel(q.currentActivity.category)}</Text>
-          <Text style={styles.activityName}>{getActivityName(q.currentActivity)}</Text>
-          <Text style={styles.description}>{getActivityDescription(q.currentActivity)}</Text>
-
-          <Text style={styles.sectionLabel}>¿Qué te parece?</Text>
-          <RatingPicker value={q.currentResponse.rating} onChange={handleRatingSelect} />
-
-          {/* Details toggle for positive rating responses in fast mode */}
-          {q.currentResponse.rating !== 'hard_limit' &&
-          q.currentResponse.rating !== 'not_interested' ? (
-            <View style={styles.detailsSection}>
-              {!showDetails && fastMode ? (
-                <TouchableOpacity 
-                  style={styles.detailsToggle} 
-                  onPress={() => setShowDetails(true)}
-                >
-                  <Text style={styles.detailsToggleText}>⚙️ Personalizar Rol e Intensidad</Text>
-                </TouchableOpacity>
-              ) : (
-                <>
-                  <Text style={[styles.sectionLabel, styles.sectionGap]}>Rol preferido</Text>
-                  <RolePicker value={q.currentResponse.role} onChange={q.setRole} />
-
-                  <Text style={[styles.sectionLabel, styles.sectionGap]}>Intensidad</Text>
-                  <IntensityPicker
-                    value={q.currentResponse.intensity}
-                    onChange={q.setIntensity}
-                  />
-
-                  {fastMode && (
-                    <TouchableOpacity 
-                      style={styles.detailsToggleClose} 
-                      onPress={() => setShowDetails(false)}
-                    >
-                      <Text style={styles.detailsToggleCloseText}>Ocultar personalización</Text>
-                    </TouchableOpacity>
-                  )}
-                </>
-              )}
-            </View>
-          ) : null}
-
-          <View style={styles.nav}>
-            {!q.isFirst ? (
-              <Button title="Anterior" onPress={q.goPrev} variant="secondary" style={styles.navBtn} />
-            ) : (
-              <View style={styles.navBtn} />
-            )}
-            {q.isLast ? (
-              <Button
-                title={loading ? 'Guardando...' : 'Finalizar e Invitar'}
-                onPress={() => onFinish(q.getAllResponses())}
-                disabled={loading}
-                style={styles.navBtn}
-              />
-            ) : (
-              <Button title="Siguiente" onPress={q.goNext} style={styles.navBtn} />
-            )}
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
-  flex: { flex: 1 },
-  scroll: { padding: spacing.lg, paddingBottom: spacing.xl },
-  intro: { padding: spacing.lg, gap: spacing.md },
-  introTitle: {
-    fontFamily: fonts.displaySemi,
-    color: colors.text,
-    fontSize: fontSize.xxl,
-  },
-  introText: {
-    ...typography.bodyMuted,
-  },
-  label: {
-    ...typography.label,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    padding: spacing.md,
-    color: colors.text,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-    fontFamily: fonts.body,
-  },
-  category: {
-    ...typography.label,
-    color: colors.primary,
-  },
-  activityName: {
-    fontFamily: fonts.displaySemi,
-    color: colors.text,
-    fontSize: fontSize.xl,
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  description: {
-    ...typography.bodyMuted,
-    marginBottom: spacing.lg,
-  },
-  sectionLabel: {
-    fontFamily: fonts.bodySemi,
-    color: colors.text,
-    fontSize: fontSize.md,
-    marginBottom: spacing.sm,
-  },
-  fieldGap: {
-    marginTop: spacing.md,
-  },
-  sectionGap: {
-    marginTop: spacing.lg,
-  },
-  nav: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.xl,
-  },
-  navBtn: {
-    flex: 1,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.md,
-  },
-  sectionSubTitle: {
-    color: colors.text,
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
-  },
-  introTextSmall: {
-    color: colors.textMuted,
-    lineHeight: 18,
-    fontSize: fontSize.sm,
-    marginBottom: spacing.md,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    marginTop: spacing.md,
-  },
-  categoryCard: {
-    width: '47%',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    justifyContent: 'center',
-  },
-  categoryCardActive: {
-    borderColor: colors.primary,
-    backgroundColor: 'rgba(147, 51, 234, 0.1)',
-  },
-  categoryCardText: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  categoryCardTextActive: {
-    color: colors.text,
-  },
-  categoryCardSub: {
-    fontSize: 10,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-  },
-  controlHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  backLink: {
-    paddingVertical: spacing.xs,
-  },
-  backLinkText: {
-    color: colors.textMuted,
-    fontSize: fontSize.md,
-  },
-  fastModeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  fastModeLabel: {
-    color: colors.text,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  modeSwitchBtn: {
-    backgroundColor: 'rgba(192, 132, 252, 0.15)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.4)',
-  },
-  modeSwitchText: {
-    color: colors.neonPurple,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-
-  detailsSection: {
-    marginTop: spacing.md,
-  },
-  detailsToggle: {
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    marginVertical: spacing.sm,
-  },
-  detailsToggleText: {
-    color: colors.text,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  detailsToggleClose: {
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    marginTop: spacing.md,
-  },
-  detailsToggleCloseText: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    textDecorationLine: 'underline',
-  },
-  filterTabContainer: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.sm,
-  },
-  filterTab: {
-    flex: 1,
-    paddingVertical: spacing.xs + 2,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  filterTabActive: {
-    backgroundColor: colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  filterTabText: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  filterTabTextActive: {
-    color: colors.text,
-    fontWeight: '700',
-  },
-  moodsGrid: {
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  moodCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 4,
-  },
-  moodCardActive: {
-    borderColor: colors.primary,
-    backgroundColor: 'rgba(147, 51, 234, 0.1)',
-  },
-  moodCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  moodCardTitle: {
-    color: colors.text,
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  moodCardBadge: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '600',
-    backgroundColor: colors.surfaceLight,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  moodCardBadgeActive: {
-    color: colors.neonPurple,
-    borderColor: colors.primary,
-    fontWeight: '700',
-  },
-  moodCardDesc: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    lineHeight: 16,
-  },
-
-  // Difficulty Filter
-  difficultyRow: {
-    width: '100%',
-    gap: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  difficultyLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  difficultyChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  diffChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  diffChipActive: {
-    borderColor: colors.primary,
-    backgroundColor: 'rgba(192, 132, 252, 0.15)',
-  },
-  diffChipText: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  diffChipTextActive: {
-    color: colors.primary,
-  },
-
-  // Search Box
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
-    gap: spacing.xs,
-  },
-  searchIcon: {
-    fontSize: 16,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 10,
-    color: colors.text,
-    fontSize: fontSize.sm,
-  },
-  clearSearchBtn: {
-    padding: 4,
-  },
-  clearSearchText: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-});

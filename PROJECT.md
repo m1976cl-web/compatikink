@@ -1,14 +1,7 @@
-# CompatKink — Especificación del Proyecto & Visión de Producto
+# PROJECT.md — CompatKink Architecture & Vision
 
-**Estado:** En producción / v2.1 Refactoring & Hardening  
-**Core Strategy:** Compatibilidad Íntima Asimétrica Privada (Core First)  
-**Modelo de Seguridad:** Zero-Knowledge Client-Side AES-GCM-256 / PBKDF2 310k iteraciones  
-
----
-
-## 1. Propuesta de Valor Core (Core First Alignment)
-
-CompatKink es una plataforma privacy-first enfocada en permitir a parejas o individuos explorar preferencias íntimas, límites BDSM, roles y protocolos de seguridad sin revelar respuestas crudas no coincidentes a la otra persona ni a servidores centrales.
+## 1. Visión y Fundamentos del Producto
+**CompatKink** es una aplicación progresiva Web / Mobile (Expo 53 / React 19) enfocada en la exploración de compatibilidad íntima y dinámicas BDSM bajo un modelo asimétrico y cifrado Zero-Knowledge.
 
 ### Pilares Fundamentales (El Core Inviolable)
 1. **Privacidad Asimétrica:** El iniciador/a crea una sesión cifrada; el invitado/a responde de forma ciega sin ver las respuestas del iniciador/a. El sistema calcula únicamente coincidencias mutuas ("Matches") y conflictos de límites duros ("Hard Limits").
@@ -41,17 +34,9 @@ CompatKink es una plataforma privacy-first enfocada en permitir a parejas o indi
 |---|---|---|
 | **Lote A — Refactor Home** | Módulo `stores/homeStore.ts`, componentes `components/home/`, desmonolitización de `index.tsx` | `DONE` ✅ |
 | **Lote C — Hardening Supabase** | Tokens CSPRNG de alta entropía, `expires_at`, rate-limiting RPC, limpieza de `refreshSession` | `DONE` ✅ |
-| **Lote B — CI/CD & Tests** | GitHub Actions (`ci.yml`, `audit.yml`) y 12 suites de prueba integradas | `DONE` ✅ |
+| **Lote B — CI/CD & Tests** | GitHub Actions (`ci.yml`, `audit.yml`) y suites de prueba integradas | `DONE` ✅ |
 | **Tier 1 — Proxy IA & Audit** | Edge Function Gemini, clasificación Screen Registry, analytics Plausible | `DONE` ✅ |
 | **Tier 2 — Modo Office & Aftercare** | Tema Claro / Excel Disguise, Protocolo Aftercare 3 fases, Deep Links QR, i18n Actividades | `DONE` ✅ |
+| **Expansión P0-P2** | 36 Preguntas intimidad, 42 Ruleta, 31 Actos diarios, 15 Rituales, 161 Actividades, 85 Glosario | `DONE` ✅ |
+| **UX & Nuevos Módulos** | Radar Chart SVG, Gear Closet con fotos/wishlist, Guía de Látex (`/latex-guide`) | `DONE` ✅ |
 | **Docs handoff Antigravity** | `AGENTS.md`, `ANTIGRAVITY_PROMPT.md`, `docs/IMPROVEMENT_REVIEW.md`, roadmap alineado | `DONE` ✅ |
-
-### Siguiente (P1) — ver `ROADMAP.md`
-
-1. ~~Unificar defaults de caducidad y tablas de rate-limit~~ ✅  
-2. ~~Feature flags MVP vs módulos Beta~~ ✅ (`EXPO_PUBLIC_MVP`)  
-3. ~~Cuestionario express + reanudar~~ ✅  
-4. Deep links HTTPS (AASA) + reporte accionable.  
-5. Split de `lib/storage.ts`.
-
-**Prompt Antigravity:** pegar el bloque de [`ANTIGRAVITY_PROMPT.md`](./ANTIGRAVITY_PROMPT.md).

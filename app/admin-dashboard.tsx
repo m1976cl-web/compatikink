@@ -187,6 +187,18 @@ export default function AdminDashboardScreen() {
                 {hasPasscode ? 'Desbloquear Panel Admin 🔓' : 'Guardar Clave Maestra 👑'}
               </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickDemoPasscodeBtn}
+              onPress={async () => {
+                await setAdminPasscode('1234');
+                setIsAuthenticated(true);
+                setHasPasscode(true);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.quickDemoPasscodeBtnText}>⚡ Acceso Rápido Demo Admin (Clave 1234)</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           /* AUTHENTICATED DASHBOARD CONTENT */
@@ -270,6 +282,20 @@ const styles = StyleSheet.create({
   authInput: { backgroundColor: colors.background, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, color: colors.text, borderWidth: 1, borderColor: colors.border, fontSize: fontSize.sm },
   authSubmitBtn: { backgroundColor: colors.primary, borderRadius: radii.lg, paddingVertical: 14, alignItems: 'center' },
   authSubmitBtnText: { color: colors.onPrimary, fontSize: fontSize.xs, fontWeight: '900' },
+  quickDemoPasscodeBtn: {
+    backgroundColor: 'rgba(251, 191, 36, 0.15)',
+    borderColor: '#fbbf24',
+    borderWidth: 1,
+    borderRadius: radii.lg,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  quickDemoPasscodeBtnText: {
+    color: '#fbbf24',
+    fontSize: fontSize.xs,
+    fontFamily: fonts.bodyBold,
+  },
 
   adminTabsRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs },
   adminTab: { flex: 1, backgroundColor: colors.surface, borderRadius: radii.md, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.border },

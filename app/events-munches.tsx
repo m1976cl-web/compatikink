@@ -22,9 +22,11 @@ import { FETISH_EVENTS, FetishEvent, EventType } from '@/data/eventsData';
 import { readStorageValue, writeStorageValue } from '@/lib/cryptoVault';
 import { triggerHaptic } from '@/lib/haptics';
 
+import { RouteFeatureGuard } from '@/components/RouteFeatureGuard';
+
 const RSVP_STORAGE_KEY = 'fetish_events_rsvp_sealed_v1';
 
-export default function EventsMunchesScreen() {
+function EventsMunchesScreenContent() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const { palette } = useTheme();
@@ -280,3 +282,11 @@ const styles = StyleSheet.create({
   emptyTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
   emptySub: { color: colors.textDim, fontSize: fontSize.xs, textAlign: 'center' },
 });
+
+export default function EventsMunchesScreen() {
+  return (
+    <RouteFeatureGuard route="/events-munches" title="Munches & Eventos">
+      <EventsMunchesScreenContent />
+    </RouteFeatureGuard>
+  );
+}

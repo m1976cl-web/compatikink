@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
+import { GoogleAuthButton } from '@/components/GoogleAuthButton';
 import { NoxHost } from '@/components/nox';
 
 const AGE_KEY = 'age_verified_18_v1';
@@ -51,6 +52,13 @@ export function AgeVerificationModal() {
               Todos los contenidos, dinámicas y acuerdos requieren consentimiento libre,
               informado y madurez legal.
             </Text>
+          </View>
+
+          <View style={{ width: '100%', marginVertical: spacing.xs }}>
+            <GoogleAuthButton onSuccess={async () => {
+              await AsyncStorage.setItem(AGE_KEY, 'true');
+              setVisible(false);
+            }} />
           </View>
 
           <TouchableOpacity

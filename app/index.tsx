@@ -13,6 +13,7 @@ import { RegisterProfileModal } from '@/components/RegisterProfileModal';
 import { AgeVerificationModal } from '@/components/AgeVerificationModal';
 import { SceneDebriefModal } from '@/components/SceneDebriefModal';
 
+import { HeroDashboardBanner } from '@/components/home/HeroDashboardBanner';
 import { HeroSection } from '@/components/home/HeroSection';
 import { CorePathBanner } from '@/components/home/CorePathBanner';
 import { ProfileBar } from '@/components/home/ProfileBar';
@@ -81,6 +82,20 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!onboardingChecked) return;
     loadHomeData();
+
+    // Background Prefetch Core Routes for Instant Navigation
+    if (router && typeof (router as any).prefetch === 'function') {
+      try {
+        (router as any).prefetch('/questionnaire');
+        (router as any).prefetch('/profile');
+        (router as any).prefetch('/report');
+        (router as any).prefetch('/dating');
+        (router as any).prefetch('/manual');
+      } catch {
+        // Ignore
+      }
+    }
+
     Animated.parallel([
       Animated.timing(heroFade, { toValue: 1, duration: 520, useNativeDriver: true }),
       Animated.timing(heroSlide, { toValue: 0, duration: 520, useNativeDriver: true }),
@@ -160,6 +175,8 @@ export default function HomeScreen() {
           vaultOpen={vaultOpen}
           onInvite={() => invite.setShowQuickInvite(true)}
         />
+
+        <HeroDashboardBanner />
 
         <ProfileBar />
 

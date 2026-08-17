@@ -39,12 +39,9 @@ if (fs.existsSync(underscoreExpo)) {
 if (fs.existsSync(indexHtmlPath)) {
   let content = fs.readFileSync(indexHtmlPath, 'utf8');
 
-  // Also add fallback script loading for /expo/ in case _expo is blocked
-  if (content.includes('/_expo/')) {
-    content = content.replace(/\/_expo\//g, '/compatikink/_expo/');
-    // Handle double prefix if any
-    content = content.replace(/\/compatikink\/compatikink\//g, '/compatikink/');
-  }
+  // Replace /_expo/ with /compatikink/expo/ (without leading underscore to prevent Jekyll 404s)
+  content = content.replace(/\/_expo\//g, '/compatikink/expo/');
+  content = content.replace(/\/compatikink\/compatikink\//g, '/compatikink/');
 
   // Inject PWA manifest & Service Worker registration
   if (!content.includes('serviceWorker')) {
@@ -61,12 +58,12 @@ if (fs.existsSync(indexHtmlPath)) {
         });
       }
     </script>
-    </head>`;
-    content = content.replace('</head>', swScript);
+    `;
+    content = content.replace('</head>', `${swScript}\n</head>`);
   }
 
-  fs.writeFileSync(indexHtmlPath, content, 'utf8');
-  fs.writeFileSync(fourOhFourHtmlPath, content, 'utf8');
+  fs.writeFileSync(indexHtmlPath, content);
+  fs.writeFileSync(fourOhFourHtmlPath, content); // SPA fallback for direct route reloads
   console.log('✅ Created 404.html & updated index.html SPA routing + PWA ServiceWorker');
 }
 

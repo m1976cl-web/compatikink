@@ -63,7 +63,9 @@ const INITIAL_POSTS: FeedPost[] = [
   },
 ];
 
-export default function KinkFeedScreen() {
+import { RouteFeatureGuard } from '@/components/RouteFeatureGuard';
+
+function KinkFeedScreenContent() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
 
@@ -412,3 +414,11 @@ const styles = StyleSheet.create({
   likeBtn: { alignSelf: 'flex-start' },
   likeBtnText: { color: colors.neonRose, fontSize: fontSize.xs, fontWeight: '800' },
 });
+
+export default function KinkFeedScreen() {
+  return (
+    <RouteFeatureGuard route="/kink-feed" title="Feed Comunitario">
+      <KinkFeedScreenContent />
+    </RouteFeatureGuard>
+  );
+}

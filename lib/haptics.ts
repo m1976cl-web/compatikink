@@ -1,78 +1,95 @@
-import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
-/**
- * Cross-platform tactile feedback engine with safe Web fallback (navigator.vibrate).
- * Guaranteed never to throw uncaught exceptions.
- */
-export const triggerHaptic = {
-  light: async (): Promise<void> => {
-    if (Platform.OS === 'web') {
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate(10); } catch { /* ignore web restriction */ }
-      }
-      return;
+function safeHapticsImpact(style: any) {
+  try {
+    const Haptics = require('expo-haptics');
+    if (Haptics && typeof Haptics.impactAsync === 'function') {
+      Haptics.impactAsync(style);
     }
-    try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch { /* ignore */ }
-  },
+  } catch {
+    // Ignore in non-native or node test environments
+  }
+}
 
-  medium: async (): Promise<void> => {
-    if (Platform.OS === 'web') {
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate(20); } catch { /* ignore */ }
-      }
-      return;
+function safeHapticsNotification(type: any) {
+  try {
+    const Haptics = require('expo-haptics');
+    if (Haptics && typeof Haptics.notificationAsync === 'function') {
+      Haptics.notificationAsync(type);
     }
-    try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch { /* ignore */ }
-  },
+  } catch {
+    // Ignore
+  }
+}
 
-  heavy: async (): Promise<void> => {
+export function triggerLightHaptic(): void {
+  try {
     if (Platform.OS === 'web') {
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate([30, 50, 30]); } catch { /* ignore */ }
+      if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+        navigator.vibrate(8);
       }
-      return;
+    } else {
+      safeHapticsImpact('light');
     }
-    try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch { /* ignore */ }
-  },
+  } catch {
+    // Ignore
+  }
+}
 
-  selection: async (): Promise<void> => {
+export function triggerMediumHaptic(): void {
+  try {
     if (Platform.OS === 'web') {
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate(8); } catch { /* ignore */ }
+      if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+        navigator.vibrate(18);
       }
-      return;
+    } else {
+      safeHapticsImpact('medium');
     }
-    try { await Haptics.selectionAsync(); } catch { /* ignore */ }
-  },
+  } catch {
+    // Ignore
+  }
+}
 
-  success: async (): Promise<void> => {
+export function triggerSuccessHaptic(): void {
+  try {
     if (Platform.OS === 'web') {
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate([15, 30, 15]); } catch { /* ignore */ }
+      if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+        navigator.vibrate([15, 30, 20]);
       }
-      return;
+    } else {
+      safeHapticsNotification('success');
     }
-    try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch { /* ignore */ }
-  },
+  } catch {
+    // Ignore
+  }
+}
 
-  warning: async (): Promise<void> => {
-    if (Platform.OS === 'web') {
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate([30, 30]); } catch { /* ignore */ }
-      }
-      return;
-    }
-    try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } catch { /* ignore */ }
-  },
+interface HapticCallable {
+  (style?: 'light' | 'medium' | 'heavy'): void;
+  light: () => void;
+  medium: () => void;
+  heavy: () => void;
+  selection: () => void;
+  success: () => void;
+  warning: () => void;
+  error: () => void;
+}
 
-  error: async (): Promise<void> => {
-    if (Platform.OS === 'web') {
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate([50, 100, 50]); } catch { /* ignore */ }
-      }
-      return;
+export const triggerHaptic: HapticCallable = Object.assign(
+  function (style: 'light' | 'medium' | 'heavy' = 'light') {
+    if (style === 'medium' || style === 'heavy') {
+      triggerMediumHaptic();
+    } else {
+      triggerLightHaptic();
     }
-    try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch { /* ignore */ }
   },
-};
+  {
+    light: () => triggerLightHaptic(),
+    medium: () => triggerMediumHaptic(),
+    heavy: () => triggerMediumHaptic(),
+    selection: () => triggerLightHaptic(),
+    success: () => triggerSuccessHaptic(),
+    warning: () => triggerMediumHaptic(),
+    error: () => triggerMediumHaptic(),
+  }
+);

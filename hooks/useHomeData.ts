@@ -5,7 +5,7 @@
  * Mantiene 100% la firma retrocompatible para todas las pantallas del dashboard.
  */
 import { useEffect } from 'react';
-import { useHomeStore } from '@/lib/stores/useHomeStore';
+import { useHomeStore } from '@/stores/homeStore';
 import { useVaultSubscription } from './useVaultSubscription';
 
 export function useHomeData() {

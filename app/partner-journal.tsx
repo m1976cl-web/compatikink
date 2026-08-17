@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  TextInput,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -21,7 +20,6 @@ import {
   PartnerReward,
   KinkDiploma,
   RelationshipType,
-  RELATIONSHIP_LABELS,
   getPartnerLinks,
   addPartnerLink,
   getJournalEntries,
@@ -33,22 +31,13 @@ import {
   createReward,
   redeemReward,
   getDiplomas,
-  addDiploma,
 } from '@/lib/partnerJournal';
-import { VaultLockGateAPI } from '@/lib/cryptoVault';
-import { PartnerLinkCard } from '@/components/journal/PartnerLinkCard';
-
-import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
-
-interface BurnoutCheckIn {
-  id: string;
-  timestamp: string;
-  physicalFatigue: number; // 1-5
-  emotionalBattery: number; // 1-5
-  aftercareQuality: number; // 1-5
-  totalScore: number;
-  recommendation: string;
-}
+import { VaultLockGateAPI, readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
+import { PartnerLinksTab } from '@/components/journal/PartnerLinksTab';
+import { JournalEntriesTab } from '@/components/journal/JournalEntriesTab';
+import { PartnerChallengesTab } from '@/components/journal/PartnerChallengesTab';
+import { KinkDiplomasTab } from '@/components/journal/KinkDiplomasTab';
+import { BurnoutAssessmentTab, BurnoutCheckIn } from '@/components/journal/BurnoutAssessmentTab';
 
 const STORAGE_KEY_BURNOUT = 'kink_burnout_checkins_v1';
 
@@ -64,39 +53,6 @@ export default function PartnerJournalScreen() {
   const [emotionalBattery, setEmotionalBattery] = useState(2);
   const [aftercareQuality, setAftercareQuality] = useState(4);
   const [burnoutLogs, setBurnoutLogs] = useState<BurnoutCheckIn[]>([]);
-
-  // Load Burnout Logs from ZK Vault / AsyncStorage
-  useEffect(() => {
-    readJsonStorage<BurnoutCheckIn[]>(STORAGE_KEY_BURNOUT, []).then((saved: BurnoutCheckIn[]) => {
-      if (Array.isArray(saved)) setBurnoutLogs(saved);
-    });
-  }, []);
-
-  const handleSaveBurnoutCheckin = async () => {
-    const totalScore = physicalFatigue + emotionalBattery + (6 - aftercareQuality);
-    let rec = '🟢 Bajo Riesgo: Excelente equilibrio en tus dinámicas.';
-    if (totalScore >= 10) {
-      rec = '🔴 Alto Riesgo de Burnout: Se recomienda activar el Protocolo de Pausa Consensuada D/s y priorizar descanso.';
-    } else if (totalScore >= 7) {
-      rec = '🟡 Riesgo Moderado: Aumentar el tiempo de Aftercare y la frecuencia de check-ins verbales.';
-    }
-
-    const entry: BurnoutCheckIn = {
-      id: `bo-${Date.now()}`,
-      timestamp: new Date().toISOString().split('T')[0],
-      physicalFatigue,
-      emotionalBattery,
-      aftercareQuality,
-      totalScore,
-      recommendation: rec,
-    };
-
-    const nextLogs = [entry, ...burnoutLogs];
-    setBurnoutLogs(nextLogs);
-    await writeJsonStorage(STORAGE_KEY_BURNOUT, nextLogs);
-
-    Alert.alert('Diagnóstico Registrado 📊', `${rec}`);
-  };
 
   // Data States
   const [partnerLinks, setPartnerLinks] = useState<PartnerLink[]>([]);
@@ -122,14 +78,18 @@ export default function PartnerJournalScreen() {
   // Challenge Form
   const [chTitle, setChTitle] = useState('');
   const [chDesc, setChDesc] = useState('');
-  const [chXp, setChXp] = useState('100');
 
   // Reward Form
   const [rewTitle, setRewTitle] = useState('');
-  const [rewCost, setRewCost] = useState('200');
 
   // Modal State
   const [selectedDiploma, setSelectedDiploma] = useState<KinkDiploma | null>(null);
+
+  useEffect(() => {
+    readJsonStorage<BurnoutCheckIn[]>(STORAGE_KEY_BURNOUT, []).then((saved: BurnoutCheckIn[]) => {
+      if (Array.isArray(saved)) setBurnoutLogs(saved);
+    });
+  }, []);
 
   useEffect(() => {
     return VaultLockGateAPI.subscribe((snap) => setVaultUnlocked(snap.unlocked));
@@ -158,6 +118,31 @@ export default function PartnerJournalScreen() {
 
     const dips = await getDiplomas();
     setDiplomas(dips);
+  };
+
+  const handleSaveBurnoutCheckin = async () => {
+    const totalScore = physicalFatigue + emotionalBattery + (6 - aftercareQuality);
+    let rec = '🟢 Bajo Riesgo: Excelente equilibrio en tus dinámicas.';
+    if (totalScore >= 10) {
+      rec = '🔴 Alto Riesgo de Burnout: Se recomienda activar el Protocolo de Pausa Consensuada D/s y priorizar descanso.';
+    } else if (totalScore >= 7) {
+      rec = '🟡 Riesgo Moderado: Aumentar el tiempo de Aftercare y la frecuencia de check-ins verbales.';
+    }
+
+    const entry: BurnoutCheckIn = {
+      id: `bo-${Date.now()}`,
+      timestamp: new Date().toISOString().split('T')[0],
+      physicalFatigue,
+      emotionalBattery,
+      aftercareQuality,
+      totalScore,
+      recommendation: rec,
+    };
+
+    const nextLogs = [entry, ...burnoutLogs];
+    setBurnoutLogs(nextLogs);
+    await writeJsonStorage(STORAGE_KEY_BURNOUT, nextLogs);
+    Alert.alert('Diagnóstico Registrado 📊', `${rec}`);
   };
 
   const handleAddPartner = async () => {
@@ -206,7 +191,7 @@ export default function PartnerJournalScreen() {
       Alert.alert('Campo requerido', 'Ingresa un título para el desafío.');
       return;
     }
-    await createChallenge(selectedPartnerId, chTitle.trim(), chDesc.trim(), parseInt(chXp) || 100);
+    await createChallenge(selectedPartnerId, chTitle.trim(), chDesc.trim(), 100);
     setChTitle('');
     setChDesc('');
     Alert.alert('Desafío Propuesto 🎯', 'El desafío está activo para tu pareja/amigo de juego.');
@@ -224,7 +209,7 @@ export default function PartnerJournalScreen() {
       Alert.alert('Campo requerido', 'Ingresa un nombre para la recompensa.');
       return;
     }
-    await createReward(selectedPartnerId, rewTitle.trim(), parseInt(rewCost) || 200);
+    await createReward(selectedPartnerId, rewTitle.trim(), 200);
     setRewTitle('');
     Alert.alert('Recompensa Creada 🎁', 'Recompensa disponible en la tienda de pareja.');
     await loadAllData();
@@ -274,6 +259,7 @@ export default function PartnerJournalScreen() {
                 key={t.key}
                 style={[styles.tab, activeTab === t.key && styles.tabActive]}
                 onPress={() => setActiveTab(t.key as any)}
+                activeOpacity={0.8}
               >
                 <Text style={[styles.tabText, activeTab === t.key && styles.tabTextActive]}>{t.label}</Text>
               </TouchableOpacity>
@@ -281,371 +267,77 @@ export default function PartnerJournalScreen() {
           </View>
 
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-            {/* TAB 1: VÍNCULOS DE PAREJA */}
             {activeTab === 'links' && (
-              <View style={styles.sectionGap}>
-                <View style={styles.cardBox}>
-                  <Text style={styles.cardBoxTitle}>➕ Crear Nuevo Vínculo (Pareja / Playmate)</Text>
-
-                  <Text style={styles.fieldLabel}>Nombre / Apodo de tu Vínculo</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ej: Morgan, Sam, Mi Sumisa..."
-                    placeholderTextColor={colors.textDim}
-                    value={newPartnerName}
-                    onChangeText={setNewPartnerName}
-                  />
-
-                  <Text style={styles.fieldLabel}>Tipo de Relación / Dinámica</Text>
-                  <View style={styles.chipGrid}>
-                    {(Object.keys(RELATIONSHIP_LABELS) as RelationshipType[]).map((type) => {
-                      const sel = newPartnerType === type;
-                      return (
-                        <TouchableOpacity
-                          key={type}
-                          style={[styles.chip, sel && styles.chipActive]}
-                          onPress={() => setNewPartnerType(type)}
-                        >
-                          <Text style={[styles.chipText, sel && styles.chipTextActive]}>
-                            {RELATIONSHIP_LABELS[type].emoji} {RELATIONSHIP_LABELS[type].label}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-
-                  <TouchableOpacity style={styles.primaryBtn} onPress={handleAddPartner}>
-                    <Text style={styles.primaryBtnText}>Vincular Pareja 🔗</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* List of active partner links */}
-                <Text style={styles.sectionHeader}>Mis Vínculos Activos ({partnerLinks.length}):</Text>
-                {partnerLinks.map((link) => (
-                  <PartnerLinkCard
-                    key={link.id}
-                    link={link}
-                    isSelected={selectedPartnerId === link.id}
-                    onSelect={setSelectedPartnerId}
-                  />
-                ))}
-              </View>
+              <PartnerLinksTab
+                newPartnerName={newPartnerName}
+                setNewPartnerName={setNewPartnerName}
+                newPartnerType={newPartnerType}
+                setNewPartnerType={setNewPartnerType}
+                onAddPartner={handleAddPartner}
+                partnerLinks={partnerLinks}
+                selectedPartnerId={selectedPartnerId}
+                onSelectPartner={setSelectedPartnerId}
+              />
             )}
 
-            {/* TAB 2: DIARIO DE SESIONES & DEBRIEFING */}
             {activeTab === 'journal' && (
-              <View style={styles.sectionGap}>
-                <View style={styles.cardBox}>
-                  <Text style={styles.cardBoxTitle}>📖 Registrar Nueva Sesión & Debriefing</Text>
-                  
-                  {activePartner ? (
-                    <Text style={styles.activePartnerBanner}>
-                      Vínculo Seleccionado: <Text style={{ color: colors.primary, fontWeight: '800' }}>{activePartner.partnerName}</Text>
-                    </Text>
-                  ) : (
-                    <Text style={styles.warningBanner}>⚠️ Crea o selecciona un vínculo arriba antes de registrar.</Text>
-                  )}
-
-                  <Text style={styles.fieldLabel}>Título de la Escena / Sesión</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ej: Noche de Shibari & Sensaciones, Protocolo Dominante..."
-                    placeholderTextColor={colors.textDim}
-                    value={sessionTitle}
-                    onChangeText={setSessionTitle}
-                  />
-
-                  <Text style={styles.fieldLabel}>Prácticas Realizadas (sep. por coma)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ej: Ataduras, Spanking, Cera tibia, Aftercare"
-                    placeholderTextColor={colors.textDim}
-                    value={activitiesDone}
-                    onChangeText={setActivitiesDone}
-                  />
-
-                  <Text style={styles.fieldLabel}>🧰 Juguetes y Equipamiento Utilizados (sep. por coma)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ej: Cuerdas Yute 6mm, Pala de cuero, Antaz de seda"
-                    placeholderTextColor={colors.textDim}
-                    value={gearUsedInput}
-                    onChangeText={setGearUsedInput}
-                  />
-
-                  <Text style={styles.fieldLabel}>Safeword Utilizada en la Escena</Text>
-                  <View style={styles.chipGrid}>
-                    {(['ninguna', 'verde', 'amarillo', 'rojo'] as const).map((sw) => (
-                      <TouchableOpacity
-                        key={sw}
-                        style={[styles.chip, safewordUsed === sw && styles.chipActive]}
-                        onPress={() => setSafewordUsed(sw)}
-                      >
-                        <Text style={[styles.chipText, safewordUsed === sw && styles.chipTextActive]}>
-                          {sw === 'ninguna' ? '✓ Ninguna (Fluido)' : sw === 'verde' ? '🟢 Verde' : sw === 'amarillo' ? '🟡 Amarillo' : '🔴 Rojo'}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  <Text style={styles.fieldLabel}>Profundidad de Subspace / Trance (1 a 5)</Text>
-                  <View style={styles.chipGrid}>
-                    {([1, 2, 3, 4, 5] as const).map((lvl) => (
-                      <TouchableOpacity
-                        key={lvl}
-                        style={[styles.chip, subspaceLevel === lvl && styles.chipActive]}
-                        onPress={() => setSubspaceLevel(lvl)}
-                      >
-                        <Text style={[styles.chipText, subspaceLevel === lvl && styles.chipTextActive]}>
-                          {'★'.repeat(lvl)} ({lvl})
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  <Text style={styles.fieldLabel}>Evaluación del Aftercare (1 a 5)</Text>
-                  <View style={styles.chipGrid}>
-                    {([1, 2, 3, 4, 5] as const).map((rating) => (
-                      <TouchableOpacity
-                        key={rating}
-                        style={[styles.chip, aftercareRating === rating && styles.chipActive]}
-                        onPress={() => setAftercareRating(rating)}
-                      >
-                        <Text style={[styles.chipText, aftercareRating === rating && styles.chipTextActive]}>
-                          {'🫂'.repeat(rating)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  <Text style={styles.fieldLabel}>Notas Privadas de Debriefing</Text>
-                  <TextInput
-                    style={[styles.input, { height: 70 }]}
-                    placeholder="¿Cómo se sintieron después? Reflexiones, cosas a mejorar..."
-                    placeholderTextColor={colors.textDim}
-                    value={debriefNotes}
-                    onChangeText={setDebriefNotes}
-                    multiline
-                  />
-
-                  <TouchableOpacity style={styles.primaryBtn} onPress={handleSaveJournalEntry}>
-                    <Text style={styles.primaryBtnText}>Guardar en Diario Cifrado 📖</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* History of logged journal entries */}
-                <Text style={styles.sectionHeader}>Historial de Sesiones Cifradas ({journalEntries.length}):</Text>
-                {journalEntries.map((j) => (
-                  <View key={j.id} style={styles.journalCard}>
-                    <View style={styles.journalHeader}>
-                      <Text style={styles.journalTitle}>{j.title}</Text>
-                      <Text style={styles.journalDate}>{new Date(j.date).toLocaleDateString()}</Text>
-                    </View>
-                    <Text style={styles.journalPartner}>Vínculo: {j.partnerName}</Text>
-                    
-                    {j.activitiesDone.length > 0 && (
-                      <Text style={styles.journalSub}>Practicas: {j.activitiesDone.join(' · ')}</Text>
-                    )}
-                    {j.gearUsed.length > 0 && (
-                      <Text style={styles.journalGear}>🧰 Equipamiento: {j.gearUsed.join(' · ')}</Text>
-                    )}
-
-                    <View style={styles.journalMetaRow}>
-                      <Text style={styles.metaBadge}>Safeword: {j.safewordUsed.toUpperCase()}</Text>
-                      <Text style={styles.metaBadge}>Subspace: {'★'.repeat(j.subspaceLevel)}</Text>
-                      <Text style={styles.metaBadge}>Aftercare: {'🫂'.repeat(j.aftercareRating)}</Text>
-                    </View>
-
-                    {j.debriefNotes ? <Text style={styles.debriefNotesText}>"{j.debriefNotes}"</Text> : null}
-                  </View>
-                ))}
-              </View>
+              <JournalEntriesTab
+                activePartner={activePartner}
+                sessionTitle={sessionTitle}
+                setSessionTitle={setSessionTitle}
+                activitiesDone={activitiesDone}
+                setActivitiesDone={setActivitiesDone}
+                gearUsedInput={gearUsedInput}
+                setGearUsedInput={setGearUsedInput}
+                safewordUsed={safewordUsed}
+                setSafewordUsed={setSafewordUsed}
+                subspaceLevel={subspaceLevel}
+                setSubspaceLevel={setSubspaceLevel}
+                aftercareRating={aftercareRating}
+                setAftercareRating={setAftercareRating}
+                debriefNotes={debriefNotes}
+                setDebriefNotes={setDebriefNotes}
+                onSaveJournalEntry={handleSaveJournalEntry}
+                journalEntries={journalEntries}
+              />
             )}
 
-            {/* TAB 3: DESAFÍOS & ECONOMÍA DE PUNTOS (XP) */}
             {activeTab === 'challenges' && (
-              <View style={styles.sectionGap}>
-                {activePartner ? (
-                  <View style={styles.xpBanner}>
-                    <Text style={styles.xpBannerTitle}>
-                      Puntos XP con {activePartner.partnerName}: <Text style={{ color: '#fbbf24' }}>{activePartner.totalXp} XP</Text> (Nivel {activePartner.level})
-                    </Text>
-                  </View>
-                ) : null}
-
-                {/* Create Challenge Form */}
-                <View style={styles.cardBox}>
-                  <Text style={styles.cardBoxTitle}>🎯 Proponer Nuevo Desafío en Pareja</Text>
-
-                  <Text style={styles.fieldLabel}>Título del Desafío</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ej: Masaje tántrico de 20 min, Día de protocolo..."
-                    placeholderTextColor={colors.textDim}
-                    value={chTitle}
-                    onChangeText={setChTitle}
-                  />
-
-                  <Text style={styles.fieldLabel}>Descripción del Reto</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Detalles o instrucciones del desafío..."
-                    placeholderTextColor={colors.textDim}
-                    value={chDesc}
-                    onChangeText={setChDesc}
-                  />
-
-                  <TouchableOpacity style={styles.primaryBtn} onPress={handleCreateChallenge}>
-                    <Text style={styles.primaryBtnText}>Publicar Desafío 🎯</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Active Challenges List */}
-                <Text style={styles.sectionHeader}>Desafíos Activos ({challenges.length}):</Text>
-                {challenges.map((ch) => (
-                  <View key={ch.id} style={styles.challengeCard}>
-                    <View style={styles.chHeader}>
-                      <Text style={styles.chTitle}>{ch.title}</Text>
-                      <Text style={styles.chXp}>+{ch.xpReward} XP</Text>
-                    </View>
-                    {ch.description ? <Text style={styles.chDesc}>{ch.description}</Text> : null}
-
-                    {ch.completed ? (
-                      <Text style={styles.completedText}>✓ Completado el {new Date(ch.completedAt!).toLocaleDateString()}</Text>
-                    ) : (
-                      <TouchableOpacity style={styles.completeBtn} onPress={() => handleCompleteChallenge(ch.id)}>
-                        <Text style={styles.completeBtnText}>Marcar como Cumplido ✓</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                ))}
-
-                {/* Create & Redeem Rewards Shop */}
-                <View style={styles.cardBox}>
-                  <Text style={styles.cardBoxTitle}>🎁 Tienda de Recompensas de Pareja</Text>
-                  <Text style={styles.fieldLabel}>Crear Nueva Recompensa Canjeable</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ej: 1 Deseo Concedido, Elección de próxima escena..."
-                    placeholderTextColor={colors.textDim}
-                    value={rewTitle}
-                    onChangeText={setRewTitle}
-                  />
-                  <TouchableOpacity style={styles.primaryBtn} onPress={handleCreateReward}>
-                    <Text style={styles.primaryBtnText}>Agregar Recompensa 🎁</Text>
-                  </TouchableOpacity>
-
-                  <Text style={[styles.sectionHeader, { marginTop: 12 }]}>Recompensas Disponibles ({rewards.length}):</Text>
-                  {rewards.map((rew) => (
-                    <View key={rew.id} style={styles.rewardCard}>
-                      <View style={styles.chHeader}>
-                        <Text style={styles.chTitle}>{rew.title}</Text>
-                        <Text style={styles.rewCost}>{rew.xpCost} XP</Text>
-                      </View>
-                      {rew.redeemed ? (
-                        <Text style={styles.completedText}>👑 Canjeado el {new Date(rew.redeemedAt!).toLocaleDateString()}</Text>
-                      ) : (
-                        <TouchableOpacity style={styles.redeemBtn} onPress={() => handleRedeemReward(rew.id)}>
-                          <Text style={styles.redeemBtnText}>Canjear Recompensa 👑</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              </View>
+              <PartnerChallengesTab
+                activePartner={activePartner}
+                chTitle={chTitle}
+                setChTitle={setChTitle}
+                chDesc={chDesc}
+                setChDesc={setChDesc}
+                onCreateChallenge={handleCreateChallenge}
+                challenges={challenges}
+                onCompleteChallenge={handleCompleteChallenge}
+                rewTitle={rewTitle}
+                setRewTitle={setRewTitle}
+                onCreateReward={handleCreateReward}
+                rewards={rewards}
+                onRedeemReward={handleRedeemReward}
+              />
             )}
 
-            {/* TAB 4: DIPLOMAS & CERTIFICADOS */}
             {activeTab === 'diplomas' && (
-              <View style={styles.sectionGap}>
-                <Text style={styles.sectionHeader}>Diplomas y Certificados Cifrados ({diplomas.length}):</Text>
-                <View style={styles.diplomaGrid}>
-                  {diplomas.map((dip) => (
-                    <TouchableOpacity
-                      key={dip.id}
-                      style={styles.diplomaCard}
-                      onPress={() => setSelectedDiploma(dip)}
-                    >
-                      <Text style={styles.diplomaEmoji}>{dip.sealEmoji || '📜'}</Text>
-                      <Text style={styles.diplomaTitle}>{dip.title}</Text>
-                      <Text style={styles.diplomaCategory}>{dip.practiceCategory}</Text>
-                      <Text style={styles.diplomaRecipient}>Otorgado a: {dip.recipientName}</Text>
-
-                      <View style={styles.viewCertBtn}>
-                        <Text style={styles.viewCertBtnText}>Ver Diploma Cifrado 📜</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
+              <KinkDiplomasTab
+                diplomas={diplomas}
+                onSelectDiploma={setSelectedDiploma}
+              />
             )}
 
-            {/* TAB 5: KINK-BURNOUT SELF-ASSESSMENT */}
             {activeTab === 'burnout' && (
-              <View style={styles.sectionGap}>
-                <View style={styles.cardBox}>
-                  <Text style={styles.cardBoxTitle}>📊 Auto-Evaluación de Kink-Burnout & Bienestar</Text>
-                  <Text style={typography.bodyMuted}>
-                    Evalúa la sobrecarga física o emocional en tu dinámica para mantener un equilibrio saludable.
-                  </Text>
-
-                  <Text style={styles.fieldLabel}>1. Cansancio Físico / Fatiga Post-Escena (1 = Leve, 5 = Extremo)</Text>
-                  <View style={styles.chipGrid}>
-                    {[1, 2, 3, 4, 5].map((val) => (
-                      <TouchableOpacity
-                        key={val}
-                        style={[styles.chip, physicalFatigue === val && styles.chipActive]}
-                        onPress={() => setPhysicalFatigue(val)}
-                      >
-                        <Text style={[styles.chipText, physicalFatigue === val && styles.chipTextActive]}>{val}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  <Text style={styles.fieldLabel}>2. Saturación / Batería Emocional (1 = Llena, 5 = Ahorro)</Text>
-                  <View style={styles.chipGrid}>
-                    {[1, 2, 3, 4, 5].map((val) => (
-                      <TouchableOpacity
-                        key={val}
-                        style={[styles.chip, emotionalBattery === val && styles.chipActive]}
-                        onPress={() => setEmotionalBattery(val)}
-                      >
-                        <Text style={[styles.chipText, emotionalBattery === val && styles.chipTextActive]}>{val}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  <Text style={styles.fieldLabel}>3. Calidad del Aftercare & Atención Mutua (1 = Insuficiente, 5 = Excelente)</Text>
-                  <View style={styles.chipGrid}>
-                    {[1, 2, 3, 4, 5].map((val) => (
-                      <TouchableOpacity
-                        key={val}
-                        style={[styles.chip, aftercareQuality === val && styles.chipActive]}
-                        onPress={() => setAftercareQuality(val)}
-                      >
-                        <Text style={[styles.chipText, aftercareQuality === val && styles.chipTextActive]}>{val}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  <TouchableOpacity style={styles.createBtn} onPress={handleSaveBurnoutCheckin}>
-                    <Text style={styles.createBtnText}>📊 Guardar Diagnóstico en Bóveda</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* History */}
-                {burnoutLogs.length > 0 && (
-                  <View style={styles.cardBox}>
-                    <Text style={styles.cardBoxTitle}>📋 Historial de Diagnósticos ({burnoutLogs.length}):</Text>
-                    {burnoutLogs.map((log) => (
-                      <View key={log.id} style={styles.journalItem}>
-                        <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>📅 {log.timestamp}</Text>
-                        <Text style={{ color: colors.text, fontSize: fontSize.xs, fontWeight: '700' }}>{log.recommendation}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
+              <BurnoutAssessmentTab
+                physicalFatigue={physicalFatigue}
+                setPhysicalFatigue={setPhysicalFatigue}
+                emotionalBattery={emotionalBattery}
+                setEmotionalBattery={setEmotionalBattery}
+                aftercareQuality={aftercareQuality}
+                setAftercareQuality={setAftercareQuality}
+                onSaveBurnoutCheckin={handleSaveBurnoutCheckin}
+                burnoutLogs={burnoutLogs}
+              />
             )}
 
             <View style={{ height: 60 }} />
@@ -695,187 +387,4 @@ const styles = StyleSheet.create({
   tabTextActive: { color: colors.primary },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
-  sectionGap: { gap: spacing.md },
-
-  cardBox: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    gap: spacing.sm,
-  },
-  cardBoxTitle: {
-    fontFamily: fonts.bodySemi,
-    color: colors.text,
-    fontSize: fontSize.md,
-    fontWeight: '800',
-  },
-  activePartnerBanner: {
-    backgroundColor: 'rgba(192, 132, 252, 0.12)',
-    borderRadius: radii.md,
-    padding: spacing.sm,
-    color: colors.text,
-    fontSize: fontSize.xs,
-  },
-  warningBanner: {
-    backgroundColor: 'rgba(251, 191, 36, 0.12)',
-    borderRadius: radii.md,
-    padding: spacing.sm,
-    color: colors.warning,
-    fontSize: fontSize.xs,
-  },
-  fieldLabel: { ...typography.label, marginTop: 4 },
-  input: {
-    backgroundColor: colors.background,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    color: colors.text,
-    fontFamily: fonts.body,
-    fontSize: fontSize.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  chip: {
-    paddingVertical: spacing.xs + 2,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.md,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  chipActive: {
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.primary,
-  },
-  chipText: { color: colors.textMuted, fontSize: fontSize.xs },
-  chipTextActive: { color: colors.primary, fontWeight: '800' },
-
-  primaryBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  primaryBtnText: { fontFamily: fonts.bodySemi, color: colors.onPrimary, fontSize: fontSize.sm, fontWeight: '800' },
-
-  sectionHeader: { fontFamily: fonts.bodySemi, color: colors.text, fontSize: fontSize.sm, fontWeight: '800', marginTop: 4 },
-  partnerCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    gap: 4,
-  },
-  partnerCardActive: { borderColor: colors.primary, backgroundColor: 'rgba(192, 132, 252, 0.08)' },
-  partnerCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  partnerName: { color: colors.text, fontSize: fontSize.md, fontFamily: fonts.bodySemi, fontWeight: '800' },
-  relBadge: { backgroundColor: colors.accentSoft, borderRadius: radii.sm, paddingHorizontal: 8, paddingVertical: 2 },
-  relBadgeText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
-  xpRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
-  xpText: { color: '#fbbf24', fontSize: fontSize.xs, fontWeight: '800' },
-  dateText: { color: colors.textDim, fontSize: 10 },
-  chatLinkBtn: {
-    backgroundColor: 'rgba(192, 132, 252, 0.15)',
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radii.md,
-    paddingVertical: 6,
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  chatLinkBtnText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
-
-  journalCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    gap: 4,
-  },
-  journalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  journalTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
-  journalDate: { color: colors.textDim, fontSize: 10 },
-  journalPartner: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
-  journalSub: { color: colors.textMuted, fontSize: fontSize.xs },
-  journalGear: { color: '#fbbf24', fontSize: fontSize.xs },
-  journalMetaRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 },
-  metaBadge: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, color: colors.textMuted, fontSize: 10 },
-  debriefNotesText: { color: colors.text, fontStyle: 'italic', fontSize: fontSize.xs, marginTop: 4 },
-
-  xpBanner: {
-    backgroundColor: 'rgba(251, 191, 36, 0.12)',
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: '#fbbf24',
-  },
-  xpBannerTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
-
-  challengeCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    gap: 4,
-  },
-  chHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  chTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
-  chXp: { color: '#fbbf24', fontSize: fontSize.xs, fontWeight: '900' },
-  chDesc: { color: colors.textMuted, fontSize: fontSize.xs },
-  completeBtn: { backgroundColor: 'rgba(74, 222, 128, 0.15)', borderWidth: 1, borderColor: colors.success, borderRadius: radii.md, paddingVertical: 6, alignItems: 'center', marginTop: 4 },
-  completeBtnText: { color: colors.success, fontSize: fontSize.xs, fontWeight: '800' },
-  completedText: { color: colors.success, fontSize: fontSize.xs, fontWeight: '800', marginTop: 2 },
-
-  rewardCard: {
-    backgroundColor: colors.background,
-    borderRadius: radii.md,
-    padding: spacing.sm + 2,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 4,
-  },
-  rewCost: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '800' },
-  redeemBtn: { backgroundColor: colors.primary, borderRadius: radii.sm, paddingVertical: 4, alignItems: 'center', marginTop: 2 },
-  redeemBtnText: { color: colors.onPrimary, fontSize: 11, fontWeight: '800' },
-
-  diplomaGrid: { gap: spacing.md },
-  diplomaCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
-    borderWidth: 1.5,
-    borderColor: '#fbbf24',
-    alignItems: 'center',
-    gap: 4,
-  },
-  diplomaEmoji: { fontSize: 36 },
-  diplomaTitle: { color: '#fbbf24', fontSize: fontSize.md, fontWeight: '800', textAlign: 'center' },
-  diplomaCategory: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
-  diplomaRecipient: { color: colors.textMuted, fontSize: fontSize.xs },
-  viewCertBtn: { backgroundColor: 'rgba(251, 191, 36, 0.15)', borderWidth: 1, borderColor: '#fbbf24', borderRadius: radii.md, paddingHorizontal: 12, paddingVertical: 6, marginTop: 6 },
-  viewCertBtnText: { color: '#fbbf24', fontSize: fontSize.xs, fontWeight: '800' },
-  createBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    marginTop: spacing.xs,
-  },
-  createBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '900' },
-
-  journalItem: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: radii.md,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 4,
-  },
 });

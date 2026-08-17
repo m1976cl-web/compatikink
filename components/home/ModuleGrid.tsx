@@ -1,13 +1,13 @@
-import { useMemo, useEffect } from 'react';
-import { View, TextInput, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useMemo, useEffect, useState } from 'react';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ModuleTile } from '@/components/ModuleTile';
 import { CategoryTabs } from '@/components/CategoryTabs';
-import { useHomeStore } from '@/lib/stores/useHomeStore';
+import { useHomeStore } from '@/stores/homeStore';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { STATIC_MODULES, ACCENT_COLORS, CATEGORY_TABS } from '@/data/homeModules';
 import { isScreenVisible, getScreenBadge } from '@/data/screenRegistry';
-import { isMvpMode, MVP_MODULE_CATEGORIES, MVP_CORE_ROUTES } from '@/lib/featureFlags';
+import { isMvpMode, MVP_MODULE_CATEGORIES, MVP_CORE_ROUTES, getFeatureMode, setFeatureMode, FeatureMode } from '@/lib/featureFlags';
 import { useResponsive } from '@/hooks/useResponsive';
 
 export type ModuleDef = {
@@ -36,25 +36,12 @@ const MVP_SUITE_BLOCK = new Set([
   '/fantasy-match',
   '/poly-group',
   '/partner-chat',
-  '/partner-journal',
-  '/private-album',
-  '/premium',
-  '/achievements',
-  '/analytics',
-  '/blue-pages',
-  '/task-economy',
-  '/contracts',
-  '/negotiation',
-  '/calendar',
-  '/gear-closet',
-  '/live-scene',
-  '/kink-roulette',
-  '/daily-submissive-act',
-  '/shibari-guide',
-  '/quick-start-bundle',
-  '/pegging',
+  '/linked-couples',
+  '/kink-feed',
   '/events-munches',
-  '/admin',
+  '/ds-tasks',
+  '/task-economy',
+  '/ephemeral-wishes',
 ]);
 
 export function ModuleGrid({
@@ -68,19 +55,78 @@ export function ModuleGrid({
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const vaultUnlocked = useHomeStore((s) => s.vaultUnlocked);
+  const profile = useHomeStore((s) => s.profile);
 
-  const visibleTabs = useMemo(() => {
-    if (!isMvpMode) return CATEGORY_TABS;
-    return CATEGORY_TABS.filter((t) => MVP_MODULE_CATEGORIES.has(t.key));
-  }, []);
+  const [featureMode, setFeatureModeState] = useState<FeatureMode>(isMvpMode ? 'mvp_only' : 'all_modules');
 
   useEffect(() => {
-    if (isMvpMode && !visibleTabs.some((t) => t.key === activeTab)) {
+    getFeatureMode().then(setFeatureModeState);
+  }, []);
+
+  const handleToggleFeatureMode = async () => {
+    const nextMode: FeatureMode = featureMode === 'mvp_only' ? 'all_modules' : 'mvp_only';
+    setFeatureModeState(nextMode);
+    await setFeatureMode(nextMode);
+  };
+
+  const isMvpEffective = featureMode === 'mvp_only';
+
+  const visibleTabs = useMemo(() => {
+    if (!isMvpEffective) return CATEGORY_TABS;
+    return CATEGORY_TABS.filter((t) => MVP_MODULE_CATEGORIES.has(t.key));
+  }, [isMvpEffective]);
+
+  useEffect(() => {
+    if (isMvpEffective && !visibleTabs.some((t) => t.key === activeTab)) {
       onChangeTab('explore');
     }
-  }, [activeTab, onChangeTab, visibleTabs]);
+  }, [activeTab, onChangeTab, visibleTabs, isMvpEffective]);
 
-  const go = (path: string) => () => router.push(path as any);
+  const ANON_ALLOWED_ROUTES = [
+    '/questionnaire',
+    '/invite',
+    '/manual',
+    '/safety-guide',
+    '/glossary',
+    '/privacy-policy',
+    '/terms',
+    '/auth',
+    '/onboarding',
+    '/guest',
+    '/report',
+    '/latex-guide',
+  ];
+
+  const go = (path: string) => () => {
+    const isAnon = !profile || profile.nickname === 'Anónimo';
+    const isAllowedInAnon = ANON_ALLOWED_ROUTES.some((r) => path.startsWith(r));
+
+    if (isAnon && !isAllowedInAnon) {
+      if (path.startsWith('/wild-feed')) {
+        Alert.alert(
+          '🔞 Galería Salvaje — Autenticación Requerida',
+          'La Galería Salvaje es un espacio exclusivo para usuarios autenticados.\n\nInicia sesión con tu cuenta de Google para ingresar. Una vez adentro, podrás publicar fotos/videos y comentar de forma 100% anónima si lo prefieres.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Iniciar Sesión con Google 🔵', onPress: () => router.push('/auth') },
+          ]
+        );
+        return;
+      }
+
+      Alert.alert(
+        '🔐 Cuenta Registrada Requerida',
+        'En Modo Anónimo puedes responder el test, compartirlo de forma anónima y comparar resultados de compatibilidad con tu pareja.\n\nPara desbloquear esta herramienta avanzada, inicia sesión con tu cuenta de Google.',
+        [
+          { text: 'Seguir Anónimo', style: 'cancel' },
+          { text: 'Iniciar Sesión con Google 🔵', onPress: () => router.push('/auth') },
+        ]
+      );
+      return;
+    }
+
+    router.push(path as any);
+  };
 
   const allModules: ModuleDef[] = useMemo(
     () => [
@@ -105,7 +151,7 @@ export function ModuleGrid({
   const filteredModules = useMemo(() => {
     let list = allModules.filter((m) => {
       if (m.route && !isScreenVisible(m.route)) return false;
-      if (!isMvpMode) return true;
+      if (!isMvpEffective) return true;
       if (!MVP_MODULE_CATEGORIES.has(m.category)) return false;
       if (m.category === 'social' || m.category === 'ai' || m.category === 'scenes') return false;
       if (!m.route) return true;
@@ -127,49 +173,60 @@ export function ModuleGrid({
     }
 
     if (activeTab === 'vault' && !vaultUnlocked && !searchQuery.trim()) {
-      return list.filter((m) => m.route === '/auth' || m.route === '/backup');
+      return list.filter((m) => m.route === '/auth');
     }
 
     return list;
-  }, [allModules, activeTab, searchQuery, vaultUnlocked, visibleTabs]);
+  }, [allModules, activeTab, searchQuery, vaultUnlocked, isMvpEffective, visibleTabs]);
 
   return (
     <View style={styles.container}>
-      {isMvpMode ? (
-        <Text style={styles.mvpBanner}>
-          Modo MVP: cuestionario, invitación y reporte. Suite social/IA oculta (EXPO_PUBLIC_MVP=0 para verla).
-        </Text>
-      ) : null}
-      <View style={styles.searchWrap}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar módulos, herramientas o guías..."
-          placeholderTextColor={colors.textMuted}
-          value={searchQuery}
-          onChangeText={onChangeSearch}
-          clearButtonMode="while-editing"
-        />
-        {searchQuery ? (
-          <TouchableOpacity onPress={() => onChangeSearch('')} style={styles.clearBtn}>
-            <Text style={styles.clearBtnText}>✕</Text>
-          </TouchableOpacity>
-        ) : null}
+      {/* Search and Feature Flag Bar */}
+      <View style={styles.searchRow}>
+        <View style={styles.searchWrap}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar módulos, herramientas o guías..."
+            placeholderTextColor={colors.textMuted}
+            value={searchQuery}
+            onChangeText={onChangeSearch}
+            clearButtonMode="while-editing"
+          />
+          {searchQuery ? (
+            <TouchableOpacity onPress={() => onChangeSearch('')} style={styles.clearBtn}>
+              <Text style={styles.clearBtnText}>✕</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.featureToggleChip, !isMvpEffective && styles.featureToggleChipActive]}
+          onPress={handleToggleFeatureMode}
+        >
+          <Text style={[styles.featureToggleChipText, !isMvpEffective && styles.featureToggleChipTextActive]}>
+            {isMvpEffective ? '🛡️ Core' : '⚡ Todos'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {!searchQuery.trim() ? (
-        <CategoryTabs tabs={visibleTabs} activeKey={activeTab} onTabChange={onChangeTab} />
-      ) : (
-        <Text style={styles.searchLabel}>
-          Resultados de búsqueda ({filteredModules.length}):
-        </Text>
+      {/* Category Tabs */}
+      {!searchQuery.trim() && (
+        <CategoryTabs
+          tabs={visibleTabs}
+          activeKey={activeTab}
+          onTabChange={onChangeTab}
+        />
       )}
 
+      {/* Grid of Modules */}
       <View style={styles.grid}>
-        {filteredModules.map((m, index) => (
-          <View key={m.title} style={isDesktop ? styles.gridColDesktop : styles.gridColMobile}>
+        {filteredModules.map((m) => (
+          <View
+            key={m.title}
+            style={isDesktop ? styles.gridColDesktop : styles.gridColMobile}
+          >
             <ModuleTile
-              index={index}
               title={m.title}
               description={m.description}
               mark={m.mark}
@@ -186,14 +243,9 @@ export function ModuleGrid({
 
 const styles = StyleSheet.create({
   container: { marginTop: spacing.xs },
-  mvpBanner: {
-    fontFamily: fonts.body,
-    fontSize: fontSize.xs,
-    color: colors.textMuted,
-    lineHeight: 16,
-    marginBottom: spacing.sm,
-  },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xs },
   searchWrap: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(21,13,36,0.9)',
@@ -201,19 +253,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(192,132,252,0.35)',
     paddingHorizontal: spacing.md,
-    height: 48,
-    marginBottom: spacing.xs,
+    height: 44,
   },
   searchIcon: { fontSize: 16, marginRight: spacing.xs },
   searchInput: { flex: 1, color: colors.text, fontFamily: fonts.body, fontSize: fontSize.md },
   clearBtn: { padding: spacing.xs },
   clearBtnText: { color: colors.textMuted, fontSize: 14, fontWeight: '700' },
-  searchLabel: {
-    fontFamily: fonts.bodySemi,
+
+  featureToggleChip: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.sm + 2,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  featureToggleChipActive: {
+    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+    borderColor: colors.primary,
+  },
+  featureToggleChipText: {
+    color: colors.textMuted,
     fontSize: fontSize.xs,
+    fontFamily: fonts.bodySemi,
+  },
+  featureToggleChipTextActive: {
     color: colors.primary,
-    marginBottom: spacing.xs,
-    letterSpacing: 0.5,
+    fontWeight: '800',
   },
   grid: {
     flexDirection: 'row',

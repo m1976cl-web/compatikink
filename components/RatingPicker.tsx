@@ -4,28 +4,48 @@ import { Rating } from '@/types';
 import { getRatingLabel } from '@/lib/localeLabels';
 import { useTranslation } from '@/lib/i18n';
 
-const RATINGS: Rating[] = ['hard_limit', 'not_interested', 'curious', 'like', 'love'];
+const RATINGS: Rating[] = ['love', 'like', 'curious', 'not_interested', 'hard_limit'];
 
 interface Props {
   value: Rating;
   onChange: (rating: Rating) => void;
 }
 
+const RATING_COLORS: Record<Rating, string> = {
+  love: '#c084fc',
+  like: '#60a5fa',
+  curious: '#fbbf24',
+  not_interested: '#94a3b8',
+  hard_limit: '#f87171',
+};
+
 export function RatingPicker({ value, onChange }: Props) {
   useTranslation();
   return (
     <View style={styles.container}>
-      {RATINGS.map((rating) => (
-        <TouchableOpacity
-          key={rating}
-          style={[styles.option, value === rating && styles.optionSelected]}
-          onPress={() => onChange(rating)}
-        >
-          <Text style={[styles.label, value === rating && styles.labelSelected]}>
-            {getRatingLabel(rating)}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {RATINGS.map((rating) => {
+        const isSelected = value === rating;
+        const color = RATING_COLORS[rating];
+        return (
+          <TouchableOpacity
+            key={rating}
+            style={[
+              styles.option,
+              isSelected && { borderColor: color, backgroundColor: `${color}15` },
+            ]}
+            onPress={() => onChange(rating)}
+          >
+            <Text
+              style={[
+                styles.label,
+                isSelected && { color, fontWeight: '700' },
+              ]}
+            >
+              {getRatingLabel(rating)}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
@@ -42,16 +62,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  optionSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.surfaceLight,
-  },
   label: {
     color: colors.textMuted,
     fontSize: fontSize.sm,
-  },
-  labelSelected: {
-    color: colors.text,
-    fontWeight: '600',
   },
 });

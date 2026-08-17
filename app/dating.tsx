@@ -31,7 +31,16 @@ import { MatchFilterBar } from '@/components/dating/MatchFilterBar';
 import { DatingProfileCard } from '@/components/dating/DatingProfileCard';
 import { DirectMessageModal } from '@/components/dating/DirectMessageModal';
 
-export default function DatingScreen() {
+import { AuthorizedMediaGallery } from '@/components/profile/AuthorizedMediaGallery';
+import { CrushMatchModal } from '@/components/profile/CrushMatchModal';
+import { VirtualDateModal } from '@/components/profile/VirtualDateModal';
+import { DirectComparisonModal } from '@/components/profile/DirectComparisonModal';
+
+import { toggleBlindCrush, getCrushStatus } from '@/lib/blindCrushManager';
+
+import { RouteFeatureGuard } from '@/components/RouteFeatureGuard';
+
+function DatingScreenContent() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -44,6 +53,13 @@ export default function DatingScreen() {
   const [chatMessages, setChatMessages] = useState<DatingMessage[]>([]);
   const [messageInput, setMessageInput] = useState('');
 
+  // Profile Enhancements State
+  const [mediaTarget, setMediaTarget] = useState<CommunityProfile | null>(null);
+  const [crushMatchTarget, setCrushMatchTarget] = useState<CommunityProfile | null>(null);
+  const [virtualDateTarget, setVirtualDateTarget] = useState<CommunityProfile | null>(null);
+  const [comparisonTarget, setComparisonTarget] = useState<CommunityProfile | null>(null);
+  const [crushStateMap, setCrushStateMap] = useState<Record<string, { hasCrush: boolean; isMutual: boolean }>>({});
+
   useEffect(() => {
     (async () => {
       const p = await getCurrentProfile();
@@ -51,8 +67,37 @@ export default function DatingScreen() {
       if (p?.fetlifeHandle) {
         setUserFetlifeHandle(p.fetlifeHandle);
       }
+
+      // Load crush states
+      if (p?.nickname) {
+        const map: Record<string, { hasCrush: boolean; isMutual: boolean }> = {};
+        for (const cp of COMMUNITY_PROFILES) {
+          const st = await getCrushStatus(p.nickname, cp.nickname);
+          map[cp.nickname] = { hasCrush: st.hasCrushOnTarget, isMutual: st.isMutualMatch };
+        }
+        setCrushStateMap(map);
+      }
     })();
   }, []);
+
+  const handleToggleCrush = async (target: CommunityProfile) => {
+    const userNick = profile?.nickname || 'Usuario';
+    const res = await toggleBlindCrush(userNick, target.nickname);
+
+    setCrushStateMap((prev) => ({
+      ...prev,
+      [target.nickname]: { hasCrush: res.isCrushActiveNow, isMutual: res.isMutualMatch },
+    }));
+
+    if (res.isMutualMatch) {
+      setCrushMatchTarget(target);
+    } else if (res.isCrushActiveNow) {
+      Alert.alert(
+        '💖 Crush Enviado',
+        `Has registrado tu crush ciego por ${target.nickname}. Nadie lo sabrá a menos que sea mutuo.`
+      );
+    }
+  };
 
   // Compute compatibility score for each community profile
   const rankedProfiles = useMemo(() => {
@@ -147,10 +192,9 @@ export default function DatingScreen() {
         '🔥 Conexión Generada',
         `Se ha generado la sesión de compatibilidad con ${target.nickname}. Redirigiendo al reporte completo...`
       );
-
-      router.push({ pathname: '/report', params: { token: session.initiatorToken } });
-    } catch {
-      Alert.alert('Error', 'No se pudo generar la sesión de conexión.');
+      setComparisonTarget(target);
+    } catch (e) {
+      console.warn('Error starting session profile:', e);
     }
   };
 
@@ -253,17 +297,24 @@ export default function DatingScreen() {
 
         {/* Feed List */}
         <ScrollView contentContainerStyle={styles.feed} showsVerticalScrollIndicator={false}>
-          {filtered.map(({ profile: item, score, roleScore, mutualMatches }) => (
-            <DatingProfileCard
-              key={item.id}
-              profile={item}
-              score={score}
-              roleScore={roleScore}
-              mutualMatches={mutualMatches}
-              onStartSession={handleStartSessionWithProfile}
-              onOpenChat={handleOpenChat}
-            />
-          ))}
+          {filtered.map(({ profile: item, score, roleScore, mutualMatches }) => {
+            const cs = crushStateMap[item.nickname];
+            return (
+              <DatingProfileCard
+                key={item.id}
+                profile={item}
+                score={score}
+                roleScore={roleScore}
+                mutualMatches={mutualMatches}
+                hasCrushOnTarget={cs?.hasCrush}
+                isMutualCrush={cs?.isMutual}
+                onStartSession={handleStartSessionWithProfile}
+                onOpenChat={handleOpenChat}
+                onToggleCrush={handleToggleCrush}
+                onOpenAuthorizedMedia={(p) => setMediaTarget(p)}
+              />
+            );
+          })}
 
           {filtered.length === 0 && (
             <View style={styles.emptyState}>
@@ -285,6 +336,43 @@ export default function DatingScreen() {
           onUnlockVault={handleUnlockVaultForChat}
           myNickname={profile?.nickname || 'Tú'}
         />
+
+        {/* Authorized ZK Media Gallery Modal */}
+        <AuthorizedMediaGallery
+          visible={!!mediaTarget}
+          targetProfileNickname={mediaTarget?.nickname || ''}
+          currentProfileNickname={profile?.nickname || 'Usuario'}
+          onClose={() => setMediaTarget(null)}
+        />
+
+        {/* Mutual Crush Match Celebration Modal */}
+        <CrushMatchModal
+          visible={!!crushMatchTarget}
+          targetNickname={crushMatchTarget?.nickname || ''}
+          onStartVirtualDate={() => {
+            const target = crushMatchTarget;
+            setCrushMatchTarget(null);
+            if (target) setVirtualDateTarget(target);
+          }}
+          onClose={() => setCrushMatchTarget(null)}
+        />
+
+        {/* Guided Virtual Date Session Modal */}
+        <VirtualDateModal
+          visible={!!virtualDateTarget}
+          targetNickname={virtualDateTarget?.nickname || ''}
+          onClose={() => setVirtualDateTarget(null)}
+        />
+
+        {/* Direct Comparison Modal (Comparate Conmigo) */}
+        {comparisonTarget && profile ? (
+          <DirectComparisonModal
+            visible={!!comparisonTarget}
+            targetProfile={comparisonTarget}
+            currentProfile={profile}
+            onClose={() => setComparisonTarget(null)}
+          />
+        ) : null}
       </View>
     </ScreenContainer>
   );
@@ -336,3 +424,11 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.sm },
   emptyText: { color: colors.textMuted, fontSize: fontSize.md },
 });
+
+export default function DatingScreen() {
+  return (
+    <RouteFeatureGuard route="/dating" title="Match Directo & Dating">
+      <DatingScreenContent />
+    </RouteFeatureGuard>
+  );
+}

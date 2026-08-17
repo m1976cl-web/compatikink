@@ -18,6 +18,7 @@ import { Button } from '@/components/Button';
 import { NoxHost } from '@/components/nox';
 import type { NoxSceneId } from '@/components/nox';
 import { colors, fonts, fontSize, radii, spacing, typography, glowShadowPrimary } from '@/constants/theme';
+import { GoogleAuthButton } from '@/components/GoogleAuthButton';
 
 const { width } = Dimensions.get('window');
 
@@ -35,35 +36,14 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
 
   // Step 0: Age Gate Verification P0.5
-  const [birthYear, setBirthYear] = useState('');
-  const [birthMonth, setBirthMonth] = useState('');
-  const [birthDay, setBirthDay] = useState('');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   // Step 1 State: Role Selection
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
-  // Step 2 State: PIN Creation
-  const [pin, setPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
-
   // Animations
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const lockBounceAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (step === 2) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(lockBounceAnim, { toValue: 1.1, duration: 800, useNativeDriver: true }),
-          Animated.timing(lockBounceAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-        ])
-      ).start();
-    } else {
-      lockBounceAnim.stopAnimation();
-    }
-  }, [step, lockBounceAnim]);
 
   const animateTransition = (nextStep: number) => {
     Animated.parallel([
@@ -80,31 +60,6 @@ export default function OnboardingScreen() {
   };
 
   const validateAge = (): boolean => {
-    const y = parseInt(birthYear);
-    const m = parseInt(birthMonth);
-    const d = parseInt(birthDay);
-
-    if (!y || !m || !d || y < 1920 || m < 1 || m > 12 || d < 1 || d > 31) {
-      Alert.alert('Fecha inválida', 'Ingresa una fecha de nacimiento válida (AAAA-MM-DD).');
-      return false;
-    }
-
-    const birthDate = new Date(y, m - 1, d);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const mDiff = today.getMonth() - birthDate.getMonth();
-    if (mDiff < 0 || (mDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-
-    if (age < 18) {
-      Alert.alert(
-        'Acceso Restringido 🔞',
-        'CompatKink es una plataforma exclusiva para personas mayores de 18 años.'
-      );
-      return false;
-    }
-
     if (!ageConfirmed) {
       Alert.alert('Confirmación requerida', 'Debes confirmar que eres mayor de 18 años para continuar.');
       return false;
@@ -117,7 +72,7 @@ export default function OnboardingScreen() {
     if (step === 0) {
       if (!validateAge()) return;
     }
-    if (step < 3) {
+    if (step < 2) {
       animateTransition(step + 1);
     }
   };
@@ -134,51 +89,32 @@ export default function OnboardingScreen() {
     router.replace(route as any);
   };
 
-  // Step 0: Verification Gate P0.5
+  // Step 0: Advertencias Legales & Verificación de Edad 18+
   const renderStep0 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Verificación de Edad 🔞</Text>
+      <Text style={styles.stepTitle}>Verificación de Edad & Advertencias 🔞</Text>
       <Text style={styles.stepSubtitle}>
-        CompatKink procesa datos de contenido íntimo y requiere que confirmes tu mayoría de edad (18+ años).
+        CompatKink procesa datos de afinidad íntima y BDSM. Se requiere estricta mayoría de edad (18+ años) y consentimiento consensuado e informado (SSC / RACK).
       </Text>
 
-      <View style={styles.dobRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.label}>Día (DD)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="01"
-            placeholderTextColor={colors.textDim}
-            keyboardType="numeric"
-            maxLength={2}
-            value={birthDay}
-            onChangeText={setBirthDay}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.label}>Mes (MM)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="08"
-            placeholderTextColor={colors.textDim}
-            keyboardType="numeric"
-            maxLength={2}
-            value={birthMonth}
-            onChangeText={setBirthMonth}
-          />
-        </View>
-        <View style={{ flex: 1.5 }}>
-          <Text style={styles.label}>Año (AAAA)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="2000"
-            placeholderTextColor={colors.textDim}
-            keyboardType="numeric"
-            maxLength={4}
-            value={birthYear}
-            onChangeText={setBirthYear}
-          />
-        </View>
+      <View style={{ marginVertical: spacing.md, width: '100%' }}>
+        <Text style={styles.label}>🔵 Iniciar Sesión Directo con Google:</Text>
+        <GoogleAuthButton onSuccess={() => handleComplete('/')} />
+      </View>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: spacing.xs, gap: spacing.xs }}>
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.borderSubtle || 'rgba(255,255,255,0.1)' }} />
+        <Text style={{ color: colors.textMuted || '#94a3b8', fontSize: 11 }}>o confirma tu fecha de nacimiento</Text>
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.borderSubtle || 'rgba(255,255,255,0.1)' }} />
+      </View>
+
+      <View style={styles.noticeCard}>
+        <Text style={styles.noticeTitle}>📜 Términos & Principios Consensuados</Text>
+        <Text style={styles.noticeBody}>
+          • Estrictamente prohibido contenido de menores, sin consentimiento o ilegal.{'\n'}
+          • Cifrado Zero-Knowledge: Tus respuestas se almacenan encriptadas localmente.{'\n'}
+          • Solo tú decides qué compartir y con quién.
+        </Text>
       </View>
 
       <TouchableOpacity
@@ -190,10 +126,17 @@ export default function OnboardingScreen() {
           {ageConfirmed && <Text style={styles.checkmark}>✓</Text>}
         </View>
         <Text style={styles.checkboxText}>
-          Confirmo bajo protesta de decir verdad que tengo 18 años o más y acepto la{' '}
+          Confirmo que tengo 18+ años y acepto los{' '}
           <Text
             style={{ color: colors.primary, textDecorationLine: 'underline' }}
-            onPress={() => router.push('/privacy-policy')}
+            onPress={() => router.push('/terms' as any)}
+          >
+            Términos de Servicio
+          </Text>{' '}
+          y la{' '}
+          <Text
+            style={{ color: colors.primary, textDecorationLine: 'underline' }}
+            onPress={() => router.push('/privacy-policy' as any)}
           >
             Política de Privacidad
           </Text>
@@ -203,10 +146,26 @@ export default function OnboardingScreen() {
     </View>
   );
 
+  // Step 1: Inicio de Sesión (Google Auth o Modo Anónimo)
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>¿Quién eres?</Text>
-      <Text style={styles.stepSubtitle}>Selecciona el rol con el que más te identificas para personalizar tu experiencia.</Text>
+      <Text style={styles.stepTitle}>Ingreso & Identidad 🔑</Text>
+      <Text style={styles.stepSubtitle}>
+        Puedes iniciar sesión con tu cuenta de Google o continuar 100% de forma anónima.
+      </Text>
+
+      <View style={{ marginVertical: spacing.md, width: '100%' }}>
+        <Text style={styles.label}>Opción A: Iniciar Sesión Rápido</Text>
+        <GoogleAuthButton onSuccess={() => handleComplete('/')} />
+      </View>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: spacing.sm, gap: spacing.xs }}>
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.borderSubtle || 'rgba(255,255,255,0.1)' }} />
+        <Text style={{ color: colors.textMuted || '#94a3b8', fontSize: 11 }}>o continuar de forma anónima</Text>
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.borderSubtle || 'rgba(255,255,255,0.1)' }} />
+      </View>
+
+      <Text style={styles.label}>Opción B: Define tu Rol para Modo Anónimo</Text>
       <View style={styles.rolesGrid}>
         {ROLES.map((r) => {
           const isSelected = selectedRole === r.id;
@@ -228,76 +187,33 @@ export default function OnboardingScreen() {
 
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Tu Bóveda Segura</Text>
-      <Text style={styles.stepSubtitle}>Toda tu información se cifra localmente.</Text>
-      
-      <Animated.View style={[styles.lockContainer, { transform: [{ scale: lockBounceAnim }] }]}>
-        <Text style={styles.lockIcon}>🔒</Text>
-      </Animated.View>
-      
-      <Text style={styles.explanationText}>Ni nosotros podemos ver tus datos</Text>
+      <Text style={styles.stepTitle}>¡Todo Listo! 🚀</Text>
+      <Text style={styles.stepSubtitle}>
+        Accede directamente a responder tu Test Cuestionario o compártelo de forma 100% anónima.
+      </Text>
 
-      <View style={styles.formContainer}>
-        <Text style={styles.label}>Crea un PIN (4-12 dígitos)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••"
-          placeholderTextColor={colors.textDim}
-          value={pin}
-          onChangeText={setPin}
-          secureTextEntry
-          keyboardType="numeric"
-          maxLength={12}
-        />
-
-        <Text style={styles.label}>Confirma tu PIN</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••"
-          placeholderTextColor={colors.textDim}
-          value={confirmPin}
-          onChangeText={setConfirmPin}
-          secureTextEntry
-          keyboardType="numeric"
-          maxLength={12}
-        />
-      </View>
-    </View>
-  );
-
-  const renderStep3 = () => (
-    <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Tu Primer Paso</Text>
-      <Text style={styles.stepSubtitle}>Elige cómo deseas comenzar en CompatKink.</Text>
-      <View style={styles.ctaGrid}>
+      <View style={styles.optionsList}>
         <TouchableOpacity
-          style={styles.ctaCard}
+          style={styles.ctaCardPrimary}
           onPress={() => handleComplete('/questionnaire')}
-          activeOpacity={0.8}
         >
-          <Text style={styles.ctaEmoji}>📋</Text>
-          <Text style={styles.ctaTitle}>Cuestionario Base</Text>
-          <Text style={styles.ctaDesc}>Responde tus preferencias íntimas y límites.</Text>
+          <Text style={styles.ctaCardTitle}>📝 Responder Test Cuestionario</Text>
+          <Text style={styles.ctaCardDesc}>Responde el test Express (10 preguntas) o Completo (59 ítems) con total privacidad.</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.ctaCard}
-          onPress={() => handleComplete('/quick-profile')}
-          activeOpacity={0.8}
+          style={styles.ctaCardSecondary}
+          onPress={() => handleComplete('/invite')}
         >
-          <Text style={styles.ctaEmoji}>⚡</Text>
-          <Text style={styles.ctaTitle}>Perfil Rápido (2 min)</Text>
-          <Text style={styles.ctaDesc}>Configura lo básico y genera una invitación inmediata.</Text>
+          <Text style={styles.ctaCardTitle}>🔗 Compartir Test de Forma Anónima</Text>
+          <Text style={styles.ctaCardDesc}>Genera un enlace cifrado o código de invitación sin revelar tus datos personales.</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.ctaCard}
-          onPress={() => handleComplete('/manual')}
-          activeOpacity={0.8}
+          style={styles.ctaCardGhost}
+          onPress={() => handleComplete('/')}
         >
-          <Text style={styles.ctaEmoji}>📖</Text>
-          <Text style={styles.ctaTitle}>Explorar Manual</Text>
-          <Text style={styles.ctaDesc}>Consulta la guía educacional BDSM y normas de seguridad.</Text>
+          <Text style={styles.ctaCardGhostTitle}>🏠 Ir al Dashboard Principal</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -307,7 +223,7 @@ export default function OnboardingScreen() {
     <ScreenContainer title="Bienvenido a CompatKink" hideHeader>
       <View style={styles.container}>
         <View style={styles.dotsContainer}>
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2].map((i) => (
             <View key={i} style={[styles.dot, step === i && styles.dotActive]} />
           ))}
         </View>
@@ -318,7 +234,6 @@ export default function OnboardingScreen() {
             {step === 0 && renderStep0()}
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
-            {step === 3 && renderStep3()}
           </Animated.View>
         </ScrollView>
 
@@ -327,7 +242,7 @@ export default function OnboardingScreen() {
             <Button title="Anterior" onPress={handlePrev} variant="secondary" style={styles.navBtn} />
           ) : <View style={{ flex: 1 }} />}
 
-          {step < 3 ? (
+          {step < 2 ? (
             <Button title="Siguiente" onPress={handleNext} variant="primary" style={styles.navBtn} />
           ) : null}
         </View>
@@ -472,6 +387,16 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: spacing.xs,
   },
+  formGroup: {
+    width: '100%',
+    gap: spacing.xs,
+  },
+  strengthBadge: {
+    fontFamily: fonts.bodySemi,
+    fontSize: fontSize.xs,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.xs,
+  },
   label: {
     fontFamily: fonts.body,
     fontSize: fontSize.sm,
@@ -523,5 +448,64 @@ const styles = StyleSheet.create({
   },
   navBtn: {
     flex: 1,
+  },
+  noticeCard: {
+    backgroundColor: 'rgba(192, 132, 252, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.3)',
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginVertical: spacing.sm,
+    width: '100%',
+  },
+  noticeTitle: {
+    fontFamily: fonts.bodySemi,
+    fontSize: fontSize.md,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+  },
+  noticeBody: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: colors.textMuted || '#94a3b8',
+    lineHeight: 18,
+  },
+  optionsList: {
+    width: '100%',
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  ctaCardPrimary: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    gap: 4,
+  },
+  ctaCardSecondary: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    gap: 4,
+  },
+  ctaCardTitle: {
+    fontFamily: fonts.bodyBold || fonts.bodySemi,
+    fontSize: fontSize.md,
+    color: '#000000',
+  },
+  ctaCardDesc: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: '#1e1b4b',
+  },
+  ctaCardGhost: {
+    padding: spacing.md,
+    alignItems: 'center',
+  },
+  ctaCardGhostTitle: {
+    fontFamily: fonts.bodySemi,
+    fontSize: fontSize.sm,
+    color: colors.textMuted || '#94a3b8',
   },
 });

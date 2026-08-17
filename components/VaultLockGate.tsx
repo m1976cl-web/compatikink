@@ -36,6 +36,12 @@ import {
 } from '@/lib/cryptoVault';
 import { getCurrentProfile, getProfile } from '@/lib/storage';
 import { triggerHaptic } from '@/lib/haptics';
+import {
+  getBiometricStatus,
+  authenticateWithBiometrics,
+  evaluatePinStrength,
+  BiometricStatus,
+} from '@/lib/biometrics';
 import { NoxHost } from '@/components/nox';
 
 export interface VaultLockGateProps {
@@ -126,6 +132,11 @@ export function VaultLockGate({
   const [busy,  setBusy]  = useState(false);
   const [unlockBurst, setUnlockBurst] = useState(false);
   const [snap,  setSnap]  = useState<VaultSessionSnapshot>(() => VaultLockGateAPI.getSnapshot());
+  const [biometricStatus, setBiometricStatus] = useState<BiometricStatus>({
+    isAvailable: false,
+    biometricType: 'None',
+    isEnabled: false,
+  });
 
   // ── Animaciones ───────────────────────────────────────────────────────────
   // Entrada del formulario PIN (spring)
@@ -143,8 +154,24 @@ export function VaultLockGate({
 
   useEffect(() => {
     const unsub = VaultLockGateAPI.subscribe(setSnap);
+    getBiometricStatus().then(setBiometricStatus);
     return unsub;
   }, []);
+
+  const handleBiometricUnlock = async () => {
+    setBusy(true);
+    try {
+      const ok = await authenticateWithBiometrics('Desbloquear Bóveda ZK');
+      if (ok) {
+        triggerHaptic.success();
+        setUnlockBurst(true);
+        setPin('');
+        await onUnlock?.('biometric');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Animación de entrada cuando se muestra el gate (bloqueado)
   const isOpen = typeof unlockedProp === 'boolean' ? unlockedProp : snap.unlocked;
@@ -288,8 +315,8 @@ export function VaultLockGate({
         <TextInput
           style={styles.pinInput}
           value={pin}
-          onChangeText={(t) => { setPin(t.replace(/[^\d]/g, '')); setError(null); }}
-          placeholder="••••"
+          onChangeText={(t) => { setPin((t || '').replace(/[^\d]/g, '')); setError(null); }}
+          placeholder="••••••"
           placeholderTextColor={colors.textDim}
           keyboardType="numeric"
           secureTextEntry
@@ -299,16 +326,32 @@ export function VaultLockGate({
           onSubmitEditing={handleUnlock}
         />
 
+        {pin.length > 0 ? (
+          <Text style={[styles.strengthBadge, { color: evaluatePinStrength(pin).color }]}>
+            {evaluatePinStrength(pin).label}
+          </Text>
+        ) : null}
+
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         {busy ? (
           <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
         ) : (
-          <Button title="Desbloquear" onPress={handleUnlock} style={styles.btn} />
+          <View style={styles.buttonGroup}>
+            <Button title="Desbloquear" onPress={handleUnlock} style={styles.btn} />
+            {biometricStatus.isAvailable ? (
+              <Button
+                title={`👆 Usar ${biometricStatus.biometricType === 'FaceID' ? 'FaceID' : 'Huella'}`}
+                variant="secondary"
+                onPress={handleBiometricUnlock}
+                style={styles.biometricBtn}
+              />
+            ) : null}
+          </View>
         )}
 
         <Text style={styles.footnote}>
-          Cifrado local AES-GCM con PBKDF2. El servidor solo ve ciphertext opaco.
+          Cifrado local AES-GCM con PBKDF2 (310,000 iteraciones). Soporta PINs de 4 a 12 dígitos (6+ recomendados).
         </Text>
       </Animated.View>
     </Animated.View>
@@ -391,9 +434,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
+  strengthBadge: {
+    fontFamily: fonts.bodySemi,
+    fontSize: fontSize.xs,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+    letterSpacing: 0.5,
+  },
+  buttonGroup: {
+    width: '100%',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
   btn: {
     width: '100%',
-    marginTop: spacing.xs,
+  },
+  biometricBtn: {
+    width: '100%',
   },
   footnote: {
     fontFamily: fonts.body,

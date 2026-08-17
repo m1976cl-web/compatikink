@@ -2,14 +2,20 @@ import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
 import { Session, SessionStatus } from '@/types';
 
-const supabaseUrl =
-  process.env.EXPO_PUBLIC_SUPABASE_URL ??
-  Constants.expoConfig?.extra?.supabaseUrl ??
-  '';
+const DEFAULT_SUPABASE_URL = 'https://piegesepycvipfzjbraz.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_giY3oB4qdYQIDKKYQMrjhg_pPbGFLIE';
+
+const rawUrl =
+  process.env.EXPO_PUBLIC_SUPABASE_URL ||
+  Constants.expoConfig?.extra?.supabaseUrl ||
+  DEFAULT_SUPABASE_URL;
+
+const supabaseUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+
 const supabaseAnonKey =
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
-  Constants.expoConfig?.extra?.supabaseAnonKey ??
-  '';
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
+  Constants.expoConfig?.extra?.supabaseAnonKey ||
+  DEFAULT_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
@@ -64,6 +70,17 @@ function mapSession(row: DbSession, extras?: Partial<Session>): Session {
   };
 }
 
+function handleSupabaseRpcError(error: any): never {
+  const msg = error?.message || String(error);
+  if (msg.includes('rate_limit_exceeded') || msg.includes('429') || msg.includes('Too Many Requests')) {
+    throw new Error('Demasiados intentos. Por favor espera 1 minuto antes de reintentar (Rate Limit).');
+  }
+  if (msg.includes('session_expired') || msg.includes('expirada')) {
+    throw new Error('La sesión de invitación ha expirado.');
+  }
+  throw new Error(msg);
+}
+
 export async function createSession(
   inviteCode: string,
   initiatorToken: string,
@@ -81,7 +98,7 @@ export async function createSession(
     p_initiator_nickname: initiatorNickname ?? null,
   });
 
-  if (error) throw error;
+  if (error) handleSupabaseRpcError(error);
   return mapSession(data as DbSession);
 }
 
@@ -120,7 +137,7 @@ export async function submitGuestCiphertext(
     p_guest_nickname: guestNickname ?? null,
   });
 
-  if (error) throw error;
+  if (error) handleSupabaseRpcError(error);
   return mapSession(data as DbSession);
 }
 

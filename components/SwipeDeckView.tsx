@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,10 +7,13 @@ import {
   Animated,
   PanResponder,
   Dimensions,
+  Platform,
+  ScrollView,
 } from 'react-native';
-import { colors, fontSize, spacing } from '@/constants/theme';
+import { colors, fonts, fontSize, spacing } from '@/constants/theme';
 import { Activity, ActivityResponse, Rating, RolePreference } from '@/types';
 import { getActivityName, getActivityDescription, getCategoryLabel } from '@/data/activities';
+import { triggerLightHaptic, triggerMediumHaptic, triggerSuccessHaptic } from '@/lib/haptics';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -24,19 +27,19 @@ interface Props {
   onIndexChange?: (index: number) => void;
 }
 
-const RATING_ACTIONS: { rating: Rating; emoji: string; label: string; color: string }[] = [
-  { rating: 'hard_limit', emoji: '🚫', label: 'Límite Duro', color: '#f87171' },
-  { rating: 'not_interested', emoji: '😐', label: 'No me interesa', color: '#94a3b8' },
-  { rating: 'curious', emoji: '🤔', label: 'Curiosidad', color: '#fbbf24' },
-  { rating: 'like', emoji: '😊', label: 'Me gusta', color: '#60a5fa' },
-  { rating: 'love', emoji: '🔥', label: 'Me encanta', color: '#c084fc' },
+const RATING_ACTIONS: { rating: Rating; emoji: string; label: string; color: string; keyHint: string }[] = [
+  { rating: 'hard_limit', emoji: '🚫', label: 'Límite Duro', color: '#f87171', keyHint: 'Shift+1' },
+  { rating: 'not_interested', emoji: '😐', label: 'No me interesa', color: '#94a3b8', keyHint: '1' },
+  { rating: 'curious', emoji: '🤔', label: 'Curiosidad', color: '#fbbf24', keyHint: '2' },
+  { rating: 'like', emoji: '😊', label: 'Me gusta', color: '#60a5fa', keyHint: '3' },
+  { rating: 'love', emoji: '🔥', label: 'Me encanta', color: '#c084fc', keyHint: '4' },
 ];
 
-const ROLE_OPTIONS: { label: string; value: RolePreference }[] = [
-  { label: 'Dar / Dom', value: 'give' },
-  { label: 'Recibir / Sub', value: 'receive' },
-  { label: 'Ambos', value: 'both' },
-  { label: 'Flexible', value: 'flexible' },
+const ROLE_OPTIONS: { label: string; value: RolePreference; icon: string }[] = [
+  { label: 'Dar / Dom', value: 'give', icon: '🤲' },
+  { label: 'Recibir / Sub', value: 'receive', icon: '🫴' },
+  { label: 'Ambos', value: 'both', icon: '🔄' },
+  { label: 'Flexible', value: 'flexible', icon: '⚡' },
 ];
 
 export function SwipeDeckView({
@@ -63,6 +66,43 @@ export function SwipeDeckView({
     intensity: 3,
   };
 
+  // Live summary stats counted in real time
+  const stats = React.useMemo(() => {
+    let hardLimits = 0;
+    let curious = 0;
+    let likes = 0;
+    let loves = 0;
+    Object.values(responses).forEach((r) => {
+      if (r.rating === 'hard_limit') hardLimits++;
+      else if (r.rating === 'curious') curious++;
+      else if (r.rating === 'like') likes++;
+      else if (r.rating === 'love') loves++;
+    });
+    return { hardLimits, curious, likes, loves };
+  }, [responses]);
+
+  // Unique categories present in activity set
+  const uniqueCategories = React.useMemo(() => {
+    const list: string[] = [];
+    activities.forEach((a) => {
+      if (!list.includes(a.category)) list.push(a.category);
+    });
+    return list;
+  }, [activities]);
+
+  const jumpToCategory = (cat: string) => {
+    const targetIdx = activities.findIndex((a) => a.category === cat);
+    if (targetIdx !== -1) {
+      triggerMediumHaptic();
+      if (onIndexChange) {
+        onIndexChange(targetIdx);
+      } else {
+        setInternalIndex(targetIdx);
+      }
+      position.setValue({ x: 0, y: 0 });
+    }
+  };
+
   const setNextIndex = () => {
     if (onIndexChange) {
       onIndexChange(currentIndex + 1);
@@ -81,12 +121,13 @@ export function SwipeDeckView({
 
   const handleRatingSelect = (rating: Rating) => {
     if (!currentActivity) return;
+    triggerLightHaptic();
 
-    // Animate card swipe
+    // Fast 120ms spring card swipe
     const toX = rating === 'hard_limit' || rating === 'not_interested' ? -SCREEN_WIDTH : SCREEN_WIDTH;
     Animated.timing(position, {
       toValue: { x: toX, y: 0 },
-      duration: 220,
+      duration: 120,
       useNativeDriver: false,
     }).start(() => {
       onResponseChange(currentActivity.id, {
@@ -97,6 +138,7 @@ export function SwipeDeckView({
       position.setValue({ x: 0, y: 0 });
 
       if (isLast) {
+        triggerSuccessHaptic();
         onFinish();
       } else {
         setNextIndex();
@@ -106,6 +148,7 @@ export function SwipeDeckView({
 
   const handleRoleSelect = (role: RolePreference) => {
     if (!currentActivity) return;
+    triggerMediumHaptic();
     onResponseChange(currentActivity.id, {
       ...currentResponse,
       role,
@@ -119,6 +162,43 @@ export function SwipeDeckView({
     }
   };
 
+  // Desktop Global Keyboard Shortcuts Effect
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea') return;
+
+      const key = e.key;
+
+      if (key === '1') {
+        if (e.shiftKey) {
+          handleRatingSelect('hard_limit');
+        } else {
+          handleRatingSelect('not_interested');
+        }
+      } else if (key === '2') {
+        handleRatingSelect('curious');
+      } else if (key === '3') {
+        handleRatingSelect('like');
+      } else if (key === '4') {
+        handleRatingSelect('love');
+      } else if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+        handleUndo();
+      } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+        if (!isLast) setNextIndex();
+      } else if (key === 'r' || key === 'R') {
+        const order: RolePreference[] = ['give', 'receive', 'both', 'flexible'];
+        const nextRole = order[(order.indexOf(currentResponse.role) + 1) % order.length];
+        handleRoleSelect(nextRole);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentIndex, currentActivity, currentResponse, isLast]);
+
   if (!currentActivity) {
     return (
       <View style={styles.emptyContainer}>
@@ -130,11 +210,6 @@ export function SwipeDeckView({
     );
   }
 
-  const isPositiveRating =
-    currentResponse.rating === 'curious' ||
-    currentResponse.rating === 'like' ||
-    currentResponse.rating === 'love';
-
   return (
     <View style={styles.container}>
       {/* Top Bar / Mode Switcher */}
@@ -144,6 +219,12 @@ export function SwipeDeckView({
             Carta {currentIndex + 1} de {activities.length}
           </Text>
         </View>
+
+        {Platform.OS === 'web' ? (
+          <View style={styles.desktopHelperBadge}>
+            <Text style={styles.desktopHelperText}>⌨️ Teclado: [1..4] Calificar · [R] Rol · [←/→] Navegar</Text>
+          </View>
+        ) : null}
 
         {onSwitchToForm ? (
           <TouchableOpacity onPress={onSwitchToForm} style={styles.modeSwitchBtn}>
@@ -157,6 +238,44 @@ export function SwipeDeckView({
         <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
       </View>
 
+      {/* Live Rating Stats Summary Bar */}
+      <View style={styles.statsSummaryBar}>
+        <View style={[styles.statPill, { borderColor: '#f87171' }]}>
+          <Text style={[styles.statPillText, { color: '#f87171' }]}>🚫 {stats.hardLimits}</Text>
+        </View>
+        <View style={[styles.statPill, { borderColor: '#fbbf24' }]}>
+          <Text style={[styles.statPillText, { color: '#fbbf24' }]}>🤔 {stats.curious}</Text>
+        </View>
+        <View style={[styles.statPill, { borderColor: '#60a5fa' }]}>
+          <Text style={[styles.statPillText, { color: '#60a5fa' }]}>👍 {stats.likes}</Text>
+        </View>
+        <View style={[styles.statPill, { borderColor: '#c084fc' }]}>
+          <Text style={[styles.statPillText, { color: '#c084fc' }]}>🔥 {stats.loves}</Text>
+        </View>
+      </View>
+
+      {/* Quick Category Jump Bar */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryJumpBar}
+      >
+        {uniqueCategories.map((cat) => {
+          const isActive = currentActivity?.category === cat;
+          return (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.categoryJumpChip, isActive && styles.categoryJumpChipActive]}
+              onPress={() => jumpToCategory(cat)}
+            >
+              <Text style={[styles.categoryJumpText, isActive && styles.categoryJumpTextActive]}>
+                {getCategoryLabel(cat as any)}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
       {/* Main Swipeable Card */}
       <View style={styles.cardContainer}>
         <Animated.View style={[styles.card, position.getLayout()]}>
@@ -169,32 +288,30 @@ export function SwipeDeckView({
           <Text style={styles.activityName}>{getActivityName(currentActivity)}</Text>
           <Text style={styles.activityDesc}>{getActivityDescription(currentActivity)}</Text>
 
-          {/* Quick Role Selection if rated positive */}
-          {isPositiveRating ? (
-            <View style={styles.roleSection}>
-              <Text style={styles.roleLabel}>Tu rol preferido:</Text>
-              <View style={styles.roleGrid}>
-                {ROLE_OPTIONS.map((r) => {
-                  const active = currentResponse.role === r.value;
-                  return (
-                    <TouchableOpacity
-                      key={r.value}
-                      style={[styles.roleChip, active && styles.roleChipActive]}
-                      onPress={() => handleRoleSelect(r.value)}
-                    >
-                      <Text style={[styles.roleChipText, active && styles.roleChipTextActive]}>
-                        {r.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+          {/* FetLife Style Always-On Role Selector */}
+          <View style={styles.roleSection}>
+            <Text style={styles.roleLabel}>🎭 Rol preferido para esta actividad (FetLife Style):</Text>
+            <View style={styles.roleGrid}>
+              {ROLE_OPTIONS.map((r) => {
+                const active = currentResponse.role === r.value;
+                return (
+                  <TouchableOpacity
+                    key={r.value}
+                    style={[styles.roleChip, active && styles.roleChipActive]}
+                    onPress={() => handleRoleSelect(r.value)}
+                  >
+                    <Text style={[styles.roleChipText, active && styles.roleChipTextActive]}>
+                      {r.icon} {r.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
-          ) : null}
+          </View>
         </Animated.View>
       </View>
 
-      {/* Action Buttons Row (Rating Options) */}
+      {/* Action Buttons Row (Rating Options with Desktop Key Badges) */}
       <View style={styles.actionsGrid}>
         {RATING_ACTIONS.map((act) => {
           const selected = currentResponse.rating === act.rating;
@@ -207,6 +324,11 @@ export function SwipeDeckView({
               ]}
               onPress={() => handleRatingSelect(act.rating)}
             >
+              {Platform.OS === 'web' ? (
+                <View style={styles.keyHintTag}>
+                  <Text style={styles.keyHintTagText}>{act.keyHint}</Text>
+                </View>
+              ) : null}
               <Text style={styles.actionEmoji}>{act.emoji}</Text>
               <Text style={[styles.actionLabel, selected && { color: act.color, fontWeight: '700' }]}>
                 {act.label}
@@ -223,7 +345,9 @@ export function SwipeDeckView({
           onPress={handleUndo}
           disabled={currentIndex === 0}
         >
-          <Text style={styles.undoBtnText}>↩️ Anterior</Text>
+          <Text style={styles.undoBtnText}>
+            ↩️ Anterior {Platform.OS === 'web' ? '[←]' : ''}
+          </Text>
         </TouchableOpacity>
 
         {isLast ? (
@@ -235,7 +359,9 @@ export function SwipeDeckView({
             style={styles.skipBtn}
             onPress={setNextIndex}
           >
-            <Text style={styles.skipBtnText}>Saltar →</Text>
+            <Text style={styles.skipBtnText}>
+              Saltar → {Platform.OS === 'web' ? '[→]' : ''}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -249,6 +375,23 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.sm,
     justifyContent: 'space-between',
+    maxWidth: 680,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  desktopHelperBadge: {
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderColor: '#38bdf8',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 4,
+  },
+  desktopHelperText: {
+    color: '#38bdf8',
+    fontSize: 11,
+    fontFamily: fonts.bodySemi,
+    fontWeight: '700',
   },
   topBar: {
     flexDirection: 'row',
@@ -393,6 +536,21 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.border,
     alignItems: 'center',
+    position: 'relative',
+  },
+  keyHintTag: {
+    position: 'absolute',
+    top: 3,
+    right: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  keyHintTagText: {
+    color: colors.textMuted,
+    fontSize: 9,
+    fontFamily: fonts.bodyBold,
   },
   actionEmoji: {
     fontSize: 22,
@@ -468,5 +626,48 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: fontSize.md,
     fontWeight: '800',
+  },
+  statsSummaryBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginVertical: 4,
+  },
+  statPill: {
+    backgroundColor: 'rgba(10, 7, 18, 0.6)',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  statPillText: {
+    fontSize: 10,
+    fontFamily: fonts.bodyBold,
+  },
+  categoryJumpBar: {
+    paddingHorizontal: spacing.xs,
+    gap: 6,
+    paddingVertical: 4,
+  },
+  categoryJumpChip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  categoryJumpChipActive: {
+    backgroundColor: 'rgba(192, 132, 252, 0.2)',
+    borderColor: colors.neonPurple,
+  },
+  categoryJumpText: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontFamily: fonts.bodySemi,
+  },
+  categoryJumpTextActive: {
+    color: colors.neonPurple,
+    fontFamily: fonts.bodyBold,
   },
 });

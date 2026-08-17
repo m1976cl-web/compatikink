@@ -1,12 +1,15 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useState } from 'react';
-import { useHomeStore } from '@/lib/stores/useHomeStore';
+import { useRouter } from 'expo-router';
+import { useHomeStore } from '@/stores/homeStore';
 import { loginProfile, logoutProfile } from '@/lib/storage';
 import { notify } from '@/lib/notify';
 import { colors, fonts, spacing } from '@/constants/theme';
+import { GoogleAuthButton } from '@/components/GoogleAuthButton';
 import { useTranslation } from '@/lib/i18n';
 
 export function ProfileBar() {
+  const router = useRouter();
   const { t } = useTranslation();
   const { profile, loadHomeData } = useHomeStore();
   const [loginNick, setLoginNick] = useState('');
@@ -34,16 +37,45 @@ export function ProfileBar() {
   if (profile) {
     return (
       <View style={styles.container}>
-        <Text style={styles.greeting}>{t('home.hello', { name: profile.nickname })}</Text>
-        <TouchableOpacity onPress={handleLogout} style={styles.button}>
-          <Text style={styles.buttonText}>{t('home.logout')}</Text>
-        </TouchableOpacity>
+        <View style={styles.profileRow}>
+          <Text style={styles.greeting}>{t('home.hello', { name: profile.nickname })}</Text>
+          {profile.isLocalAdmin ? (
+            <View style={styles.adminBadge}>
+              <Text style={styles.adminBadgeText}>👑 ADMINISTRADOR</Text>
+            </View>
+          ) : null}
+        </View>
+
+        <View style={styles.actionsRow}>
+          {profile.isLocalAdmin ? (
+            <TouchableOpacity onPress={() => router.push('/admin-dashboard')} style={styles.adminButton}>
+              <Text style={styles.adminButtonText}>👑 Abrir Dashboard Admin</Text>
+            </TouchableOpacity>
+          ) : null}
+          <TouchableOpacity onPress={handleLogout} style={styles.button}>
+            <Text style={styles.buttonText}>{t('home.logout')}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ marginTop: spacing.sm }}>
+          <GoogleAuthButton />
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <View style={styles.googleContainer}>
+        <GoogleAuthButton />
+      </View>
+
+      <View style={styles.dividerRow}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>o entrar con Nick & PIN</Text>
+        <View style={styles.dividerLine} />
+      </View>
+
       <TextInput
         style={styles.input}
         placeholder={t('home.login_nick')}
@@ -69,20 +101,39 @@ export function ProfileBar() {
 
 const styles = StyleSheet.create({
   container: { padding: spacing.md },
+  profileRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xs },
   greeting: { fontFamily: fonts.bodySemi || fonts.body, color: colors.text, fontSize: 18 },
-  input: {
+  adminBadge: {
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
+    borderColor: '#fbbf24',
     borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  adminBadgeText: { color: '#fbbf24', fontSize: 10, fontWeight: '800' },
+  actionsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginVertical: spacing.xs },
+  adminButton: { backgroundColor: 'rgba(251, 191, 36, 0.2)', borderWidth: 1, borderColor: '#fbbf24', padding: 8, borderRadius: 8 },
+  adminButtonText: { color: '#fbbf24', fontSize: 12, fontWeight: '700' },
+  googleContainer: { marginBottom: spacing.sm },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.xs, gap: spacing.xs },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border || 'rgba(255,255,255,0.1)' },
+  dividerText: { color: colors.textMuted || '#94a3b8', fontSize: 11 },
+  input: {
+    backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderRadius: 8,
-    padding: spacing.sm,
+    borderWidth: 1,
     color: colors.text,
-    marginBottom: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: 8,
+    marginBottom: spacing.xs,
   },
   button: {
     backgroundColor: colors.primary,
     padding: spacing.sm,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: spacing.xs,
   },
-  buttonText: { color: colors.background, fontFamily: fonts.bodySemi },
+  buttonText: { color: '#000', fontFamily: fonts.bodySemi, fontWeight: '700' },
 });

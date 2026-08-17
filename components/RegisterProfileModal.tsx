@@ -25,6 +25,7 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
   const [pin, setPin] = useState('');
   const [pronouns, setPronouns] = useState('');
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | undefined>(undefined);
+  const [isLocalAdmin, setIsLocalAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
@@ -55,6 +56,7 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
         pin: pin.trim(),
         pronouns: pronouns || undefined,
         experienceLevel,
+        isLocalAdmin,
         baseResponses: [],
         createdSessionIds: [],
         receivedSessionIds: [],
@@ -62,14 +64,15 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
 
       const created = await registerProfile(newProfile);
       Alert.alert(
-        'Perfil creado',
-        `Bienvenido/a, ${cleanNick}. Tu perfil está protegido con tu PIN.`
+        isLocalAdmin ? '👑 Perfil Administrador Creado' : 'Perfil Creado',
+        `Bienvenido/a, ${cleanNick}. ${isLocalAdmin ? 'Tu perfil tiene privilegios de Administrador Maestro.' : 'Tu perfil está protegido con tu PIN.'}`
       );
 
       setNickname('');
       setPin('');
       setPronouns('');
       setExperienceLevel(undefined);
+      setIsLocalAdmin(false);
 
       onSuccess(created);
       onClose();
@@ -77,6 +80,30 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
       Alert.alert('Error', e.message || 'No se pudo crear el perfil.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRegisterAdminDemo = async () => {
+    setNickname('AdminDemo');
+    setPin('1234');
+    setIsLocalAdmin(true);
+    const demoProfile: UserProfile = {
+      nickname: 'AdminDemo',
+      pin: '1234',
+      isLocalAdmin: true,
+      experienceLevel: 'advanced',
+      baseResponses: [],
+      createdSessionIds: [],
+      receivedSessionIds: [],
+    };
+    try {
+      const created = await registerProfile(demoProfile);
+      Alert.alert('👑 Cuenta Admin Demo Lista', 'Se ha registrado "AdminDemo" con PIN 1234 y rol de Administrador Maestro.');
+      onSuccess(created);
+      onClose();
+    } catch {
+      // If already registered, login
+      onClose();
     }
   };
 
@@ -121,6 +148,16 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
 
             <Text style={styles.fieldLabel}>Nivel de experiencia</Text>
             <ExperiencePicker value={experienceLevel} onChange={setExperienceLevel} />
+
+            <TouchableOpacity
+              style={[styles.adminToggle, isLocalAdmin && styles.adminToggleActive]}
+              onPress={() => setIsLocalAdmin(!isLocalAdmin)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.adminToggleText, isLocalAdmin && styles.adminToggleTextActive]}>
+                {isLocalAdmin ? '✓ 👑 Cuenta de Administrador Maestro' : '👑 Registrar como Administrador'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
@@ -130,8 +167,16 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
             accessibilityRole="button"
           >
             <Text style={styles.submitBtnText}>
-              {loading ? 'Creando…' : 'Crear perfil'}
+              {loading ? 'Creando…' : isLocalAdmin ? '👑 Crear Perfil Admin' : 'Crear perfil'}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.demoAdminBtn}
+            onPress={handleRegisterAdminDemo}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.demoAdminBtnText}>⚡ Generar Cuenta Admin Demo (1 Clic)</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
@@ -161,12 +206,42 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
-  brand: {
-    fontFamily: fonts.display,
-    fontSize: fontSize.lg,
-    color: colors.primary,
-    letterSpacing: 2,
-    marginBottom: spacing.xs,
+  adminToggle: {
+    backgroundColor: colors.surfaceLight,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radii.md,
+    paddingVertical: spacing.xs + 2,
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  adminToggleActive: {
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
+    borderColor: '#fbbf24',
+  },
+  adminToggleText: {
+    color: colors.textMuted,
+    fontFamily: fonts.bodySemi,
+    fontSize: fontSize.xs,
+  },
+  adminToggleTextActive: {
+    color: '#fbbf24',
+    fontFamily: fonts.bodyBold,
+  },
+  demoAdminBtn: {
+    backgroundColor: 'rgba(251, 191, 36, 0.15)',
+    borderColor: '#fbbf24',
+    borderWidth: 1,
+    borderRadius: radii.lg,
+    paddingVertical: spacing.xs + 4,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  demoAdminBtnText: {
+    color: '#fbbf24',
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.xs,
   },
   title: {
     fontFamily: fonts.displaySemi,
@@ -174,6 +249,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     textAlign: 'center',
     marginBottom: 4,
+  },
+  brand: {
+    fontFamily: fonts.display,
+    fontSize: fontSize.lg,
+    color: colors.primary,
+    letterSpacing: 2,
+    marginBottom: spacing.xs,
   },
   subtitle: {
     ...typography.bodyMuted,

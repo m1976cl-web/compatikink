@@ -237,7 +237,27 @@ async function testComponentLogic() {
   const svgData = linking.generateQRCodeSVG('https://m1976cl-web.github.io/compatikink/guest/ABC123#k=SecretKey99');
   assert.ok(svgData.startsWith('data:image/svg+xml;utf8,'), 'QR Code must be local SVG data URL');
   assert.ok(svgData.includes('%3Csvg'), 'QR SVG must contain valid SVG tag');
-  console.log('  ✅ Deep Linking & Offline QR Code generator verified');
+  // Test Case 7: P1.3 HTTPS Universal Deep Link Builders
+  const { buildInviteLink, buildInviteMessage } = await import('../lib/storage/sessionStorage');
+  const httpsLink = buildInviteLink('TEST99', 'SecretZk123');
+  assert.equal(httpsLink, 'https://m1976cl-web.github.io/compatikink/guest/TEST99#k=SecretZk123');
+  
+  const msg = buildInviteMessage('TEST99', 'SecretZk123');
+  assert.ok(msg.includes('https://m1976cl-web.github.io/compatikink/guest/TEST99#k=SecretZk123'), 'Message must contain HTTPS Universal Link');
+  assert.ok(msg.includes('compatikink://join/TEST99#k=SecretZk123'), 'Message must contain custom scheme backup link');
+
+  // Test Case 8: P1.4 Actionable 10-Minute Conversation Guide
+  const { generateReport, generate10MinConversationGuide } = await import('../lib/compatibility');
+  const mockReport = generateReport(
+    'sess_123',
+    [{ activityId: 'bondage_rope', rating: 'love', role: 'give', intensity: 3 }],
+    [{ activityId: 'bondage_rope', rating: 'love', role: 'receive', intensity: 3 }]
+  );
+  const guide = generate10MinConversationGuide(mockReport);
+  assert.equal(guide.totalDurationMinutes, 10, 'Guide duration must be 10 minutes');
+  assert.equal(guide.phases.length, 3, 'Guide must contain exactly 3 structured phases');
+  assert.ok(guide.formattedMarkdown.includes('Guión de Conversación Guiado de 10 Minutos'), 'Guide markdown title verified');
+  console.log('  ✅ Actionable 10-Minute Conversation Guide verified (P1.4)');
 
   // ─── 13. Nox host scene registry ──────────────────────────────────
   console.log('\n13. Testing NoxHost scene registry...');

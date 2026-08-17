@@ -13,6 +13,7 @@ import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
 import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
+import { authenticateWithBiometrics } from '@/lib/biometrics';
 
 interface DSContract {
   id: string;
@@ -60,10 +61,17 @@ export default function ContractsScreen() {
       return;
     }
 
+    // Trigger physical hardware biometric verification (FaceID / TouchID / Hardware PIN)
+    const isAuth = await authenticateWithBiometrics('Autentícate con FaceID / Huella para firmar el Contrato D/s');
+    if (!isAuth) {
+      Alert.alert('Firma Cancelada', 'Se requiere autenticación biométrica previa para ratificar legalmente este contrato.');
+      return;
+    }
+
     const updatedContract: DSContract = {
       ...contract,
       isSigned: true,
-      signature: signature.trim(),
+      signature: `${signature.trim()} [Verificado por Biometría 🛡️]`,
       signedAt: new Date().toISOString().split('T')[0],
     };
 
@@ -71,8 +79,8 @@ export default function ContractsScreen() {
     await writeJsonStorage('ds_signed_contracts_v1', updatedContract);
 
     Alert.alert(
-      '¡Contrato Firmado Digitalmente! 📜✍️',
-      `El acuerdo "${contract.title}" ha sido ratificado con éxito. Copia cifrada guardada en tu Bóveda.`
+      '¡Contrato Firmado Biométricamente! 📜✍️🛡️',
+      `El acuerdo "${contract.title}" ha sido ratificado con éxito y autenticado por hardware. Copia cifrada en tu Bóveda.`
     );
   };
 

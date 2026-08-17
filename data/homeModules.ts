@@ -48,11 +48,14 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
 
   // Escenas
   { title: 'Escena en Vivo',       description: 'Monitor inmersivo con safeword por voz y Aftercare',    mark: '⚡', category: 'scenes', route: '/live-scene'           },
+  { title: 'Creador de Escenas',   description: 'Diseñador de secuencias de escena personalizadas',      mark: '🎬', category: 'scenes', route: '/scene-builder'        },
   { title: 'Ruleta Kink',          description: 'Oráculo de fantasías y retos en pareja',                mark: '🔮', category: 'scenes', route: '/kink-roulette'        },
   { title: 'Guía de Shibari',      description: 'Nudos paso a paso y mapa anatómico de nervios',         mark: '🪢', category: 'scenes', route: '/shibari-guide'        },
+  { title: 'Guía de Látex',        description: 'Mantenimiento, brillo espejo y reparación de goma',     mark: '🖤', category: 'scenes', route: '/latex-guide'          },
   { title: 'Acto Diario Kink',     description: 'Tareas diarias de disciplina D/s y racha',              mark: '🎲', category: 'scenes', route: '/daily-submissive-act' },
   { title: 'Kit de Inicio BDSM',   description: 'Guiones de escena, rutinas D/s y 7 días',               mark: '🚀', category: 'scenes', route: '/quick-start-bundle'   },
   { title: 'Vínculos & Diario',    description: 'Bitácora de parejas, retos, XP y diplomas',             mark: '🔗', category: 'scenes', route: '/partner-journal'      },
+  { title: 'Historial & Diff',     description: 'Evolución de compatibilidad en el tiempo',              mark: '📈', category: 'scenes', route: '/session-diff'         },
   { title: 'Chat E2EE Efímero',    description: 'Mensajería cifrada de pareja y retos',                  mark: '💬', category: 'scenes', route: '/partner-chat'         },
   { title: 'Pegging & Dating',     description: 'Guía psicológica, técnica y dating',                    mark: '🍑', category: 'scenes', route: '/pegging'              },
   { title: 'Rituales D/s',         description: 'Protocolos y hábitos guiados',                          mark: '📜', category: 'scenes', route: '/rituals'              },
@@ -74,7 +77,9 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
   { title: 'Wrapped',              description: 'Resumen anual de exploración',         mark: '🎁', category: 'social', route: '/wrapped'           },
   { title: 'Reto semanal',         description: 'Desafíos con XP y niveles',           mark: '🏆', category: 'social', route: '/weekly-challenge'  },
   { title: 'Matriz Poli',          description: 'Sinastría de 3+ personas',            mark: '💎', category: 'social', route: '/poly-group'        },
-  { title: 'Página Azul 💙',       description: 'Promociona tu OnlyFans & Fansly',     mark: '📸', category: 'social', route: '/blue-pages'        },
+  { title: 'Deseos Efímeros 24h',  description: 'Tablón de fantasías efímeras Pure ZK', mark: '🔥', category: 'social', route: '/ephemeral-wishes' },
+  { title: 'Perfil de Pareja',     description: 'Vincula acuerdos y límites de pareja (Feeld)', mark: '💜', category: 'social', route: '/linked-couples' },
+  { title: 'Galería Salvaje (18+)', description: 'Fotos/videos sin censura, comentarios y "Comparemos Test"', mark: '🔥', category: 'social', route: '/wild-feed' },
   { title: 'Tienda',               description: 'Recomendaciones y partners',           mark: '🛍️', category: 'social', route: '/store'             },
 
   // IA & Hardware
@@ -92,4 +97,5 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
 
   // Bóveda / Vault
   { title: 'Backup Cifrado',       description: 'Exportar e importar tu bóveda completa', mark: '💾', category: 'vault', route: '/backup' },
+  { title: 'Sincronización P2P',   description: 'Intercambia test cara a cara 100% offline (QR)', mark: '📡', category: 'vault', route: '/p2p-sync' },
 ];

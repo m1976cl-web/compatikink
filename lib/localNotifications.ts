@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+export * from './notifications';
 
 export interface LocalNotificationTask {
   id: string;

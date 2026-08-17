@@ -178,6 +178,23 @@ export default function InviteScreen() {
         <Text style={styles.hint}>{t('invite.whatsapp_warn')}</Text>
         <Button title={t('invite.share_full')} onPress={shareInvite} variant="secondary" />
 
+        <TouchableOpacity
+          style={styles.selfReportBtn}
+          onPress={() => router.push({ pathname: '/report', params: { token: session.initiatorToken, selfMode: 'true' } })}
+        >
+          <Text style={styles.selfReportBtnText}>📊 Ver Mis Propios Resultados & Mapa de Gustos</Text>
+          <Text style={styles.selfReportBtnSub}>Explora tus límites duros, aficiones y preferencias sin esperar al invitado</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.profileCtaCard}
+          onPress={() => router.push('/profile')}
+        >
+          <Text style={styles.profileCtaBadge}>✨ PASO 2 RECOMENDADO</Text>
+          <Text style={styles.profileCtaTitle}>Completa tu Perfil & Álbum Cifrado (FetLife Style)</Text>
+          <Text style={styles.profileCtaSub}>Sube fotos/videos con permisos de visibilidad (Público, Solo Amigos Mutuos, Autorizados o Bóveda)</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.qrCard} onPress={() => setShowQrModal(true)}>
           <Text style={styles.qrCardTitle}>Código QR (Local Offline)</Text>
           <Text style={styles.qrCardSub}>Mostrar para escanear cara a cara (100% cifrado local)</Text>
@@ -401,9 +418,59 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
   },
   qrModalCodeText: {
-    fontFamily: fonts.bodyBold,
-    color: colors.text,
+    fontFamily: fonts.mono,
+    color: colors.primary,
     fontSize: fontSize.md,
     letterSpacing: 2,
+  },
+  selfReportBtn: {
+    backgroundColor: 'rgba(192, 132, 252, 0.15)',
+    borderWidth: 1.5,
+    borderColor: colors.neonPurple,
+    borderRadius: radii.xl,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: 4,
+    marginVertical: spacing.xs,
+  },
+  selfReportBtnText: {
+    color: colors.neonPurple,
+    fontFamily: fonts.displaySemi,
+    fontSize: fontSize.sm,
+    fontWeight: '800',
+  },
+  selfReportBtnSub: {
+    color: colors.textMuted,
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    textAlign: 'center',
+  },
+  profileCtaCard: {
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderWidth: 1.5,
+    borderColor: '#38bdf8',
+    borderRadius: radii.xl,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: 4,
+    marginVertical: spacing.xs,
+  },
+  profileCtaBadge: {
+    color: '#38bdf8',
+    fontSize: 10,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 1,
+  },
+  profileCtaTitle: {
+    color: colors.text,
+    fontFamily: fonts.displaySemi,
+    fontSize: fontSize.sm,
+    fontWeight: '800',
+  },
+  profileCtaSub: {
+    color: colors.textMuted,
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    textAlign: 'center',
   },
 });

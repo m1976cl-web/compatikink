@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { createSession } from '@/lib/sessions';
 import { UserProfile } from '@/types';
-import { useHomeStore } from '@/lib/stores/useHomeStore';
+import { useHomeStore } from '@/stores/homeStore';
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
 import { notify } from '@/lib/notify';
 

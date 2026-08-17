@@ -5,6 +5,8 @@ import { OfficeModeAPI } from '@/lib/officeMode';
 import { GlobalSearchAPI } from '@/lib/globalSearch';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
+import { useRouter } from 'expo-router';
+
 interface AppHeaderProps {
   /** When true, shows Compatikink as the dominant brand signal */
   brand?: boolean;
@@ -24,6 +26,7 @@ export function AppHeader({
   right,
   style,
 }: AppHeaderProps) {
+  const router = useRouter();
   const { isOnline } = useNetworkStatus();
 
   return (
@@ -71,6 +74,16 @@ export function AppHeader({
           >
             <Text style={styles.officeBtnText}>💼 Excel</Text>
           </TouchableOpacity>
+
+          {/* Google Auth Button Header Shortcut */}
+          <TouchableOpacity
+            style={styles.googleHeaderBtn}
+            onPress={() => router.push('/auth')}
+            accessibilityLabel="Iniciar Sesión con Google"
+          >
+            <Text style={styles.googleHeaderBtnText}>🔵 Google</Text>
+          </TouchableOpacity>
+
           {right ? <View style={styles.right}>{right}</View> : null}
         </View>
       </View>
@@ -191,6 +204,20 @@ const styles = StyleSheet.create({
   },
   officeBtnText: {
     color: '#4ade80',
+    fontSize: 10,
+    fontFamily: fonts.bodySemi,
+    fontWeight: '800',
+  },
+  googleHeaderBtn: {
+    backgroundColor: 'rgba(66, 133, 244, 0.2)',
+    borderWidth: 1,
+    borderColor: '#4285F4',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  googleHeaderBtnText: {
+    color: '#38bdf8',
     fontSize: 10,
     fontFamily: fonts.bodySemi,
     fontWeight: '800',

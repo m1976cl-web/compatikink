@@ -37,6 +37,17 @@ export const SENSITIVE_STORAGE_KEYS = [
   'private_album_photos_v1',
   'private_album_shared_links_v1',
   'user_gear_inventory',
+  // Next-Gen ZK Module Keys (Milestone 2)
+  'ds_tasks_list_v1',
+  'ds_habits_list_v1',
+  'ds_rewards_list_v1',
+  'ds_redemptions_v1',
+  'ds_points_ledger_v1',
+  'ephemeral_wishes_v1',
+  'ephemeral_chat_threads_v1',
+  'linked_profiles_v1',
+  'joint_vault_data_v1',
+  'partner_pairing_tokens_v1',
 ] as const;
 
 export const SENSITIVE_KEY_PREFIXES = [
@@ -45,6 +56,14 @@ export const SENSITIVE_KEY_PREFIXES = [
   'guest_profile_',
   'guest_draft_',
   'initiator_',
+  // Next-Gen ZK Module Key Prefixes
+  'ds_task_',
+  'ephemeral_msg_',
+  'partner_pairing_',
+  'joint_vault_',
+  'ds_',
+  'ephemeral_',
+  'linked_',
   'questionnaire_draft_',
 ] as const;
 
@@ -427,13 +446,37 @@ export function isSensitiveStorageKey(key: string): boolean {
 
 /** Static Harmless Decoy Payloads for Sensitive Storage Keys */
 export function getStaticDecoyValueForKey(key: string): string {
-  if (key === 'user_wishlist_items' || key === 'custom_activities_list' || key === 'private_album_photos_v1' || key === 'user_gear_inventory') {
+  if (
+    key === 'user_wishlist_items' ||
+    key === 'custom_activities_list' ||
+    key === 'private_album_photos_v1' ||
+    key === 'user_gear_inventory' ||
+    key === 'ds_tasks_list_v1' ||
+    key === 'ds_habits_list_v1' ||
+    key === 'ds_rewards_list_v1' ||
+    key === 'ds_redemptions_v1' ||
+    key === 'ephemeral_wishes_v1' ||
+    key === 'ephemeral_chat_threads_v1' ||
+    key === 'linked_profiles_v1' ||
+    key === 'partner_pairing_tokens_v1'
+  ) {
     return JSON.stringify([]);
   }
-  if (key === 'local_sessions' || key === 'dating_direct_messages') {
+  if (key === 'local_sessions' || key === 'dating_direct_messages' || key === 'joint_vault_data_v1') {
     return JSON.stringify({});
   }
-  if (key.startsWith('scene_agreements_') || key.startsWith('scene_debriefs_')) {
+  if (key === 'ds_points_ledger_v1') {
+    return JSON.stringify({ currentBalance: 0, totalEarned: 0, totalSpent: 0, history: [] });
+  }
+  if (
+    key.startsWith('scene_agreements_') ||
+    key.startsWith('scene_debriefs_') ||
+    key.startsWith('ds_') ||
+    key.startsWith('ephemeral_') ||
+    key.startsWith('linked_') ||
+    key.startsWith('partner_') ||
+    key.startsWith('joint_')
+  ) {
     return JSON.stringify([]);
   }
   return JSON.stringify([]);

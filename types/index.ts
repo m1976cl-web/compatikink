@@ -159,6 +159,8 @@ export interface UserProfile {
   bio?: string;
   location?: string;
   avatarUrl?: string;
+  /** Permite a otros miembros comparar sus resultados de compatibilidad con este perfil */
+  allowPublicComparison?: boolean;
   /** Supabase Auth user id (Google / email). Not a vault key — identity only. */
   supabaseUserId?: string;
 }
@@ -342,3 +344,7 @@ export interface SceneAgreement {
   aftercarePlan?: string[];
   createdAt: string;
 }
+
+export * from './dsTask';
+export * from './ephemeral';
+export * from './linkedProfiles';

@@ -68,6 +68,7 @@ export default function RootLayout() {
             <Stack.Screen name="astrology"            options={{ title: 'Astrología Kink',           headerShown: false }} />
             <Stack.Screen name="pegging"              options={{ title: 'Pegging & Dating',          headerShown: false }} />
             <Stack.Screen name="task-economy"         options={{ title: 'Economía D/s',              headerShown: false }} />
+            <Stack.Screen name="ds-tasks"             options={{ title: 'Tareas & Hábitos D/s',       headerShown: false }} />
             <Stack.Screen name="fantasy-match"        options={{ title: 'Match Secreto',             headerShown: false }} />
             <Stack.Screen name="archetypes"           options={{ title: 'Quiz Arquetipos',           headerShown: false }} />
             <Stack.Screen name="rituals"              options={{ title: 'Ritual Builder',            headerShown: false }} />
@@ -77,16 +78,25 @@ export default function RootLayout() {
             <Stack.Screen name="music-sync"           options={{ title: 'Music Sync',                headerShown: false }} />
             <Stack.Screen name="ai-script"            options={{ title: 'AI Scene Builder',          headerShown: false }} />
             <Stack.Screen name="partner-journal"      options={{ title: 'Vínculos & Diario',         headerShown: false }} />
+            <Stack.Screen name="session-diff"         options={{ title: 'Historial & Diff',          headerShown: false }} />
+            <Stack.Screen name="poly-group"           options={{ title: 'Matriz Poli',               headerShown: false }} />
             <Stack.Screen name="partner-chat"         options={{ title: 'Chat E2EE Efímero',         headerShown: false }} />
             <Stack.Screen name="quick-start-bundle"   options={{ title: 'Kit de Inicio BDSM',        headerShown: false }} />
             <Stack.Screen name="shibari-guide"        options={{ title: 'Guía de Shibari',           headerShown: false }} />
+            <Stack.Screen name="latex-guide"          options={{ title: 'Guía de Cuidado de Látex',  headerShown: false }} />
             <Stack.Screen name="daily-submissive-act" options={{ title: 'Acto de Sumisión Diario',   headerShown: false }} />
             <Stack.Screen name="live-scene"           options={{ title: 'Modo Escena en Vivo',       headerShown: false }} />
+            <Stack.Screen name="scene-builder"        options={{ title: 'Creador de Escenas',        headerShown: false }} />
             <Stack.Screen name="kink-roulette"        options={{ title: 'Ruleta Kink',               headerShown: false }} />
             <Stack.Screen name="events-munches"       options={{ title: 'Munches & Eventos',         headerShown: false }} />
             <Stack.Screen name="admin-dashboard"      options={{ title: 'Panel de Administración',   headerShown: false }} />
             <Stack.Screen name="security-audit"       options={{ title: 'Auditoría PenTest',         headerShown: false }} />
             <Stack.Screen name="blue-pages"           options={{ title: 'Promociona tu Página Azul', headerShown: false }} />
+            <Stack.Screen name="ephemeral-wishes"     options={{ title: 'Deseos Efímeros 24h',       headerShown: false }} />
+            <Stack.Screen name="linked-couples"       options={{ title: 'Perfil de Pareja',          headerShown: false }} />
+            <Stack.Screen name="wild-feed"            options={{ title: 'Galería Salvaje (18+)',     headerShown: false }} />
+            <Stack.Screen name="p2p-sync"             options={{ title: 'Sincronización P2P',       headerShown: false }} />
+            <Stack.Screen name="terms"                options={{ title: 'Términos de Servicio',      headerShown: false }} />
             <Stack.Screen name="backup"               options={{ title: 'Backup Cifrado',            headerShown: false }} />
             <Stack.Screen name="ai-assistant"         options={{ title: 'Asistente IA Íntimo',       headerShown: false }} />
             <Stack.Screen name="landing"              options={{ title: 'Presentación',              headerShown: false }} />

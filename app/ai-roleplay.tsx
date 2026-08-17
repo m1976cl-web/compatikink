@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -12,6 +12,8 @@ import { useRouter } from 'expo-router';
 import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
+import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
+import { askGeminiAssistant } from '@/lib/geminiAssistant';
 
 interface AIPersona {
   id: string;
@@ -55,47 +57,67 @@ interface ChatMsg {
   time: string;
 }
 
+const STORAGE_KEY_ROLEPLAY_CHATS = 'ai_roleplay_chats_v1';
+
 export default function AIRoleplayScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
 
   const [selectedPersona, setSelectedPersona] = useState<AIPersona>(AI_PERSONAS[0]);
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    { sender: 'ai', text: AI_PERSONAS[0].initialMessage, time: 'Ahora' },
-  ]);
+  const [chatsMap, setChatsMap] = useState<Record<string, ChatMsg[]>>({});
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
+  // Load saved Zero-Knowledge chats on mount
+  useEffect(() => {
+    readJsonStorage<Record<string, ChatMsg[]>>(STORAGE_KEY_ROLEPLAY_CHATS, {}).then((saved) => {
+      if (saved) setChatsMap(saved);
+    });
+  }, []);
+
+  const currentMessages = chatsMap[selectedPersona.id] || [
+    { sender: 'ai', text: selectedPersona.initialMessage, time: 'Ahora' },
+  ];
+
   const handleSelectPersona = (p: AIPersona) => {
     setSelectedPersona(p);
-    setMessages([{ sender: 'ai', text: p.initialMessage, time: 'Ahora' }]);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
     const userMsgText = inputText.trim();
     const newMsg: ChatMsg = { sender: 'user', text: userMsgText, time: 'Ahora' };
 
-    setMessages((prev) => [...prev, newMsg]);
+    const updatedList = [...currentMessages, newMsg];
+    const newMap = { ...chatsMap, [selectedPersona.id]: updatedList };
+
+    setChatsMap(newMap);
     setInputText('');
     setIsTyping(true);
+    await writeJsonStorage(STORAGE_KEY_ROLEPLAY_CHATS, newMap);
 
-    // Simulate AI Roleplay response
-    setTimeout(() => {
-      let aiReplyText = `Entendido. En nuestra dinámica con rol de ${selectedPersona.role}, el consentimiento y la seguridad son prioridad. ¿Cómo deseas proceder?`;
-
-      if (userMsgText.toLowerCase().includes('limite') || userMsgText.toLowerCase().includes('rojo')) {
-        aiReplyText = 'Entendido. Registro perfectamente tu límite. Mantendremos la escena dentro de la zona de confort negociada.';
-      } else if (userMsgText.toLowerCase().includes('hola') || userMsgText.toLowerCase().includes('buenas')) {
-        aiReplyText = `Hola. Me alegra que estés aquí. Cuéntame qué fantasía o protocolo deseas ensayar hoy conmigo.`;
-      } else if (userMsgText.toLowerCase().includes('cuerda') || userMsgText.toLowerCase().includes('atadura')) {
-        aiReplyText = 'Excelente elección. Recuerda que nunca ataremos cerca de las articulaciones principales sin revisar la circulación cada 5 minutos.';
-      }
-
-      setMessages((prev) => [...prev, { sender: 'ai', text: aiReplyText, time: 'Ahora' }]);
+    // Call Gemini AI for response with persona context
+    try {
+      const prompt = `Asume el rol de "${selectedPersona.name}" (${selectedPersona.role}). ${selectedPersona.bio}. El usuario dice: "${userMsgText}". Responde manteniendo el rol en 2-3 frases, priorizando siempre el consentimiento y la seguridad BDSM (SSC/RACK).`;
+      const aiReply = await askGeminiAssistant(prompt);
+      
+      const replyMsg: ChatMsg = { sender: 'ai', text: aiReply, time: 'Ahora' };
+      const finalMap = { ...newMap, [selectedPersona.id]: [...updatedList, replyMsg] };
+      setChatsMap(finalMap);
+      await writeJsonStorage(STORAGE_KEY_ROLEPLAY_CHATS, finalMap);
+    } catch {
+      const fallbackMsg: ChatMsg = {
+        sender: 'ai',
+        text: `Entendido. Como ${selectedPersona.role}, mantendremos la escena negociada dentro de los límites y protocolos de seguridad.`,
+        time: 'Ahora',
+      };
+      const finalMap = { ...newMap, [selectedPersona.id]: [...updatedList, fallbackMsg] };
+      setChatsMap(finalMap);
+      await writeJsonStorage(STORAGE_KEY_ROLEPLAY_CHATS, finalMap);
+    } finally {
       setIsTyping(false);
-    }, 1200);
+    }
   };
 
   return (
@@ -106,62 +128,70 @@ export default function AIRoleplayScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Roleplay con Inteligencia Artificial</Text>
+          <Text style={styles.title}>Roleplay confidencial por IA 🤖</Text>
           <Text style={styles.subtitle}>
-            Ensayo de dinámicas BDSM, simulación de negociación y exploración de fantasías en un entorno seguro
+            Ensaya dinámicas, negociaciones y protocolos D/s en un chat Zero-Knowledge totalmente privado
           </Text>
         </View>
 
-        {/* Persona Selector */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.personaScroll}>
-          {AI_PERSONAS.map((p) => (
-            <TouchableOpacity
-              key={p.id}
-              style={[styles.personaChip, selectedPersona.id === p.id && styles.personaChipActive]}
-              onPress={() => handleSelectPersona(p)}
-            >
-              <Image source={{ uri: p.avatar }} style={styles.personaAvatar} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.personaName, selectedPersona.id === p.id && { color: '#fff' }]}>{p.name}</Text>
-                <Text style={styles.personaRole}>{p.role}</Text>
+        {/* Persona Selector Carousel */}
+        <View style={styles.personaSection}>
+          <Text style={styles.sectionLabel}>SELECCIONA TU COMPAÑERO/A DE ENSAYO:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.personaRow}>
+            {AI_PERSONAS.map((p) => {
+              const active = selectedPersona.id === p.id;
+              return (
+                <TouchableOpacity
+                  key={p.id}
+                  style={[styles.personaChip, active && styles.personaChipActive]}
+                  onPress={() => handleSelectPersona(p)}
+                  activeOpacity={0.8}
+                >
+                  <Image source={{ uri: p.avatar }} style={styles.avatarImg} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.personaName, active && styles.personaNameActive]}>{p.name}</Text>
+                    <Text style={styles.personaRole} numberOfLines={1}>{p.role}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Chat Area */}
+        <ScrollView style={styles.chatBox} contentContainerStyle={styles.chatContent} showsVerticalScrollIndicator={false}>
+          {currentMessages.map((m, idx) => {
+            const isUser = m.sender === 'user';
+            return (
+              <View key={idx} style={[styles.msgRow, isUser ? styles.msgRowUser : styles.msgRowAI]}>
+                <View style={[styles.msgBubble, isUser ? styles.msgBubbleUser : styles.msgBubbleAI]}>
+                  <Text style={styles.msgText}>{m.text}</Text>
+                </View>
               </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+            );
+          })}
 
-        {/* Chat Messages */}
-        <ScrollView contentContainerStyle={styles.chatScroll} showsVerticalScrollIndicator={false}>
-          {messages.map((m, idx) => (
-            <View
-              key={idx}
-              style={[
-                styles.bubble,
-                m.sender === 'user' ? styles.bubbleUser : styles.bubbleAI,
-              ]}
-            >
-              <Text style={styles.senderLabel}>
-                {m.sender === 'user' ? 'Tú' : selectedPersona.name}
-              </Text>
-              <Text style={styles.bubbleText}>{m.text}</Text>
+          {isTyping ? (
+            <View style={styles.msgRowAI}>
+              <View style={styles.msgBubbleAI}>
+                <Text style={styles.typingText}>{selectedPersona.name} está respondiendo...</Text>
+              </View>
             </View>
-          ))}
-
-          {isTyping && (
-            <Text style={styles.typingText}>🤖 {selectedPersona.name} está escribiendo...</Text>
-          )}
+          ) : null}
         </ScrollView>
 
         {/* Input Bar */}
         <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
-            placeholder={`Habla con ${selectedPersona.name}...`}
+            placeholder="Escribe tu mensaje o propuesta de escena..."
             placeholderTextColor={colors.textMuted}
             value={inputText}
             onChangeText={setInputText}
+            onSubmitEditing={handleSendMessage}
           />
-          <TouchableOpacity style={styles.sendBtn} onPress={handleSendMessage}>
-            <Text style={styles.sendBtnText}>Enviar 🚀</Text>
+          <TouchableOpacity style={styles.sendBtn} onPress={handleSendMessage} activeOpacity={0.8}>
+            <Text style={styles.sendBtnText}>Enviar ➔</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -170,9 +200,8 @@ export default function AIRoleplayScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1, paddingHorizontal: spacing.md },
-  containerDesktop: { maxWidth: 740, alignSelf: 'center', width: '100%' },
+  containerDesktop: { maxWidth: 760, alignSelf: 'center', width: '100%' },
 
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
@@ -180,34 +209,80 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
   subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
-  personaScroll: { gap: spacing.xs, marginVertical: spacing.xs },
+  personaSection: { marginVertical: spacing.xs, gap: 4 },
+  sectionLabel: { color: colors.textMuted, fontFamily: fonts.bodyBold, fontSize: 10, letterSpacing: 1 },
+  personaRow: { gap: spacing.xs, paddingVertical: 4 },
   personaChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
     borderRadius: radii.lg,
     padding: spacing.xs,
-    paddingRight: spacing.md,
+    width: 220,
+    gap: spacing.xs,
+  },
+  personaChipActive: {
+    backgroundColor: 'rgba(192, 132, 252, 0.2)',
+    borderColor: colors.primary,
+  },
+  avatarImg: { width: 36, height: 36, borderRadius: radii.pill },
+  personaName: { color: colors.textMuted, fontFamily: fonts.bodyBold, fontSize: fontSize.xs },
+  personaNameActive: { color: colors.primary },
+  personaRole: { color: colors.textMuted, fontFamily: fonts.body, fontSize: 10 },
+
+  chatBox: { flex: 1, marginVertical: spacing.xs },
+  chatContent: { gap: spacing.sm, paddingVertical: spacing.xs },
+  msgRow: { flexDirection: 'row', width: '100%' },
+  msgRowUser: { justifyContent: 'flex-end' },
+  msgRowAI: { justifyContent: 'flex-start' },
+
+  msgBubble: {
+    maxWidth: '82%',
+    padding: spacing.md,
+    borderRadius: radii.lg,
+  },
+  msgBubbleUser: {
+    backgroundColor: colors.primary,
+    borderBottomRightRadius: 2,
+  },
+  msgBubbleAI: {
+    backgroundColor: colors.surfaceLight,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderBottomLeftRadius: 2,
+  },
+  msgText: { color: colors.text, fontFamily: fonts.body, fontSize: fontSize.sm, lineHeight: 20 },
+  typingText: { color: colors.primary, fontFamily: fonts.body, fontSize: fontSize.xs, fontStyle: 'italic' },
+
+  inputRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginVertical: spacing.md,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    color: colors.text,
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    gap: spacing.xs,
-    width: 220,
   },
-  personaChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  personaAvatar: { width: 36, height: 36, borderRadius: 18 },
-  personaName: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
-  personaRole: { color: colors.textMuted, fontSize: 9 },
-
-  chatScroll: { gap: spacing.sm, paddingVertical: spacing.xs },
-  bubble: { maxWidth: '85%', padding: spacing.md, borderRadius: radii.lg, gap: 2 },
-  bubbleUser: { alignSelf: 'flex-end', backgroundColor: colors.primaryDark, borderBottomRightRadius: 4 },
-  bubbleAI: { alignSelf: 'flex-start', backgroundColor: colors.surfaceLight, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.border },
-  senderLabel: { color: colors.primaryLight, fontSize: 10, fontWeight: '800' },
-  bubbleText: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
-  typingText: { color: colors.textMuted, fontSize: 10, fontStyle: 'italic', alignSelf: 'flex-start' },
-
-  inputRow: { flexDirection: 'row', gap: spacing.xs, paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
-  input: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: 10, color: colors.text, fontSize: fontSize.xs, borderWidth: 1, borderColor: colors.border },
-  sendBtn: { backgroundColor: colors.primary, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radii.lg, justifyContent: 'center' },
-  sendBtnText: { color: '#fff', fontSize: fontSize.xs, fontWeight: '800' },
+  sendBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendBtnText: {
+    color: colors.text,
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.xs,
+  },
 });

@@ -2,7 +2,7 @@
  * data/screenRegistry.ts — Screen Classification Registry (Tier 1.2)
  *
  * Classifies every screen as READY, PREVIEW, or STUB based on audit:
- * - READY:   Core invite → guest → report (+ vault / safety)
+ * - READY:   Core invite → guest → report (+ vault / safety / latex guide)
  * - PREVIEW: Suite / demo UI (not multi-device social)
  * - STUB:    Hidden from navigation
  *
@@ -36,6 +36,7 @@ export const SCREEN_REGISTRY: Record<string, ScreenClassification> = {
   '/glossary': { route: '/glossary', status: 'ready' },
   '/safety-guide': { route: '/safety-guide', status: 'ready' },
   '/privacy-policy': { route: '/privacy-policy', status: 'ready' },
+  '/latex-guide': { route: '/latex-guide', status: 'ready' },
 
   // ═══ PREVIEW / Demo local ═════════════════════════════════════════
   '/dating': { route: '/dating', status: 'preview', badge: 'Demo local' },
@@ -86,26 +87,33 @@ export const SCREEN_REGISTRY: Record<string, ScreenClassification> = {
   '/scene-ai': { route: '/scene-ai', status: 'stub', badge: '🔒 Próximamente' },
 };
 
-/** Get classification for a route. Returns 'ready' if not registered. */
 export function getScreenStatus(route: string): ScreenClassification {
-  return SCREEN_REGISTRY[route] || { route, status: 'ready' };
+  return SCREEN_REGISTRY[route] ?? { route, status: 'preview' };
 }
 
-/** Check if a screen should be visible in the module grid. */
 export function isScreenVisible(route: string): boolean {
-  const entry = SCREEN_REGISTRY[route];
-  if (!entry) return true;
-  return entry.status !== 'stub';
+  return getScreenStatus(route).status !== 'stub';
 }
 
-/** Get the badge text for a screen, if any. */
 export function getScreenBadge(route: string): string | undefined {
   return SCREEN_REGISTRY[route]?.badge;
 }
 
 export const SCREEN_STATS = {
-  ready: Object.values(SCREEN_REGISTRY).filter((s) => s.status === 'ready').length,
-  preview: Object.values(SCREEN_REGISTRY).filter((s) => s.status === 'preview').length,
-  stub: Object.values(SCREEN_REGISTRY).filter((s) => s.status === 'stub').length,
-  total: Object.keys(SCREEN_REGISTRY).length,
+  get ready() {
+    return Object.values(SCREEN_REGISTRY).filter((s) => s.status === 'ready').length;
+  },
+  get preview() {
+    return Object.values(SCREEN_REGISTRY).filter((s) => s.status === 'preview').length;
+  },
+  get stub() {
+    return Object.values(SCREEN_REGISTRY).filter((s) => s.status === 'stub').length;
+  },
+  get total() {
+    return Object.keys(SCREEN_REGISTRY).length;
+  },
+  get readyCount() { return this.ready; },
+  get previewCount() { return this.preview; },
+  get stubCount() { return this.stub; },
+  get totalCount() { return this.total; },
 };

@@ -6,6 +6,7 @@ import { NoxHost } from '@/components/nox';
 import { colors, fonts, fontSize, spacing, typography } from '@/constants/theme';
 import { UserProfile } from '@/types';
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
+import { GoogleAuthButton } from '@/components/GoogleAuthButton';
 import { useTranslation } from '@/lib/i18n';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 
@@ -58,7 +59,13 @@ export function HeroSection({
             : t('home.support_locked')
           : t('home.support_guest')}
       </Text>
+
       <View style={styles.ctaGroup}>
+        {/* Prominent Google Auth Button at top of Hero */}
+        <View style={{ marginBottom: spacing.xs }}>
+          <GoogleAuthButton />
+        </View>
+
         {loggedIn ? (
           <>
             <Button
