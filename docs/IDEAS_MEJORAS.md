@@ -24,10 +24,12 @@
 - Vista en `app/achievements.tsx` como pestaña extra "Ranking".
 - Datos agregados en Supabase con RLS estricto; nunca exponer contenido de sesiones.
 
-### G4 — Desafíos Diarios
-- Un reto pequeño nuevo cada día (ej. "Agrega un juguete a tu Gear Closet", "Lee una guía educativa").
-- Datos en `data/dailyChallenges.ts` con ciclo de 30 retos.
-- Notificación push a las 10:00 AM con el reto del día.
+### G4 — Desafíos Diarios ✅ [COMPLETADO]
+- Un reto pequeño nuevo cada día (ej. "Agrega un juguete a tu Gear Closet", "Lee una guía educativa", "Audita tus hard limits", "Aprende el término del día").
+- Datos en `data/dailyChallenges.ts` con ciclo de 31 retos clasificados en 5 categorías (Educación, Exploración, Comunicación, Seguridad & Consent, Gear & Deseos) con recompensas de XP (+50 a +100 XP).
+- Gestión en `lib/dailyChallenges.ts` con persistencia ZK, otorgamiento de XP al vínculo de pareja y mantenimiento de racha diaria.
+- Componente `components/gamification/DailyChallengeCard.tsx` integrado en el dashboard principal con microinteracciones y hápticos.
+- Notificación recordatoria configurable vía `lib/localNotifications.ts`.
 
 ### G5 — Sala de Trofeos (Trophy Room)
 - Pantalla visual con todos los logros desbloqueados en formato galería.
@@ -260,7 +262,7 @@
 | S4 | Modo Pasar y Jugar | Medio | Alto | ✅ Completado |
 | E3 | Glosario interactivo | Bajo | Medio | ✅ Completado |
 | G1 | Rachas de uso | Medio | Alto | ✅ Completado |
-| G4 | Desafíos diarios | Medio | Medio | 🟡 Media |
+| G4 | Desafíos diarios | Medio | Medio | ✅ Completado |
 | S1 | Cards compartibles | Medio | Alto | 🟡 Media |
 | P2 | Botón pánico FAB | Bajo | Alto | 🟡 Media |
 | P5 | Denuncias y Bloqueo Mutuo | Medio | Muy Alto | ✅ Completado |

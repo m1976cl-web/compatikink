@@ -5,6 +5,7 @@ import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { useHomeStore, HomeState } from '@/stores/homeStore';
 import { VaultSession } from '@/lib/cryptoVault';
 import { StreakBadgeWidget } from '@/components/gamification/StreakBadgeWidget';
+import { DailyChallengeCard } from '@/components/gamification/DailyChallengeCard';
 
 export function HeroDashboardBanner() {
   const router = useRouter();
@@ -51,6 +52,9 @@ export function HeroDashboardBanner() {
 
         {/* STREAK WIDGET */}
         <StreakBadgeWidget />
+
+        {/* DAILY CHALLENGE CARD (G4) */}
+        <DailyChallengeCard />
 
         {/* QUICK ACTIONS ROW */}
         <View style={styles.actionsRow}>

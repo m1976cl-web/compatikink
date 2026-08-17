@@ -26,6 +26,7 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] U2: Sistema integral de vibración y hápticos multi-nivel (selección, impacto, éxito, logros, ruleta y switch de preferencias)
 - [x] G1: Contador de rachas (Streaks) con llama dinámica, historial de 7 días, widget interactivo y logros por hitos (7d, 30d, 100d)
 - [x] P5: Sistema de Denuncias (Reports) y Bloqueo Mutuo Bidireccional (Mutual Block) en feed, dating y admin dashboard
+- [x] G4: Desafíos diarios (ciclo de 31 retos, 5 categorías, recompensas de XP, widget en dashboard, persistencia ZK y notificación)
 - [ ] P3-1 Onboarding Wizard interactivo
 - [ ] P3-2 Sistema de Badges y ranking
 - [ ] P3-3 Galería de fotos y comparador de juguetes

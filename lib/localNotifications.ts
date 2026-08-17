@@ -148,3 +148,15 @@ export async function clearAllLocalNotifications(): Promise<void> {
     await AsyncStorage.removeItem(NOTIFICATIONS_STORAGE_KEY);
   } catch {}
 }
+
+/**
+ * Schedules a reminder notification for today's daily challenge.
+ */
+export async function scheduleDailyChallengeNotification(challengeTitle: string): Promise<string> {
+  return scheduleLocalNotification(
+    '🎯 Reto Íntimo del Día Disponible',
+    `Hoy toca: "${challengeTitle}". ¡Complétalo para sumar XP y mantener tu racha!`,
+    60,
+    'daily_task'
+  );
+}
