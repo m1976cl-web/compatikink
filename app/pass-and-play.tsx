@@ -20,6 +20,7 @@ import { PassAndPlaySetup } from '@/components/pass-and-play/PassAndPlaySetup';
 import { PassAndPlayQuestionsStep } from '@/components/pass-and-play/PassAndPlayQuestionsStep';
 import { PassAndPlayCurtain } from '@/components/pass-and-play/PassAndPlayCurtain';
 import { IntimacyQuestions36Step } from '@/components/pass-and-play/IntimacyQuestions36Step';
+import { ReportAnalysisLoader } from '@/components/feedback/ReportAnalysisLoader';
 
 const STORAGE_KEY_INTIMACY_36 = 'intimacy_36_progress_v1';
 
@@ -28,10 +29,11 @@ export default function PassAndPlayScreen() {
   const { isDesktop } = useResponsive();
 
   const [mode, setMode] = useState<'compat_test' | '36_questions'>('compat_test');
-  const [step, setStep] = useState<'p1_setup' | 'p1_questions' | 'curtain' | 'p2_questions'>('p1_setup');
+  const [step, setStep] = useState<'p1_setup' | 'p1_questions' | 'curtain' | 'p2_questions' | 'analyzing'>('p1_setup');
   const [questionMode, setQuestionMode] = useState<'express' | 'full'>('express');
   const [curtainPin, setCurtainPin] = useState('');
-  
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+
   // 36 Questions Progress State
   const [q36Index, setQ36Index] = useState(0);
 
@@ -87,7 +89,8 @@ export default function PassAndPlayScreen() {
     if (p2Index < activitiesList.length - 1) {
       setP2Index((i) => i + 1);
     } else {
-      // Both finished! Create ZK session and jump to report
+      // Both finished! Show analysis loader and generate local ZK session
+      setStep('analyzing');
       try {
         const finalP1 = Object.values(p1Responses);
         const finalP2 = Object.values(newP2);
@@ -103,12 +106,17 @@ export default function PassAndPlayScreen() {
         }
 
         await saveGuestProfile(session.id, { nickname: p2Name, notes: '' });
-
-        Alert.alert('¡Cuestionario Presencial Completado! 🎉', 'Generando reporte de compatibilidad en pantalla...');
-        router.replace({ pathname: '/report', params: { token: session.initiatorToken } });
+        setSessionToken(session.initiatorToken);
       } catch {
         Alert.alert('Error', 'No se pudo generar la sesión presencial.');
+        setStep('p1_setup');
       }
+    }
+  };
+
+  const handleAnalysisComplete = () => {
+    if (sessionToken) {
+      router.replace({ pathname: '/report', params: { token: sessionToken } });
     }
   };
 
@@ -118,41 +126,51 @@ export default function PassAndPlayScreen() {
   return (
     <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>← Volver</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Modo Presencial (Mismo Teléfono)</Text>
-          <Text style={styles.subtitle}>
-            Turnos alternados en un solo dispositivo con cortina de privacidad entre personas
-          </Text>
-        </View>
+        {/* Header (hidden during analysis) */}
+        {step !== 'analyzing' ? (
+          <>
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <Text style={styles.backBtnText}>← Volver</Text>
+              </TouchableOpacity>
+              <Text style={styles.title}>Modo Presencial (Mismo Teléfono)</Text>
+              <Text style={styles.subtitle}>
+                Turnos alternados en un solo dispositivo con cortina de privacidad entre personas
+              </Text>
+            </View>
 
-        {/* Mode Selector Tabs */}
-        <View style={styles.tabsRow}>
-          <TouchableOpacity
-            style={[styles.tab, mode === 'compat_test' && styles.tabActive]}
-            onPress={() => setMode('compat_test')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.tabText, mode === 'compat_test' && styles.tabTextActive]}>
-              📱 Test de Compatibilidad
-            </Text>
-          </TouchableOpacity>
+            {/* Mode Selector Tabs */}
+            <View style={styles.tabsRow}>
+              <TouchableOpacity
+                style={[styles.tab, mode === 'compat_test' && styles.tabActive]}
+                onPress={() => setMode('compat_test')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.tabText, mode === 'compat_test' && styles.tabTextActive]}>
+                  📱 Test de Compatibilidad
+                </Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.tab, mode === '36_questions' && styles.tabActive]}
-            onPress={() => setMode('36_questions')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.tabText, mode === '36_questions' && styles.tabTextActive]}>
-              💬 36 Preguntas Íntimas
-            </Text>
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity
+                style={[styles.tab, mode === '36_questions' && styles.tabActive]}
+                onPress={() => setMode('36_questions')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.tabText, mode === '36_questions' && styles.tabTextActive]}>
+                  💬 36 Preguntas Íntimas
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : null}
 
-        {mode === '36_questions' ? (
+        {step === 'analyzing' ? (
+          <ReportAnalysisLoader
+            initiatorName={p1Name}
+            guestName={p2Name}
+            onAnimationComplete={handleAnalysisComplete}
+          />
+        ) : mode === '36_questions' ? (
           <IntimacyQuestions36Step
             q36Index={q36Index}
             onNextQ36={handleNextQ36}

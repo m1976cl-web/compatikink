@@ -53,10 +53,10 @@
 - Contenido curado por el equipo inicialmente (no UGC).
 - Títulos de hilos: "Mi primera vez con límites", "Aftercare que funcionó", etc.
 
-### S4 — Modo Pasar y Jugar (Pass and Play)
-- La pantalla `app/pass-and-play.tsx` (ya existe como stub) se convierte en un modo donde dos personas usan el **mismo dispositivo** alternativamente.
-- Sin necesidad de dos cuentas ni invitación. Ideal para primeras exploraciones.
-- Datos locales cifrados con DEK del dispositivo.
+### S4 — Modo Pasar y Jugar (Pass and Play) ✅ [COMPLETADO]
+- La pantalla `app/pass-and-play.tsx` se convierte en un modo donde dos personas usan el **mismo dispositivo** alternativamente con cortina de privacidad.
+- Sin necesidad de dos cuentas ni invitación. Ideal para primeras exploraciones presenciales.
+- Datos locales cifrados con DEK del dispositivo y generación inmediata del reporte.
 
 ### S5 — Widget de "Compatibilidad del Día"
 - Para iOS 17+ / Android: un widget pequeño que muestre un consejo diario basado en el último reporte.
@@ -76,10 +76,10 @@
 - `components/education/TechniqueGuide.tsx` con pasos numerados, imágenes y advertencias de seguridad.
 - Datos en `data/techniqueGuides.ts`.
 
-### E3 — Glosario Interactivo
-- La pantalla `app/glossary.tsx` mejorada con búsqueda, favoritos y "Término del Día".
-- Al tocar un término, muestra definición completa + términos relacionados.
-- "Término del Día" en pantalla de inicio como módulo pequeño.
+### E3 — Glosario Interactivo ✅ [COMPLETADO]
+- La pantalla `app/glossary.tsx` cuenta con búsqueda en tiempo real, favoritos/bookmarks ZK persistentes y "Término del Día" con destacados.
+- Al tocar un término, despliega definición extendida, consejos de seguridad/anatomía y términos relacionados interactivos.
+- Mini-Quiz de 3 preguntas integrado directamente para poner a prueba el aprendizaje.
 
 ### E4 — Tests de Conocimiento (Quiz Mode)
 - Quiz de 5 preguntas sobre BDSM, seguridad y consentimiento.
@@ -132,14 +132,14 @@
 - Alto contraste automático al seleccionar tema claro.
 - Compatible con VoiceOver / TalkBack (etiquetas `accessibilityLabel` en todos los botones).
 
-### U4 — Barra de Progreso del Cuestionario Mejorada
+### U4 — Barra de Progreso del Cuestionario Mejorada ✅ [COMPLETADO]
 - Progreso visual con animación fluida + texto "Pregunta X de Y" + tiempo estimado restante.
-- Indicar categoría actual (Roles, Limites, Experiencias...) con color distintivo.
+- Indicar categoría actual (Roles, Limites, Experiencias...) con badge e insignia de color temático distintivo.
 
-### U5 — Microinteracciones de Feedback
-- Al responder cada pregunta: animación de check + color de fondo brief.
-- Al generar reporte: cuenta regresiva animada ("Analizando compatibilidad...").
-- Al recibir badge: confetti + sound (opcional, desactivable).
+### U5 — Microinteracciones de Feedback ✅ [COMPLETADO]
+- Al responder cada pregunta: animación de rebote táctil en RatingPicker + checkmark activo.
+- Al generar reporte: pantalla de análisis animada (`ReportAnalysisLoader`) con fases ZK y cálculo de compatibilidad en tiempo real.
+- Micro-animaciones en componentes clave.
 
 ### U6 — Pantalla de Inicio Personalizada
 - El home muestra: nombre del usuario, racha actual, último logro, reporte reciente.
@@ -242,10 +242,10 @@
 
 | ID | Mejora | Esfuerzo | Impacto | Prioridad |
 |----|--------|----------|---------|-----------|
-| U4 | Barra de progreso cuestionario | Bajo | Alto | 🔴 Alta |
-| U5 | Microinteracciones feedback | Bajo | Alto | 🔴 Alta |
-| S4 | Modo Pasar y Jugar | Medio | Alto | 🔴 Alta |
-| E3 | Glosario interactivo | Bajo | Medio | 🟡 Media |
+| U4 | Barra de progreso cuestionario | Bajo | Alto | ✅ Completado |
+| U5 | Microinteracciones feedback | Bajo | Alto | ✅ Completado |
+| S4 | Modo Pasar y Jugar | Medio | Alto | ✅ Completado |
+| E3 | Glosario interactivo | Bajo | Medio | ✅ Completado |
 | G1 | Rachas de uso | Medio | Alto | 🟡 Media |
 | G4 | Desafíos diarios | Medio | Medio | 🟡 Media |
 | S1 | Cards compartibles | Medio | Alto | 🟡 Media |

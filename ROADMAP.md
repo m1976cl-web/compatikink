@@ -19,6 +19,10 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] Expansiones de contenido P0-P2 (36 preguntas intimidad, 42 ruleta, 31 actos diarios, 15 rituales, 161 actividades, 85 glosario)
 - [x] Radar Chart SVG en reporte de compatibilidad
 - [x] Gear Closet con fotos, wishlist y compatibilidad de juguetes
+- [x] U4: Barra de progreso de cuestionario animada con insignias de categoría y tiempo estimado
+- [x] U5: Microinteracciones de feedback (animaciones en RatingPicker y ReportAnalysisLoader para generación de reporte)
+- [x] S4: Modo Pasar y Jugar presencial (Pass and Play) con turnos alternados, cortina de privacidad y reporte inmediato
+- [x] E3: Glosario Interactivo (Término del Día, 5 categorías, favoritos/bookmarks ZK, términos relacionados y mini-quiz)
 - [ ] P3-1 Onboarding Wizard interactivo
 - [ ] P3-2 Sistema de Badges y ranking
 - [ ] P3-3 Galería de fotos y comparador de juguetes

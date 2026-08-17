@@ -15,6 +15,7 @@ import { RatingPicker } from '@/components/RatingPicker';
 import { RolePicker } from '@/components/RolePicker';
 import { IntensityPicker } from '@/components/IntensityPicker';
 import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
+import { QuestionnaireProgressBar } from '@/components/QuestionnaireProgressBar';
 import { SwipeDeckView } from '@/components/SwipeDeckView';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
@@ -146,10 +147,13 @@ export function QuestionnaireQuestionsStep({
             </View>
           </View>
 
-          <ProgressBar progress={q.progress} />
-          <ProgressLabel current={q.currentIndex + 1} total={q.total} />
+          <QuestionnaireProgressBar
+            current={q.currentIndex + 1}
+            total={q.total}
+            category={q.currentActivity.category}
+            showTimeEstimate
+          />
 
-          <Text style={styles.category}>{getCategoryLabel(q.currentActivity.category)}</Text>
           <Text style={styles.activityName}>{getActivityName(q.currentActivity)}</Text>
           <Text style={styles.description}>{getActivityDescription(q.currentActivity)}</Text>
 

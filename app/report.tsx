@@ -13,6 +13,7 @@ import { SceneTimerModal } from '@/components/SceneTimerModal';
 import { SceneDebriefModal } from '@/components/SceneDebriefModal';
 import { ConversationGuideModal } from '@/components/ConversationGuideModal';
 import { SkeletonCardGroup } from '@/components/SkeletonLoader';
+import { ReportAnalysisLoader } from '@/components/feedback/ReportAnalysisLoader';
 import { NoxHost } from '@/components/nox';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -221,10 +222,10 @@ export default function ReportScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
-        <View style={[styles.center, { padding: 16 }]}>
-          <Text style={[styles.muted, { marginBottom: 12 }]}>⚡ Generando reporte cifrado ZK…</Text>
-          <SkeletonCardGroup />
-        </View>
+        <ReportAnalysisLoader
+          initiatorName="Tú"
+          guestName={guestName || 'Pareja'}
+        />
       </SafeAreaView>
     );
   }

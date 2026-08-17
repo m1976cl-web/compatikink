@@ -26,6 +26,7 @@ export interface GearItem {
 
 const CUSTOM_ACTIVITIES_KEY = 'custom_activities_list';
 const MANUAL_BOOKMARKS_KEY = 'manual_bookmarked_modules_v1';
+const GLOSSARY_BOOKMARKS_KEY = 'glossary_bookmarked_terms_v1';
 const WISHLIST_KEY = 'user_wishlist_items';
 const DATING_MESSAGES_KEY = 'dating_direct_messages';
 const GEAR_ITEMS_KEY = 'user_gear_inventory';
@@ -66,6 +67,23 @@ export async function toggleManualBookmark(moduleId: string): Promise<string[]> 
 export async function isManualBookmarked(moduleId: string): Promise<boolean> {
   const bookmarks = await loadManualBookmarks();
   return bookmarks.includes(moduleId);
+}
+
+export async function loadGlossaryBookmarks(): Promise<string[]> {
+  return readJsonStorage<string[]>(GLOSSARY_BOOKMARKS_KEY, []);
+}
+
+export async function toggleGlossaryBookmark(term: string): Promise<string[]> {
+  const bookmarks = await loadGlossaryBookmarks();
+  const exists = bookmarks.includes(term);
+  const updated = exists ? bookmarks.filter((t) => t !== term) : [...bookmarks, term];
+  await writeJsonStorage(GLOSSARY_BOOKMARKS_KEY, updated);
+  return updated;
+}
+
+export async function isGlossaryBookmarked(term: string): Promise<boolean> {
+  const bookmarks = await loadGlossaryBookmarks();
+  return bookmarks.includes(term);
 }
 
 export async function getWishlist(): Promise<WishlistItem[]> {
