@@ -6,6 +6,7 @@ import { loginProfile, logoutProfile } from '@/lib/storage';
 import { notify } from '@/lib/notify';
 import { colors, fonts, spacing } from '@/constants/theme';
 import { GoogleAuthButton } from '@/components/GoogleAuthButton';
+import { StreakBadgeWidget } from '@/components/gamification/StreakBadgeWidget';
 import { useTranslation } from '@/lib/i18n';
 
 export function ProfileBar() {
@@ -39,6 +40,7 @@ export function ProfileBar() {
       <View style={styles.container}>
         <View style={styles.profileRow}>
           <Text style={styles.greeting}>{t('home.hello', { name: profile.nickname })}</Text>
+          <StreakBadgeWidget compact />
           {profile.isLocalAdmin ? (
             <View style={styles.adminBadge}>
               <Text style={styles.adminBadgeText}>👑 ADMINISTRADOR</Text>

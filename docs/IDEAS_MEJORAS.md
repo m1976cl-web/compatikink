@@ -8,11 +8,11 @@
 
 ## 🎮 Experiencia de Juego (Gamificación Profunda)
 
-### G1 — Rachas (Streaks) de Uso
-- Contador de días consecutivos usando la app.
-- Visual tipo "llama" que crece con los días.
-- Premiado con badge exclusivo al llegar a 7, 30 y 100 días.
-- Implementar en `lib/streaks.ts` + `profileStorage`.
+### G1 — Rachas (Streaks) de Uso ✅ [COMPLETADO]
+- Contador de días consecutivos de actividad y conexión.
+- Llama visual animada con estados progresivos (`🌱`, `🔥`, `⚡🔥`, `🌟🔥`, `💜🔥`, `👑🔥`, `✨🔥👑`).
+- Widget con visualización de los últimos 7 días e insignias por hitos a los 7, 30 y 100 días integradas en el sistema de logros.
+- Implementado en `lib/streaks.ts` y componentes `StreakBadgeWidget.tsx`.
 
 ### G2 — Modo Reto de Pareja (Partner Challenge)
 - Desde el reporte de compatibilidad, proponer un "Reto de la Semana" generado automáticamente según los matches.
@@ -246,7 +246,7 @@
 | U5 | Microinteracciones feedback | Bajo | Alto | ✅ Completado |
 | S4 | Modo Pasar y Jugar | Medio | Alto | ✅ Completado |
 | E3 | Glosario interactivo | Bajo | Medio | ✅ Completado |
-| G1 | Rachas de uso | Medio | Alto | 🟡 Media |
+| G1 | Rachas de uso | Medio | Alto | ✅ Completado |
 | G4 | Desafíos diarios | Medio | Medio | 🟡 Media |
 | S1 | Cards compartibles | Medio | Alto | 🟡 Media |
 | P2 | Botón pánico FAB | Bajo | Alto | 🟡 Media |

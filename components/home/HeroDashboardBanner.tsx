@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { useHomeStore, HomeState } from '@/stores/homeStore';
 import { VaultSession } from '@/lib/cryptoVault';
+import { StreakBadgeWidget } from '@/components/gamification/StreakBadgeWidget';
 
 export function HeroDashboardBanner() {
   const router = useRouter();
@@ -47,6 +48,9 @@ export function HeroDashboardBanner() {
             Exploración de compatibilidad íntima asimétrica, consentida y con cifrado Zero-Knowledge.
           </Text>
         </View>
+
+        {/* STREAK WIDGET */}
+        <StreakBadgeWidget />
 
         {/* QUICK ACTIONS ROW */}
         <View style={styles.actionsRow}>

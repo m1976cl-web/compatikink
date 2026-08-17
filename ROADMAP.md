@@ -24,6 +24,7 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] S4: Modo Pasar y Jugar presencial (Pass and Play) con turnos alternados, cortina de privacidad y reporte inmediato
 - [x] E3: Glosario Interactivo (Término del Día, 5 categorías, favoritos/bookmarks ZK, términos relacionados y mini-quiz)
 - [x] U2: Sistema integral de vibración y hápticos multi-nivel (selección, impacto, éxito, logros, ruleta y switch de preferencias)
+- [x] G1: Contador de rachas (Streaks) con llama dinámica, historial de 7 días, widget interactivo y logros por hitos (7d, 30d, 100d)
 - [ ] P3-1 Onboarding Wizard interactivo
 - [ ] P3-2 Sistema de Badges y ranking
 - [ ] P3-3 Galería de fotos y comparador de juguetes

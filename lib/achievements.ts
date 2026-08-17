@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCurrentProfile, listMyLocalSessions, getWishlist, getGearItems } from './storage';
 import { getPartnerLinks, getJournalEntries } from './partnerJournal';
+import { getStreakData } from './streaks';
 import { triggerSuccessHaptic } from './haptics';
 
 export type AchievementCategory =
@@ -251,6 +252,36 @@ export const ALL_ACHIEVEMENTS: Omit<Achievement, 'unlocked'>[] = [
     description: 'Desbloquear 10 o más insignias en tu trayectoria kink.',
     flavorText: 'Incoronación oficial por Nox el Pulpo de Látex. ¡Respeto total!',
   },
+  {
+    id: 'streak_7_days',
+    title: 'Racha de Fuego (7 Días) 🔥',
+    emoji: '🔥',
+    category: 'community_legend',
+    rarity: 'rare',
+    glowColor: '#fb923c',
+    description: 'Mantener 7 días consecutivos de exploración o actividad en la app.',
+    flavorText: 'La chispa se convirtió en llama constante de complicidad.',
+  },
+  {
+    id: 'streak_30_days',
+    title: 'Maestro/a de Racha (30 Días) 👑',
+    emoji: '👑',
+    category: 'community_legend',
+    rarity: 'epic',
+    glowColor: '#c084fc',
+    description: 'Completar 30 días seguidos de conexión, diarios o retos.',
+    flavorText: 'Un mes ininterrumpido construyendo intimidad y confianza.',
+  },
+  {
+    id: 'streak_100_days',
+    title: 'Leyenda de 100 Días ✨',
+    emoji: '✨',
+    category: 'community_legend',
+    rarity: 'legendary',
+    glowColor: '#fbbf24',
+    description: 'Alcanzar el hito supremo de 100 días de racha activa.',
+    flavorText: 'Tu dedicación trasciende el tiempo y entra en los anales del Noir.',
+  },
 ];
 
 export async function getUnlockedAchievements(): Promise<string[]> {
@@ -266,8 +297,15 @@ export async function checkAndUnlockAchievements(): Promise<Achievement[]> {
   const gear = await getGearItems();
   const links = await getPartnerLinks();
   const journal = await getJournalEntries();
+  const streak = await getStreakData();
 
   const newUnlocked = [...unlocked];
+
+  if (streak) {
+    if (streak.currentStreak >= 7 || streak.longestStreak >= 7) newUnlocked.push('streak_7_days');
+    if (streak.currentStreak >= 30 || streak.longestStreak >= 30) newUnlocked.push('streak_30_days');
+    if (streak.currentStreak >= 100 || streak.longestStreak >= 100) newUnlocked.push('streak_100_days');
+  }
 
   if (profile) {
     newUnlocked.push('safeword_sentinel');
