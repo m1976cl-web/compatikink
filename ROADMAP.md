@@ -25,6 +25,7 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] E3: Glosario Interactivo (Término del Día, 5 categorías, favoritos/bookmarks ZK, términos relacionados y mini-quiz)
 - [x] U2: Sistema integral de vibración y hápticos multi-nivel (selección, impacto, éxito, logros, ruleta y switch de preferencias)
 - [x] G1: Contador de rachas (Streaks) con llama dinámica, historial de 7 días, widget interactivo y logros por hitos (7d, 30d, 100d)
+- [x] P5: Sistema de Denuncias (Reports) y Bloqueo Mutuo Bidireccional (Mutual Block) en feed, dating y admin dashboard
 - [ ] P3-1 Onboarding Wizard interactivo
 - [ ] P3-2 Sistema de Badges y ranking
 - [ ] P3-3 Galería de fotos y comparador de juguetes
@@ -51,9 +52,9 @@ Ver [`docs/PUBLIC_PROFILE_VS_VAULT.md`](./docs/PUBLIC_PROFILE_VS_VAULT.md):
 - [ ] CTA “Invitar a comparar” → `create_zk_session` existente  
 - [ ] DM E2E (solo ciphertext en servidor)  
 - [ ] Media cifrada (Storage + share con secreto) + política 18+  
-- [ ] **Trust & Safety / Moderación**:
-  - [ ] Sistema de **Denuncias (Reports)** para usuario específico, posteo de feed o mensaje directo (con tipificación de motivos y cola de moderación).
-  - [ ] Sistema de **Bloqueo Mutuo Bidireccional (Mutual Block)**: el usuario bloqueado no puede ver el perfil de quien lo bloqueó y se bloquea recíprocamente la mensajería, invitaciones y visibilidad de posteos.  
+- [x] **Trust & Safety / Moderación (P5)**:
+  - [x] Sistema de **Denuncias (Reports)** para usuario específico, posteo de feed o mensaje directo (con tipificación de motivos y cola de moderación).
+  - [x] Sistema de **Bloqueo Mutuo Bidireccional (Mutual Block)**: el usuario bloqueado no puede ver el perfil de quien lo bloqueó y se bloquea recíprocamente la mensajería, invitaciones y visibilidad de posteos.  
 
 ---
 

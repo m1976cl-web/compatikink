@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -37,6 +37,11 @@ import { VirtualDateModal } from '@/components/profile/VirtualDateModal';
 import { DirectComparisonModal } from '@/components/profile/DirectComparisonModal';
 
 import { toggleBlindCrush, getCrushStatus } from '@/lib/blindCrushManager';
+import { BlockedUser, getBlockedUsers, filterBlockedItems } from '@/lib/trustSafety';
+import { ReportContentModal } from '@/components/safety/ReportContentModal';
+import { BlockUserModal } from '@/components/safety/BlockUserModal';
+import { BlockedUsersManagerModal } from '@/components/safety/BlockedUsersManagerModal';
+import { triggerLightHaptic } from '@/lib/haptics';
 
 import { RouteFeatureGuard } from '@/components/RouteFeatureGuard';
 
@@ -59,6 +64,31 @@ function DatingScreenContent() {
   const [virtualDateTarget, setVirtualDateTarget] = useState<CommunityProfile | null>(null);
   const [comparisonTarget, setComparisonTarget] = useState<CommunityProfile | null>(null);
   const [crushStateMap, setCrushStateMap] = useState<Record<string, { hasCrush: boolean; isMutual: boolean }>>({});
+
+  // Trust & Safety State
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+  const [reportModalData, setReportModalData] = useState<{
+    targetType: 'user';
+    targetId: string;
+    targetAuthorName?: string;
+    targetPreviewText?: string;
+  } | null>(null);
+
+  const [blockModalData, setBlockModalData] = useState<{
+    targetUserId: string;
+    targetUserNickname: string;
+  } | null>(null);
+
+  const [showBlockedManager, setShowBlockedManager] = useState(false);
+
+  const loadBlockedList = useCallback(async () => {
+    const list = await getBlockedUsers();
+    setBlockedUsers(list);
+  }, []);
+
+  useEffect(() => {
+    loadBlockedList();
+  }, [loadBlockedList]);
 
   useEffect(() => {
     (async () => {
@@ -109,62 +139,63 @@ function DatingScreenContent() {
       let mutualNames: string[] = p.topKinks;
 
       if (myResponses.length > 0) {
-        const report = generateReport('dating_sim', myResponses, p.baseResponses, profile ?? undefined, p);
-        baseScore = report.compatibilityScore;
-        const filteredMatches = report.items
-          .filter((i) => i.section === 'mutual_match' || i.section === 'explore_together')
-          .map((i) => i.activityName);
-        if (filteredMatches.length > 0) {
-          mutualNames = filteredMatches;
+        try {
+          const report = generateReport('local-dating-preview', myResponses, p.baseResponses || []);
+          baseScore = report.compatibilityScore;
+          mutualNames = report.items
+            .filter((i) => i.section === 'mutual_match')
+            .map((i) => i.activityName);
+        } catch {
+          baseScore = 70;
         }
       }
 
-      // Calculate role complementarity score
       const roleScore = calculateRoleComplementarityScore(myRole, p.role || 'Switch');
-      const combinedScore = Math.round(baseScore * 0.6 + roleScore * 0.4);
+      const finalScore = Math.round(baseScore * 0.7 + roleScore * 0.3);
 
       return {
         profile: p,
-        score: combinedScore,
+        score: finalScore,
         roleScore,
         mutualMatches: mutualNames,
       };
-    }).sort((a, b) => b.score - a.score);
+    });
   }, [profile]);
 
+  // Filter blocked profiles and apply search / role filters
   const filtered = useMemo(() => {
-    return rankedProfiles.filter(({ profile: p, score }) => {
+    const unblocked = filterBlockedItems(
+      rankedProfiles.map((r) => ({
+        ...r,
+        nickname: r.profile.nickname,
+        id: r.profile.id,
+      })),
+      blockedUsers
+    );
+
+    return unblocked.filter(({ profile: p, score }) => {
       if (score < minScoreFilter) return false;
-
-      if (selectedRoleFilter !== 'all') {
-        const pRole = (p.role || '').toLowerCase();
-        const target = selectedRoleFilter.toLowerCase();
-        if (!pRole.includes(target)) return false;
-      }
-
-      if (fetlifeRoleFilter !== 'all') {
-        const q = fetlifeRoleFilter.toLowerCase();
-        const matchesRole = (p.bio || '').toLowerCase().includes(q) || p.topKinks.some((k) => k.toLowerCase().includes(q));
-        if (!matchesRole) return false;
-      }
+      if (selectedRoleFilter !== 'all' && p.role?.toLowerCase() !== selectedRoleFilter.toLowerCase()) return false;
+      if (fetlifeRoleFilter !== 'all' && p.role?.toLowerCase() !== fetlifeRoleFilter.toLowerCase()) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchesName = p.nickname.toLowerCase().includes(q);
-        const matchesBio = p.bio.toLowerCase().includes(q);
-        const matchesKinks = p.topKinks.some((k) => k.toLowerCase().includes(q));
-        const matchesBadges = (p.fetishBadges || []).some((b) => b.label.toLowerCase().includes(q));
-        if (!matchesName && !matchesBio && !matchesKinks && !matchesBadges) return false;
+        const matchNick = p.nickname.toLowerCase().includes(q);
+        const matchBio = p.bio.toLowerCase().includes(q);
+        const matchKink = p.topKinks.some((k) => k.toLowerCase().includes(q));
+        const matchFetish = p.fetishBadges?.some((b) => b.label.toLowerCase().includes(q));
+        if (!matchNick && !matchBio && !matchKink && !matchFetish) return false;
       }
+
       return true;
     });
-  }, [rankedProfiles, minScoreFilter, selectedRoleFilter, fetlifeRoleFilter, searchQuery]);
+  }, [rankedProfiles, blockedUsers, minScoreFilter, selectedRoleFilter, fetlifeRoleFilter, searchQuery]);
 
   const handleStartSessionWithProfile = async (target: CommunityProfile) => {
-    if (!profile || !profile.baseResponses || profile.baseResponses.length === 0) {
+    if (!profile) {
       Alert.alert(
-        'Completa tu Cuestionario Base',
-        'Debes responder tu cuestionario primero para comparar compatibilidad real con perfiles.',
+        'Perfil Incompleto',
+        'Crea tu perfil y responde el cuestionario base para comparar tu compatibilidad.',
         [
           { text: 'Ir al Cuestionario', onPress: () => router.push('/questionnaire') },
           { text: 'Cancelar', style: 'cancel' },
@@ -174,12 +205,12 @@ function DatingScreenContent() {
     }
 
     try {
-      const session = await createLocalSession(profile.nickname, profile.baseResponses, profile);
+      const session = await createLocalSession(profile.nickname, profile.baseResponses || [], profile);
       const { saveLocalSessions, loadLocalSessions } = await import('@/lib/storage');
       const sessions = await loadLocalSessions();
       if (sessions[session.id]) {
         sessions[session.id].guestNickname = target.nickname;
-        sessions[session.id].guestProfile = target;
+        sessions[session.id].guestProfile = target as any;
         sessions[session.id].guestResponses = target.baseResponses;
         sessions[session.id].status = 'complete';
         sessions[session.id].completedAt = new Date().toISOString();
@@ -254,9 +285,25 @@ function DatingScreenContent() {
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>← Volver</Text>
-          </TouchableOpacity>
+          <View style={styles.headerTopRow}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <Text style={styles.backBtnText}>← Volver</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.safetyBtn}
+              onPress={() => {
+                triggerLightHaptic();
+                setShowBlockedManager(true);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.safetyBtnText}>
+                🛡️ Bloqueados ({blockedUsers.length})
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <Text style={styles.title}>Fetish Social & Dating Suite</Text>
           <Text style={styles.subtitle}>
             Buscador por roles (Dom/Sub/Switch), insignias fetichistas, protocolos SSC/RACK y mensajería cifrada
@@ -312,6 +359,20 @@ function DatingScreenContent() {
                 onOpenChat={handleOpenChat}
                 onToggleCrush={handleToggleCrush}
                 onOpenAuthorizedMedia={(p) => setMediaTarget(p)}
+                onReport={(p) =>
+                  setReportModalData({
+                    targetType: 'user',
+                    targetId: p.id,
+                    targetAuthorName: p.nickname,
+                    targetPreviewText: p.bio,
+                  })
+                }
+                onBlock={(p) =>
+                  setBlockModalData({
+                    targetUserId: p.id,
+                    targetUserNickname: p.nickname,
+                  })
+                }
               />
             );
           })}
@@ -338,97 +399,135 @@ function DatingScreenContent() {
         />
 
         {/* Authorized ZK Media Gallery Modal */}
-        <AuthorizedMediaGallery
-          visible={!!mediaTarget}
-          targetProfileNickname={mediaTarget?.nickname || ''}
-          currentProfileNickname={profile?.nickname || 'Usuario'}
-          onClose={() => setMediaTarget(null)}
-        />
+        {mediaTarget && profile ? (
+          <AuthorizedMediaGallery
+            visible={!!mediaTarget}
+            targetProfileNickname={mediaTarget.nickname}
+            currentProfileNickname={profile.nickname}
+            onClose={() => setMediaTarget(null)}
+          />
+        ) : null}
 
-        {/* Mutual Crush Match Celebration Modal */}
-        <CrushMatchModal
-          visible={!!crushMatchTarget}
-          targetNickname={crushMatchTarget?.nickname || ''}
-          onStartVirtualDate={() => {
-            const target = crushMatchTarget;
-            setCrushMatchTarget(null);
-            if (target) setVirtualDateTarget(target);
-          }}
-          onClose={() => setCrushMatchTarget(null)}
-        />
+        {/* Crush Match Modal */}
+        {crushMatchTarget ? (
+          <CrushMatchModal
+            visible={!!crushMatchTarget}
+            targetNickname={crushMatchTarget.nickname}
+            onStartVirtualDate={() => {
+              const t = crushMatchTarget;
+              setCrushMatchTarget(null);
+              setVirtualDateTarget(t);
+            }}
+            onClose={() => setCrushMatchTarget(null)}
+          />
+        ) : null}
 
-        {/* Guided Virtual Date Session Modal */}
-        <VirtualDateModal
-          visible={!!virtualDateTarget}
-          targetNickname={virtualDateTarget?.nickname || ''}
-          onClose={() => setVirtualDateTarget(null)}
-        />
+        {/* Virtual Date Simulator Modal */}
+        {virtualDateTarget ? (
+          <VirtualDateModal
+            visible={!!virtualDateTarget}
+            targetNickname={virtualDateTarget.nickname}
+            onClose={() => setVirtualDateTarget(null)}
+          />
+        ) : null}
 
-        {/* Direct Comparison Modal (Comparate Conmigo) */}
+        {/* Direct Comparison Modal */}
         {comparisonTarget && profile ? (
           <DirectComparisonModal
             visible={!!comparisonTarget}
-            targetProfile={comparisonTarget}
+            targetProfile={comparisonTarget as any}
             currentProfile={profile}
+            currentResponses={profile.baseResponses || []}
+            targetResponses={comparisonTarget.baseResponses || []}
             onClose={() => setComparisonTarget(null)}
           />
         ) : null}
+
+        {/* Safety Modals */}
+        {reportModalData ? (
+          <ReportContentModal
+            visible={!!reportModalData}
+            onClose={() => setReportModalData(null)}
+            targetType={reportModalData.targetType}
+            targetId={reportModalData.targetId}
+            targetAuthorName={reportModalData.targetAuthorName}
+            targetPreviewText={reportModalData.targetPreviewText}
+            onReportSubmitted={loadBlockedList}
+          />
+        ) : null}
+
+        {blockModalData ? (
+          <BlockUserModal
+            visible={!!blockModalData}
+            onClose={() => setBlockModalData(null)}
+            targetUserId={blockModalData.targetUserId}
+            targetUserNickname={blockModalData.targetUserNickname}
+            onUserBlocked={loadBlockedList}
+          />
+        ) : null}
+
+        <BlockedUsersManagerModal
+          visible={showBlockedManager}
+          onClose={() => setShowBlockedManager(false)}
+          onListUpdated={loadBlockedList}
+        />
       </View>
     </ScreenContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-    backgroundColor: '#0a0612',
-  },
-  containerDesktop: {
-    maxWidth: 800,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  header: {
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
-    gap: 4,
-  },
-  backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
-  backBtnText: { fontFamily: fonts.bodySemi, color: colors.neonPurple, fontSize: fontSize.sm },
-  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
-  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
-
-  warningBanner: {
-    backgroundColor: 'rgba(251, 191, 36, 0.1)',
-    borderWidth: 1,
-    borderColor: colors.warning,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    marginVertical: spacing.sm,
-    gap: spacing.xs,
-  },
-  warningTitle: { color: colors.warning, fontSize: fontSize.sm, fontWeight: '800' },
-  warningText: { color: colors.text, fontSize: fontSize.xs, lineHeight: 18 },
-  warningBtn: {
-    backgroundColor: colors.warning,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.md,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-  },
-  warningBtnText: { color: '#000', fontSize: fontSize.xs, fontWeight: '800' },
-
-  feed: { gap: spacing.md, paddingTop: spacing.xs },
-  emptyState: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.sm },
-  emptyText: { color: colors.textMuted, fontSize: fontSize.md },
-});
-
 export default function DatingScreen() {
   return (
-    <RouteFeatureGuard route="/dating" title="Match Directo & Dating">
+    <RouteFeatureGuard route="/dating" title="Módulo de Dating y Perfiles">
       <DatingScreenContent />
     </RouteFeatureGuard>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: spacing.md },
+  containerDesktop: { maxWidth: 760, alignSelf: 'center', width: '100%' },
+  header: { paddingTop: spacing.md, paddingBottom: spacing.sm, gap: 4 },
+  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  backBtn: { alignSelf: 'flex-start' },
+  backBtnText: { color: colors.primary, fontFamily: fonts.bodySemi, fontSize: fontSize.sm },
+  safetyBtn: {
+    backgroundColor: 'rgba(248, 113, 113, 0.15)',
+    borderColor: '#f87171',
+    borderWidth: 1,
+    borderRadius: radii.md,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  safetyBtnText: {
+    color: '#f87171',
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+  },
+  title: { color: colors.text, fontFamily: fonts.displaySemi, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.xs },
+  feed: { gap: spacing.md, paddingBottom: spacing.xxl },
+  warningBanner: {
+    backgroundColor: 'rgba(251, 191, 36, 0.15)',
+    borderWidth: 1,
+    borderColor: '#fbbf24',
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    marginVertical: spacing.xs,
+    gap: 4,
+  },
+  warningTitle: { color: '#fbbf24', fontFamily: fonts.bodyBold, fontSize: fontSize.xs },
+  warningText: { color: colors.text, fontSize: 11, lineHeight: 16 },
+  warningBtn: {
+    backgroundColor: '#fbbf24',
+    paddingVertical: 6,
+    borderRadius: radii.sm,
+    alignItems: 'center',
+    marginTop: 4,
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.md,
+  },
+  warningBtnText: { color: '#000', fontSize: 11, fontFamily: fonts.bodyBold },
+  emptyState: { alignItems: 'center', paddingVertical: spacing.xl },
+  emptyText: { color: colors.textMuted, fontSize: fontSize.sm },
+});

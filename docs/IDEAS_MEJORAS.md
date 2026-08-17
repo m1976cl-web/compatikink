@@ -114,7 +114,7 @@
 - Permitir al usuario elegir el TTL de la sesión (24h, 48h, 7 días) al crear la invitación.
 - La UI actual tiene 48h hardcodeado. Hacer configurable en `app/invite.tsx`.
 
-### P5 — Sistema de Denuncias y Bloqueo Mutuo (Trust & Safety / Bidirectional Block)
+### P5 — Sistema de Denuncias y Bloqueo Mutuo (Trust & Safety / Bidirectional Block) ✅ [COMPLETADO]
 - **Objetivo:** Salvaguardar la seguridad, el consentimiento estricto y la privacidad de la comunidad ante conductas inapropiadas o acoso.
 - **Mecánica de Bloqueo Mutuo Bidireccional (Mutual Block):**
   - Al bloquear a un usuario (Usuario B bloqueado por Usuario A):
@@ -263,7 +263,7 @@
 | G4 | Desafíos diarios | Medio | Medio | 🟡 Media |
 | S1 | Cards compartibles | Medio | Alto | 🟡 Media |
 | P2 | Botón pánico FAB | Bajo | Alto | 🟡 Media |
-| P5 | Denuncias y Bloqueo Mutuo | Medio | Muy Alto | 🟡 Media / H3 |
+| P5 | Denuncias y Bloqueo Mutuo | Medio | Muy Alto | ✅ Completado |
 | U2 | Haptic feedback | Bajo | Medio | ✅ Completado |
 | E1 | Biblioteca de artículos | Alto | Medio | 🟢 Baja |
 | G3 | Tabla de clasificación | Alto | Medio | 🟢 Baja |

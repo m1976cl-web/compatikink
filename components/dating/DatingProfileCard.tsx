@@ -16,6 +16,8 @@ interface Props {
   onOpenChat: (p: CommunityProfile) => void;
   onToggleCrush?: (p: CommunityProfile) => void;
   onOpenAuthorizedMedia?: (p: CommunityProfile) => void;
+  onReport?: (p: CommunityProfile) => void;
+  onBlock?: (p: CommunityProfile) => void;
 }
 
 export function DatingProfileCard({
@@ -30,6 +32,8 @@ export function DatingProfileCard({
   onOpenChat,
   onToggleCrush,
   onOpenAuthorizedMedia,
+  onReport,
+  onBlock,
 }: Props) {
   return (
     <View style={styles.profileCard}>
@@ -190,9 +194,31 @@ export function DatingProfileCard({
           ) : null}
         </View>
 
-        <TouchableOpacity style={styles.chatBtn} onPress={() => onOpenChat(item)}>
-          <Text style={styles.chatBtnText}>💬 Enviar mensaje directo cifrado</Text>
-        </TouchableOpacity>
+        <View style={styles.chatAndSafetyRow}>
+          <TouchableOpacity style={styles.chatBtn} onPress={() => onOpenChat(item)}>
+            <Text style={styles.chatBtnText}>💬 Enviar mensaje directo cifrado</Text>
+          </TouchableOpacity>
+
+          {onReport ? (
+            <TouchableOpacity
+              style={styles.safetyIconBtn}
+              onPress={() => onReport(item)}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Text style={{ fontSize: 13 }}>🚩</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {onBlock ? (
+            <TouchableOpacity
+              style={styles.safetyIconBtn}
+              onPress={() => onBlock(item)}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Text style={{ fontSize: 13 }}>🚫</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
     </View>
   );
@@ -336,7 +362,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   connectBtnText: { color: '#000', fontSize: fontSize.sm, fontWeight: '900' },
+  chatAndSafetyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   chatBtn: {
+    flex: 1,
     backgroundColor: colors.surfaceLight,
     paddingVertical: spacing.sm,
     borderRadius: radii.lg,
@@ -345,6 +377,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   chatBtnText: { color: colors.text, fontSize: fontSize.xs, fontWeight: '700' },
+  safetyIconBtn: {
+    padding: spacing.sm,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   secondaryActionsGrid: { flexDirection: 'row', gap: spacing.xs },
   crushBtn: {
     flex: 1,
