@@ -34,6 +34,7 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] E1: Biblioteca de Artículos y Guías Educativas (6 artículos extensos, 6 categorías, lector inmersivo y bookmarks ZK)
 - [x] G5: Sala de Trofeos interactiva (Vitrina de pedestales 3D con resplandor, modal de inspección táctil y compartir logros)
 - [x] P1: Indicador de Nivel de Privacidad y Auditoría Criptográfica (Escudo 100% ZK, desglose de 5 capas y recomendaciones)
+- [x] AI1-4: Suite de Inteligencia Artificial Íntima (AI1 Resumen narrativo de reporte, AI2 Sugerencia de 3 próximos pasos, AI3 Asistente de negociación con agenda guiada, AI4 Roleplay contextual con Nox y arquetipos)
 - [ ] P3-1 Onboarding Wizard interactivo
 - [ ] P3-2 Sistema de Badges y ranking
 - [ ] P3-3 Galería de fotos y comparador de juguetes

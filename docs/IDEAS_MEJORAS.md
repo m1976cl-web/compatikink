@@ -172,28 +172,24 @@
 - El home muestra: nombre del usuario, racha actual, último logro, reporte reciente.
 - Módulo "¿Qué quieres explorar hoy?" con 3 sugerencias aleatorias basadas en historial.
 
----
+## 🤖 Suite de Inteligencia Artificial Íntima ✅ [COMPLETADO]
 
-## 🤖 IA (Post-Core, Solo con Tracción)
+### AI1 — Resumen del Reporte en Lenguaje Natural ✅ [COMPLETADO]
+- Generador `generateReportAISummary()` en `lib/aiReportInsights.ts` con llamada a Gemini Edge Function y fallback heurístico local determinista 100% offline.
+- Componente `components/report/ReportAISummaryCard.tsx` integrado en `app/report.tsx` con análisis narrativo, fortalezas clave, zonas de diálogo y consejos de conversación.
+- Garantía Zero-Knowledge: únicamente se envían puntuaciones agregadas de categorías (`Sensorial: 90%`), sin texto plano de respuestas.
 
-> ⚠️ Implementar SOLO después de que el core de compatibilidad tenga usuarios activos.
+### AI2 — Sugerencia de Próximos Pasos (Next Steps) ✅ [COMPLETADO]
+- La IA propone 3 pasos y actividades concretas, graduadas por dificultad (*Principiante*, *Intermedio*, *Avanzado*), con tiempo estimado y salvaguardas de seguridad anatómica y emocional.
+- Desplegable interactivo dentro de `ReportAISummaryCard.tsx`.
 
-### AI1 — Resumen del Reporte en Lenguaje Natural
-- GPT/Gemini genera un párrafo descriptivo del reporte de compatibilidad.
-- Texto en primera persona: "Tienen alta afinidad en X pero deberían conversar sobre Y...".
-- Cero datos sensibles enviados a la API; solo scores y categorías.
+### AI3 — Asistente de Negociación Guiado por IA ✅ [COMPLETADO]
+- Generador `generateAINegotiationAgenda()` en `lib/aiNegotiationHelper.ts`.
+- Modal interactivo `components/negotiation/AINegotiationAgendaModal.tsx` integrado en `app/negotiation.tsx` que propone 5 puntos estructurados con preguntas y salvaguardas e inserción directa en las notas del acuerdo.
 
-### AI2 — Sugerencia de Próximos Pasos
-- IA genera 3 actividades concretas para explorar según el reporte.
-- Datos: solo scores de categorías + wishlist de la Gear Closet (si el usuario da permiso).
-
-### AI3 — Asistente de Negociación
-- La pantalla `app/negotiation.tsx` (ya existe) mejorada con flujo guiado por IA.
-- IA propone puntos de agenda de negociación basados en el reporte.
-
-### AI4 — Roleplay AI con Contexto de Compatibilidad
-- La pantalla `app/ai-roleplay.tsx` (ya existe) mejorada para usar el reporte como contexto.
-- El personaje Nox puede referenciar los intereses detectados.
+### AI4 — Roleplay AI con Contexto de Compatibilidad ✅ [COMPLETADO]
+- Pantalla `app/ai-roleplay.tsx` con la inclusión de **Nox (Mentor Noir & Concierge ZK)** como persona principal.
+- Switch opcional para inyectar el contexto del reporte de compatibilidad en la simulación, ideas rápidas de escena y reinicio de chat.
 
 ---
 
@@ -281,11 +277,10 @@
 | S2 | Modo Abre-hielos post-reporte | Bajo | Alto | ✅ Completado |
 | E1 | Biblioteca de artículos | Alto | Medio | ✅ Completado |
 | G5 | Sala de Trofeos interactiva | Medio | Alto | ✅ Completado |
-| P1 | Indicador de nivel de privacidad | Bajo | Alto | ✅ Completado |
+| AI1-4 | Suite IA (Resumen, Pasos, Negociación, Roleplay) | Muy Alto | Alto | ✅ Completado |
+| S3 | Foro comunidades | Muy Alto | Medio | ✅ Completado |
 | G3 | Tabla de clasificación | Alto | Medio | 🟢 Baja |
 | T2 | Pruebas E2E automatizadas | Alto | Alto | 🟢 Baja |
-| AI1-4 | Suite IA | Muy Alto | Alto | ⚫ Post-core |
-| S3 | Foro comunidades | Muy Alto | Medio | ✅ Completado |
 
 ---
 

@@ -16,6 +16,9 @@ import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
 import { listMyLocalSessions } from '@/lib/storage';
 import { generateReport } from '@/lib/compatibility';
 import { Session, ReportItem, RATING_LABELS, ROLE_LABELS } from '@/types';
+import { generateAINegotiationAgenda, AINegotiationPoint } from '@/lib/aiNegotiationHelper';
+import { AINegotiationAgendaModal } from '@/components/negotiation/AINegotiationAgendaModal';
+import { triggerLightHaptic } from '@/lib/haptics';
 
 interface PauseDsState {
   durationDays: number;
@@ -46,6 +49,9 @@ export default function NegotiationScreen() {
   const [negotiationNotes, setNegotiationNotes] = useState<Record<string, string>>({});
   const [negotiationStatuses, setNegotiationStatuses] = useState<Record<string, 'agreed' | 'adjust' | 'rejected'>>({});
   const [signed, setSigned] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiPoints, setAiPoints] = useState<AINegotiationPoint[]>([]);
+  const [generatingAi, setGeneratingAi] = useState(false);
 
   // Pausing D/s State
   const [pauseState, setPauseState] = useState<PauseDsState>({
@@ -126,6 +132,29 @@ export default function NegotiationScreen() {
       'Se han registrado los acuerdos y límites de la sesión de negociación en vivo.',
       [{ text: 'Ver Reporte de Sesión', onPress: () => router.push({ pathname: '/report', params: { token: selectedSession?.initiatorToken } }) }]
     );
+  };
+
+  const handleGenerateAiAgenda = async () => {
+    if (!selectedSession) return;
+    triggerLightHaptic();
+    setGeneratingAi(true);
+    try {
+      const points = await generateAINegotiationAgenda(selectedSession, report);
+      setAiPoints(points);
+      setShowAiModal(true);
+    } finally {
+      setGeneratingAi(false);
+    }
+  };
+
+  const handleApplyAiNotes = (notesText: string) => {
+    if (mutualItems.length > 0) {
+      const firstId = mutualItems[0].activityId;
+      setNegotiationNotes((prev) => ({
+        ...prev,
+        [firstId]: (prev[firstId] ? prev[firstId] + '\n\n' : '') + notesText,
+      }));
+    }
   };
 
   return (
@@ -264,9 +293,21 @@ export default function NegotiationScreen() {
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
             {/* Header Card */}
             <View style={styles.infoCard}>
-              <Text style={styles.infoTitle}>
-                Negociando con: <Text style={{ color: colors.primary }}>{selectedSession.guestNickname || 'Pareja'}</Text>
-              </Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={styles.infoTitle}>
+                  Negociando con: <Text style={{ color: colors.primary }}>{selectedSession.guestNickname || 'Pareja'}</Text>
+                </Text>
+                <TouchableOpacity
+                  style={styles.aiAgendaBtn}
+                  onPress={handleGenerateAiAgenda}
+                  disabled={generatingAi}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.aiAgendaBtnText}>
+                    {generatingAi ? 'Generando...' : '🤖 Agenda IA ✨'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <Text style={styles.infoSub}>
                 Revisen juntos las {mutualItems.length} actividades de interés mutuo antes de realizar la escena.
               </Text>
@@ -345,6 +386,14 @@ export default function NegotiationScreen() {
             <View style={{ height: 60 }} />
           </ScrollView>
         )}
+
+        {/* AI Negotiation Agenda Modal */}
+        <AINegotiationAgendaModal
+          visible={showAiModal}
+          onClose={() => setShowAiModal(false)}
+          points={aiPoints}
+          onApplyToNotes={handleApplyAiNotes}
+        />
       </View>
     </ScreenContainer>
   );
@@ -360,6 +409,20 @@ const styles = StyleSheet.create({
   backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
   title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
   subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
+
+  aiAgendaBtn: {
+    backgroundColor: 'rgba(192, 132, 252, 0.18)',
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radii.md,
+  },
+  aiAgendaBtnText: {
+    color: colors.primary,
+    fontSize: 10,
+    fontFamily: fonts.bodyBold,
+  },
 
   sessionPickerBar: {
     flexDirection: 'row',

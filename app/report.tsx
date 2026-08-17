@@ -8,6 +8,7 @@ import { ReportCard } from '@/components/ReportCard';
 import { CompatibilityInfographic } from '@/components/CompatibilityInfographic';
 import { ShareableMatchCardModal } from '@/components/report/ShareableMatchCardModal';
 import { IcebreakerModal } from '@/components/report/IcebreakerModal';
+import { ReportAISummaryCard } from '@/components/report/ReportAISummaryCard';
 import { ScenePlannerModal } from '@/components/ScenePlannerModal';
 import { SceneRouletteModal } from '@/components/SceneRouletteModal';
 import { SceneTimerModal } from '@/components/SceneTimerModal';
@@ -271,6 +272,9 @@ export default function ReportScreen() {
               isDesktop={isDesktop}
             />
           </ReportScoreHeader>
+
+          {/* AI1 & AI2: Natural Language Summary & Next Steps */}
+          <ReportAISummaryCard report={report} guestName={guestName} />
 
           {report.categoryCompatibilities && (
             <View style={styles.radarContainer}>
