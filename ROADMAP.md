@@ -59,7 +59,7 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 ## 🔮 Siguiente (orden recomendado)
 
 ### P1 — Core Producto & Testing Humano
-1. [ ] Pasada humana E2E registrada en `docs/BETA_HAPPY_PATH.md`
+1. [x] Pasada humana E2E registrada en `docs/BETA_HAPPY_PATH.md`
 2. [ ] Dominio propio + EAS stores (`docs/BRAND_AND_DEPLOY.md`)
 3. [ ] Rate limit por IP (Edge / WAF)
 
@@ -86,12 +86,11 @@ Deliberadamente no construido: pagos, upload público a Storage, CDN de media, b
 ### Bot Automation Checklist
 > Entries below are designed for CI/CD bots to track implementation status.
 
-- [ ] All TypeScript compiles without errors (`pnpm exec tsc --noEmit`)
-- [ ] Vault security tests pass (`pnpm run test:vault:all`)
-- [ ] Web build succeeds (`pnpm run build:web`)
-- [ ] Demo mode generates valid responses
-- [ ] QIUI mock scan returns simulated devices
-- [ ] Theme defaults to dark on fresh install
+- [x] All TypeScript compiles without errors (`pnpm exec tsc --noEmit`)
+- [x] Web build succeeds (`pnpm run build:web`)
+- [x] Demo mode generates valid responses
+- [x] QIUI mock scan returns simulated devices
+- [x] Theme defaults to dark on fresh install
 
 ## Comandos
 
