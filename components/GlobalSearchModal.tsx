@@ -108,7 +108,7 @@ export function GlobalSearchModal() {
               ref={inputRef}
               style={styles.input}
               placeholder="Buscar en Compatikink (pantallas, manual, actividades, glosario)..."
-              placeholderTextColor={colors.textDim}
+              placeholderTextColor={colors.textMuted}
               value={query}
               onChangeText={setQuery}
               autoCapitalize="none"
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSubtle,
   },
   escBadgeText: {
-    color: colors.textDim,
+    color: colors.textMuted,
     fontSize: 10,
     fontFamily: fonts.bodyBold,
   },

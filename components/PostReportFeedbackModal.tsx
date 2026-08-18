@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   skipText: {
-    color: colors.textDim,
+    color: colors.textMuted,
     fontSize: fontSize.xs,
     fontFamily: fonts.body,
   },

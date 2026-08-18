@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
   intensityRow: { gap: spacing.xs, marginVertical: spacing.xs },
-  intensityLabel: { color: colors.textDim, fontSize: 10, fontWeight: '800' },
+  intensityLabel: { color: colors.textMuted, fontSize: 10, fontWeight: '800' },
   chipsRow: { flexDirection: 'row', gap: 4 },
   chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   rolesGrid: { gap: spacing.xs, marginVertical: 4 },
   domBox: { backgroundColor: 'rgba(192, 132, 252, 0.12)', borderRadius: radii.md, padding: spacing.sm, borderWidth: 1, borderColor: colors.primary },
   subBox: { backgroundColor: 'rgba(56, 189, 248, 0.12)', borderRadius: radii.md, padding: spacing.sm, borderWidth: 1, borderColor: '#38bdf8' },
-  roleTitle: { fontSize: 10, fontWeight: '900', color: colors.textDim },
+  roleTitle: { fontSize: 10, fontWeight: '900', color: colors.textMuted },
   roleDesc: { color: colors.text, fontSize: fontSize.xs, marginTop: 2 },
 
   claimBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center', marginTop: 4 },

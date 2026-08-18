@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
   },
   closeBtnText: {
-    color: colors.textDim,
+    color: colors.textMuted,
     fontSize: fontSize.lg,
   },
   scrollContent: {
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   scoreLabel: {
     fontFamily: fonts.body,
     fontSize: fontSize.xs,
-    color: colors.textDim,
+    color: colors.textMuted,
   },
   scoreValue: {
     fontFamily: fonts.displaySemi,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   phaseDuration: {
     fontFamily: fonts.body,
     fontSize: fontSize.xs,
-    color: colors.textDim,
+    color: colors.textMuted,
   },
   phaseObjective: {
     fontFamily: fonts.bodySemi,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   subHeading: {
     fontFamily: fonts.bodyBold,
     fontSize: fontSize.xs,
-    color: colors.textDim,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   activityPrompt: {
     fontFamily: fonts.body,
     fontSize: fontSize.xs,
-    color: colors.textDim,
+    color: colors.textMuted,
     marginTop: 2,
     fontStyle: 'italic',
   },

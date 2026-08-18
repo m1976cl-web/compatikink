@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
   },
   devErrorText: {
-    color: colors.textDim,
+    color: colors.textMuted,
     fontFamily: 'monospace',
     fontSize: 11,
     marginTop: spacing.xs,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   footnote: {
     fontFamily: fonts.body,
     fontSize: fontSize.xs,
-    color: colors.textDim,
+    color: colors.textMuted,
     textAlign: 'center',
   },
 });

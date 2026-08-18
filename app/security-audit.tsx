@@ -107,7 +107,7 @@ export default function SecurityAuditScreen() {
             <TextInput
               style={styles.input}
               placeholder="Clave Maestra Admin..."
-              placeholderTextColor={colors.textDim}
+              placeholderTextColor={colors.textMuted}
               secureTextEntry
               value={adminPasscodeInput}
               onChangeText={setAdminPasscodeInput}
@@ -190,7 +190,7 @@ export default function SecurityAuditScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="PIN Actual de la Bóveda..."
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry
                 value={oldPin}
                 onChangeText={setOldPin}
@@ -199,7 +199,7 @@ export default function SecurityAuditScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Nuevo PIN de la Bóveda (mínimo 4 caracteres)..."
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry
                 value={newPin}
                 onChangeText={setNewPin}
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   scoreNumber: { fontSize: 26, fontWeight: '900', color: colors.success },
-  scoreGaugeLabel: { fontSize: 7, color: colors.textDim, textAlign: 'center', fontWeight: '800' },
+  scoreGaugeLabel: { fontSize: 7, color: colors.textMuted, textAlign: 'center', fontWeight: '800' },
   scoreTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
   scoreMetricsText: { color: colors.textMuted, fontSize: 10 },
   retestBtn: { backgroundColor: 'rgba(192, 132, 252, 0.15)', borderRadius: radii.md, paddingVertical: 4, paddingHorizontal: 8, marginTop: 4, alignSelf: 'flex-start' },
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   resCategory: { color: colors.primary, fontSize: 10, fontWeight: '700' },
   resDetails: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 16 },
   recBox: { backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 6, padding: spacing.xs, marginTop: 2 },
-  recText: { color: colors.textDim, fontSize: 10, fontWeight: '700' },
+  recText: { color: colors.textMuted, fontSize: 10, fontWeight: '700' },
 
   rotationBox: { backgroundColor: colors.surface, borderRadius: radii.xl, padding: spacing.lg, borderWidth: 1, borderColor: colors.primary, gap: spacing.xs, marginTop: spacing.sm },
   rotationTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },

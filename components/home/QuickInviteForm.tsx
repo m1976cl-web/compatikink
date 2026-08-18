@@ -21,7 +21,7 @@ export function QuickInviteForm({ invite }: QuickInviteFormProps) {
         <TextInput
           style={styles.input}
           placeholder={t('invite.nick_ph')}
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={invite.quickGuestNick}
           onChangeText={invite.setQuickGuestNick}
         />
@@ -29,7 +29,7 @@ export function QuickInviteForm({ invite }: QuickInviteFormProps) {
         <TextInput
           style={[styles.input, styles.textArea]}
           placeholder={t('invite.notes_ph')}
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={invite.quickGuestNotes}
           onChangeText={invite.setQuickGuestNotes}
           multiline

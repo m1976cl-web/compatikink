@@ -52,7 +52,7 @@ export function PartnerChallengesTab({
         <TextInput
           style={styles.input}
           placeholder="Ej: Masaje tántrico de 20 min, Día de protocolo..."
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={chTitle}
           onChangeText={setChTitle}
         />
@@ -61,7 +61,7 @@ export function PartnerChallengesTab({
         <TextInput
           style={styles.input}
           placeholder="Detalles o instrucciones del desafío..."
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={chDesc}
           onChangeText={setChDesc}
         />
@@ -98,7 +98,7 @@ export function PartnerChallengesTab({
         <TextInput
           style={styles.input}
           placeholder="Ej: 1 Deseo Concedido, Elección de próxima escena..."
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={rewTitle}
           onChangeText={setRewTitle}
         />

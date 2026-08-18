@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   },
   itemName: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: fontSize.md },
   itemBlurb: { color: colors.textMuted, fontSize: fontSize.sm, lineHeight: 20 },
-  meta: { color: colors.textDim, fontSize: 11 },
+  meta: { color: colors.textMuted, fontSize: 11 },
   row: { flexDirection: 'row', gap: 6, marginTop: 4 },
   stChip: {
     flex: 1,

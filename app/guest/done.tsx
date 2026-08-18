@@ -75,7 +75,7 @@ export default function GuestDoneScreen() {
             <TextInput
               style={styles.input}
               placeholder="••••"
-              placeholderTextColor={colors.textDim}
+              placeholderTextColor={colors.textMuted}
               value={pin}
               onChangeText={setPin}
               keyboardType="numeric"

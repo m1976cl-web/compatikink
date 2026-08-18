@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   stepStatus: {
     fontFamily: fonts.body,
     fontSize: fontSize.xs,
-    color: colors.textDim,
+    color: colors.textMuted,
     marginTop: 2,
   },
   stepStatusNow: { color: colors.primary },
@@ -247,6 +247,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     lineHeight: 18,
   },
-  dimText: { color: colors.textDim },
+  dimText: { color: colors.textMuted },
   cta: { marginTop: spacing.xs },
 });

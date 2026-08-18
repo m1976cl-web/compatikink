@@ -195,7 +195,7 @@ export default function DailySubmissiveActScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder="Escribe una breve reflexión sobre cómo te sentiste..."
-                    placeholderTextColor={colors.textDim}
+                    placeholderTextColor={colors.textMuted}
                     multiline
                     value={reflectionNote}
                     onChangeText={setReflectionNote}
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   instructionsGrid: { gap: spacing.xs, marginVertical: 4 },
   domBox: { backgroundColor: 'rgba(192, 132, 252, 0.12)', borderRadius: radii.md, padding: spacing.sm, borderWidth: 1, borderColor: colors.primary },
   subBox: { backgroundColor: 'rgba(56, 189, 248, 0.12)', borderRadius: radii.md, padding: spacing.sm, borderWidth: 1, borderColor: '#38bdf8' },
-  roleHeader: { fontSize: 10, fontWeight: '900', color: colors.textDim },
+  roleHeader: { fontSize: 10, fontWeight: '900', color: colors.textMuted },
   roleDesc: { color: colors.text, fontSize: fontSize.xs, marginTop: 2 },
 
   completeActionBtn: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.lg, alignItems: 'center', marginTop: 6 },
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   histLogTitle: { color: colors.success, fontSize: fontSize.xs, fontWeight: '800' },
   histLogXp: { color: '#fbbf24', fontSize: 10, fontWeight: '800' },
   histLogNote: { color: colors.textMuted, fontSize: 10, fontStyle: 'italic' },
-  histLogDate: { color: colors.textDim, fontSize: 8 },
+  histLogDate: { color: colors.textMuted, fontSize: 8 },
 
   historyInfoToggle: { marginTop: 2 },
   infoModalBox: {

@@ -317,7 +317,7 @@ export function VaultLockGate({
           value={pin}
           onChangeText={(t) => { setPin((t || '').replace(/[^\d]/g, '')); setError(null); }}
           placeholder="••••••"
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           keyboardType="numeric"
           secureTextEntry
           maxLength={12}
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   footnote: {
     fontFamily: fonts.body,
     fontSize: fontSize.xs,
-    color: colors.textDim,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: spacing.lg,
     lineHeight: 16,

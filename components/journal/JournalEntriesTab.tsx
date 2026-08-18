@@ -59,7 +59,7 @@ export function JournalEntriesTab({
         <TextInput
           style={styles.input}
           placeholder="Ej: Noche de Shibari & Sensaciones, Protocolo Dominante..."
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={sessionTitle}
           onChangeText={setSessionTitle}
         />
@@ -68,7 +68,7 @@ export function JournalEntriesTab({
         <TextInput
           style={styles.input}
           placeholder="Ej: Ataduras, Spanking, Cera tibia, Aftercare"
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={activitiesDone}
           onChangeText={setActivitiesDone}
         />
@@ -77,7 +77,7 @@ export function JournalEntriesTab({
         <TextInput
           style={styles.input}
           placeholder="Ej: Cuerdas Yute 6mm, Pala de cuero, Antafaz de seda"
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={gearUsedInput}
           onChangeText={setGearUsedInput}
         />
@@ -134,7 +134,7 @@ export function JournalEntriesTab({
         <TextInput
           style={[styles.input, { height: 70, textAlignVertical: 'top' }]}
           placeholder="¿Cómo se sintieron después? Reflexiones, cosas a mejorar..."
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={debriefNotes}
           onChangeText={setDebriefNotes}
           multiline

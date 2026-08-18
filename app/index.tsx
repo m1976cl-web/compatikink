@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     fontFamily: fonts.body,
     fontSize: 12,
-    color: colors.textDim,
+    color: colors.textMuted,
     textAlign: 'center',
   },
 });

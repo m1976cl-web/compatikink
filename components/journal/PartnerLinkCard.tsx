@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   relBadgeText: { color: colors.primary, fontSize: 11, fontWeight: '700' },
   xpRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   xpText: { color: colors.accent, fontSize: fontSize.xs, fontWeight: '700' },
-  dateText: { color: colors.textDim, fontSize: 10 },
+  dateText: { color: colors.textMuted, fontSize: 10 },
   chatLinkBtn: {
     backgroundColor: 'rgba(56, 189, 248, 0.12)',
     borderRadius: radii.md,

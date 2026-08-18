@@ -167,14 +167,14 @@ export function AuthorizedMediaGallery({
                   <TextInput
                     style={styles.input}
                     placeholder="Título del contenido (ej. Shibari Noche)"
-                    placeholderTextColor={colors.textDim}
+                    placeholderTextColor={colors.textMuted}
                     value={newTitle}
                     onChangeText={setNewTitle}
                   />
                   <TextInput
                     style={styles.input}
                     placeholder="URL o URI de la imagen/video (https://...)"
-                    placeholderTextColor={colors.textDim}
+                    placeholderTextColor={colors.textMuted}
                     value={newUri}
                     onChangeText={setNewUri}
                   />
@@ -205,7 +205,7 @@ export function AuthorizedMediaGallery({
                     <TextInput
                       style={styles.input}
                       placeholder={`Apodo a autorizar (ej. ${targetProfileNickname})`}
-                      placeholderTextColor={colors.textDim}
+                      placeholderTextColor={colors.textMuted}
                       value={newTargetAuth}
                       onChangeText={setNewTargetAuth}
                     />

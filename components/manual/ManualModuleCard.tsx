@@ -90,5 +90,5 @@ const styles = StyleSheet.create({
   stepText: { color: colors.text, fontSize: fontSize.xs, flex: 1, lineHeight: 18 },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 2 },
   tagBadge: { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  tagBadgeText: { color: colors.textDim, fontSize: 9, fontWeight: '700' },
+  tagBadgeText: { color: colors.textMuted, fontSize: 9, fontWeight: '700' },
 });

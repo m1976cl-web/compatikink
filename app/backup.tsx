@@ -83,7 +83,7 @@ export default function BackupScreen() {
             <TextInput
               style={styles.input}
               placeholder="Contraseña del backup..."
-              placeholderTextColor={colors.textDim}
+              placeholderTextColor={colors.textMuted}
               secureTextEntry
               value={exportPassphrase}
               onChangeText={setExportPassphrase}
@@ -119,7 +119,7 @@ export default function BackupScreen() {
             <TextInput
               style={styles.input}
               placeholder="Contraseña del backup..."
-              placeholderTextColor={colors.textDim}
+              placeholderTextColor={colors.textMuted}
               secureTextEntry
               value={importPassphrase}
               onChangeText={setImportPassphrase}
@@ -128,7 +128,7 @@ export default function BackupScreen() {
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Pega la cadena del backup aquí (ckbak1:...)"
-              placeholderTextColor={colors.textDim}
+              placeholderTextColor={colors.textMuted}
               multiline
               value={importInput}
               onChangeText={setImportInput}
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   description: {
     fontFamily: fonts.body,
     fontSize: fontSize.sm,
-    color: colors.textDim,
+    color: colors.textMuted,
     marginBottom: spacing.md,
   },
   input: {
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   backupLabel: {
-    color: colors.textDim,
+    color: colors.textMuted,
     fontFamily: fonts.body,
     fontSize: fontSize.sm,
     marginBottom: spacing.xs,

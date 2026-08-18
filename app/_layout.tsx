@@ -106,6 +106,7 @@ export default function RootLayout() {
             <Stack.Screen name="guest/done"           options={{ title: 'Listo',                     headerShown: false }} />
             <Stack.Screen name="marketplace-dark"     options={{ title: 'Marketplace Dark',          headerShown: false }} />
             <Stack.Screen name="foot-fetish"          options={{ title: 'Foot Fetish',               headerShown: false }} />
+            // <Stack.Screen name="leisure"               options={{ title: 'Leisure Suite Larry',        headerShown: false }} />
             <Stack.Screen name="tribute"              options={{ title: 'Tribute',                   headerShown: false }} />
             <Stack.Screen name="sissy-training"       options={{ title: 'Sissy Training',            headerShown: false }} />
             <Stack.Screen name="chastity"             options={{ title: 'Castidad',                  headerShown: false }} />
@@ -116,6 +117,7 @@ export default function RootLayout() {
             <Stack.Screen name="chastity-cage"        options={{ title: 'Castidad · Jaula',          headerShown: false }} />
             <Stack.Screen name="chastity-belt"        options={{ title: 'Castidad · Cinturón',       headerShown: false }} />
             <Stack.Screen name="chastity-fit"         options={{ title: 'Castidad · Estilo y talla', headerShown: false }} />
+            <Stack.Screen name="private-sessions"     options={{ title: 'Mis Sesiones',              headerShown: false }} />
           </Stack>
         </Suspense>
         <OfficeModeModal />
@@ -137,7 +139,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: {
-    color: colors.textDim,
+    color: colors.textMuted,
     fontFamily: fonts.body,
     fontSize: 13,
     letterSpacing: 0.5,

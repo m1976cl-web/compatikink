@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   footerLabel: {
     fontFamily: fonts.bodySemi,
     fontSize: 9,
-    color: colors.textDim,
+    color: colors.textMuted,
     letterSpacing: 1,
   },
   footerValue: {

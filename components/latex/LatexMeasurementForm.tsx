@@ -151,7 +151,7 @@ export function LatexMeasurementForm() {
                     }
                     keyboardType="decimal-pad"
                     placeholder={`${field.placeholder} ${field.unit}`}
-                    placeholderTextColor={colors.textDim}
+                    placeholderTextColor={colors.textMuted}
                     style={styles.input}
                   />
                 </View>
@@ -165,7 +165,7 @@ export function LatexMeasurementForm() {
           value={profile.notes ?? ''}
           onChangeText={(notes) => setProfile({ ...profile, notes })}
           placeholder={t('latex.measure.notes_ph')}
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           multiline
           style={[styles.input, styles.notes]}
         />
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   group: { gap: 8 },
   field: { gap: 4 },
   fieldLabel: { color: colors.text, fontSize: fontSize.xs, fontWeight: '800' },
-  fieldKey: { color: colors.textDim, fontWeight: '600' },
+  fieldKey: { color: colors.textMuted, fontWeight: '600' },
   input: {
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
@@ -241,5 +241,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ghostText: { color: colors.primary, fontFamily: fonts.bodySemi, fontSize: fontSize.sm },
-  meta: { color: colors.textDim, fontSize: 11, lineHeight: 16 },
+  meta: { color: colors.textMuted, fontSize: 11, lineHeight: 16 },
 });

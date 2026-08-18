@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   itemName: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: fontSize.md },
   itemBlurb: { color: colors.textMuted, fontSize: fontSize.sm, lineHeight: 20 },
   discreet: { color: '#38bdf8', fontSize: fontSize.xs, lineHeight: 18 },
-  meta: { color: colors.textDim, fontSize: 11 },
+  meta: { color: colors.textMuted, fontSize: 11 },
   wishBtn: {
     marginTop: 6,
     borderWidth: 1,

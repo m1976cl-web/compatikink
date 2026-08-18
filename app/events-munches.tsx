@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   eventEmoji: { fontSize: 34 },
   eventTypeTag: { fontSize: 9, fontWeight: '900', letterSpacing: 1 },
   eventTitle: { fontSize: fontSize.md, fontWeight: '800' },
-  organizerText: { color: colors.textDim, fontSize: 10 },
+  organizerText: { color: colors.textMuted, fontSize: 10 },
 
   metaRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginVertical: 2 },
   metaBadge: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, color: colors.text, fontSize: 10 },
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
 
   tagsRow: { flexDirection: 'row', gap: 4, flexWrap: 'wrap', marginVertical: 2 },
   tagChip: { backgroundColor: colors.background, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  tagChipText: { color: colors.textDim, fontSize: 9 },
+  tagChipText: { color: colors.textMuted, fontSize: 9 },
 
   rsvpRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs },
   rsvpBtn: { flex: 2, paddingVertical: 10, borderRadius: radii.lg, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   emptyBox: { alignItems: 'center', padding: spacing.xl, gap: spacing.xs },
   emptyEmoji: { fontSize: 40 },
   emptyTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
-  emptySub: { color: colors.textDim, fontSize: fontSize.xs, textAlign: 'center' },
+  emptySub: { color: colors.textMuted, fontSize: fontSize.xs, textAlign: 'center' },
 });
 
 export default function EventsMunchesScreen() {

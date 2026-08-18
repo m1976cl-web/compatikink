@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Clipboard from 'expo-clipboard';
 import { colors, fontSize, spacing, fonts, radii, typography } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -86,6 +87,8 @@ export default function GearClosetScreen() {
   const [gearList, setGearList] = useState<GearItem[]>([]);
   const [activeTab, setActiveTab] = useState<'owned' | 'wishlist' | 'compat'>('owned');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isShareMode, setIsShareMode] = useState(false);
+  const [selectedGearIds, setSelectedGearIds] = useState<Set<string>>(new Set());
 
   // Form states
   const [newName, setNewName] = useState('');
@@ -147,6 +150,40 @@ export default function GearClosetScreen() {
     return true; // compat mode shows all
   });
 
+  const toggleSelection = (id: string) => {
+    const newSelection = new Set(selectedGearIds);
+    if (newSelection.has(id)) {
+      newSelection.delete(id);
+    } else {
+      newSelection.add(id);
+    }
+    setSelectedGearIds(newSelection);
+  };
+
+  const handleGenerateShowcase = async () => {
+    if (selectedGearIds.size === 0) {
+      Alert.alert('Sin selección', 'Selecciona al menos un elemento para el showcase.');
+      return;
+    }
+    const selectedItems = gearList.filter(g => selectedGearIds.has(g.id));
+    const text = `*Mi Gear Closet Disponible*\n\n` + selectedItems.map(g => `- ${g.name} (${g.category})`).join('\n') + `\n\n[Compartido desde CompatKink]`;
+    await Clipboard.setStringAsync(text);
+    Alert.alert('¡Copiado!', 'El Showcase se ha copiado al portapapeles.');
+    setIsShareMode(false);
+    setSelectedGearIds(new Set());
+  };
+
+  const handleStartSession = () => {
+    if (selectedGearIds.size === 0) {
+      Alert.alert('Sin selección', 'Selecciona equipamiento para iniciar la sesión.');
+      return;
+    }
+    const ids = Array.from(selectedGearIds).join(',');
+    setIsShareMode(false);
+    setSelectedGearIds(new Set());
+    router.push(`/private-sessions?new=true&gearIds=${ids}`);
+  };
+
   return (
     <ScreenContainer title="" hideHeader>
       <View style={[styles.container, isDesktop && styles.containerDesktop]}>
@@ -155,56 +192,77 @@ export default function GearClosetScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Gear Closet & Juguetes ⚙️</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={styles.title}>Gear Closet & Juguetes ⚙️</Text>
+            <TouchableOpacity 
+              style={[styles.shareToggleBtn, isShareMode && styles.shareToggleBtnActive]} 
+              onPress={() => {
+                setIsShareMode(!isShareMode);
+                if (isShareMode) setSelectedGearIds(new Set());
+              }}
+            >
+              <Text style={[styles.shareToggleText, isShareMode && styles.shareToggleTextActive]}>
+                {isShareMode ? 'Cancelar Showcase' : 'Compartir / Sesión'}
+              </Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.subtitle}>
             Armario personal de implementos, fotos, wishlist de curiosidades y compatibilidad de juegos con tu pareja.
           </Text>
         </View>
 
-        {/* Latex Guide Banner */}
-        <TouchableOpacity style={styles.latexBanner} onPress={() => router.push('/latex-guide')}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.latexBannerTitle}>🖤 Guía de Cuidado & Reparación de Látex</Text>
-            <Text style={styles.latexBannerDesc}>
-              Aprende lavado, desinfección, brillo espejo Glossy y cómo reparar rasgaduras paso a paso.
-            </Text>
+        {isShareMode && (
+          <View style={styles.shareActionsCard}>
+            <Text style={styles.shareTitle}>Modo Showcase ZK</Text>
+            <Text style={styles.shareSubtitle}>Selecciona los ítems a compartir o usar en una sesión.</Text>
+            <View style={styles.shareActionButtons}>
+              <TouchableOpacity style={styles.shareCopyBtn} onPress={handleGenerateShowcase}>
+                <Text style={styles.shareBtnText}>📋 Copiar Showcase</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.shareSessionBtn} onPress={handleStartSession}>
+                <Text style={styles.shareBtnTextSession}>🎒 Iniciar Sesión</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.latexBannerArrow}>➔</Text>
-        </TouchableOpacity>
+        )}
 
         {/* View Tabs */}
-        <View style={styles.viewTabs}>
-          {[
-            { id: 'owned', label: '🧰 Mi Armario', count: gearList.filter((g) => g.intent === 'owned').length },
-            { id: 'wishlist', label: '🔮 Wishlist (Probar)', count: gearList.filter((g) => g.intent !== 'owned').length },
-            { id: 'compat', label: '🤝 Compatibilidad & Test', count: gearList.length },
-          ].map((tab) => (
-            <TouchableOpacity
-              key={tab.id}
-              style={[styles.viewTab, activeTab === tab.id && styles.viewTabActive]}
-              onPress={() => setActiveTab(tab.id as any)}
-            >
-              <Text style={[styles.viewTabText, activeTab === tab.id && styles.viewTabTextActive]}>
-                {tab.label} ({tab.count})
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {!isShareMode && (
+          <View style={styles.viewTabs}>
+            {[
+              { id: 'owned', label: '🧰 Mi Armario', count: gearList.filter((g) => g.intent === 'owned').length },
+              { id: 'wishlist', label: '🔮 Wishlist (Probar)', count: gearList.filter((g) => g.intent !== 'owned').length },
+              { id: 'compat', label: '🤝 Compatibilidad & Test', count: gearList.length },
+            ].map((tab) => (
+              <TouchableOpacity
+                key={tab.id}
+                style={[styles.viewTab, activeTab === tab.id && styles.viewTabActive]}
+                onPress={() => setActiveTab(tab.id as any)}
+              >
+                <Text style={[styles.viewTabText, activeTab === tab.id && styles.viewTabTextActive]}>
+                  {tab.label} ({tab.count})
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Add Gear Trigger */}
-        <TouchableOpacity
-          style={styles.addTriggerBtn}
-          onPress={() => {
-            setNewIntent(activeTab === 'wishlist' ? 'wishlist' : 'owned');
-            setShowAddModal(true);
-          }}
-        >
-          <Text style={styles.addTriggerText}>
-            {activeTab === 'wishlist'
-              ? '🔮 Registrar Juguete / Juego a Probar (Wishlist)'
-              : '➕ Registrar Nuevo Juguete / Accesorio con Foto'}
-          </Text>
-        </TouchableOpacity>
+        {!isShareMode && (
+          <TouchableOpacity
+            style={styles.addTriggerBtn}
+            onPress={() => {
+              setNewIntent(activeTab === 'wishlist' ? 'wishlist' : 'owned');
+              setShowAddModal(true);
+            }}
+          >
+            <Text style={styles.addTriggerText}>
+              {activeTab === 'wishlist'
+                ? '🔮 Registrar Juguete / Juego a Probar (Wishlist)'
+                : '➕ Registrar Nuevo Juguete / Accesorio con Foto'}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Modal / Form */}
         {showAddModal && (
@@ -212,7 +270,7 @@ export default function GearClosetScreen() {
             <Text style={styles.formTitle}>Nuevo Juguete / Implemento</Text>
             <TextInput
               style={styles.input}
-              placeholder="Nombre (ej. Vibrador app, Catsuit látex, Cuerdas, Plug...)"
+              placeholder="Nombre (ej. Vibrador app, Catsuit látex, Cuerdas...)"
               placeholderTextColor={colors.textMuted}
               value={newName}
               onChangeText={setNewName}
@@ -222,7 +280,7 @@ export default function GearClosetScreen() {
             <View style={styles.chipsRow}>
               {[
                 { id: 'owned', label: '🧰 Lo tengo en mi armario' },
-                { id: 'wishlist', label: '🔮 Wishlist / Curiosidad de probar con otra persona' },
+                { id: 'wishlist', label: '🔮 Wishlist / Curiosidad' },
               ].map((item) => (
                 <TouchableOpacity
                   key={item.id}
@@ -249,10 +307,10 @@ export default function GearClosetScreen() {
               ))}
             </View>
 
-            <Text style={styles.fieldLabel}>Foto / Imagen (URL o Preset):</Text>
+            <Text style={styles.fieldLabel}>Foto (URL o Preset):</Text>
             <TextInput
               style={styles.input}
-              placeholder="https://... o pega URL de imagen"
+              placeholder="https://... o pega URL"
               placeholderTextColor={colors.textMuted}
               value={newPhotoUri}
               onChangeText={setNewPhotoUri}
@@ -277,11 +335,11 @@ export default function GearClosetScreen() {
               </View>
             ) : null}
 
-            <Text style={styles.fieldLabel}>Notas / Fantasías vinculadas:</Text>
+            <Text style={styles.fieldLabel}>Notas:</Text>
             <TextInput
               style={[styles.input, { height: 60 }]}
               multiline
-              placeholder="Detalles de cuidado, fantasía a explorar o notas..."
+              placeholder="Detalles de cuidado, fantasía..."
               placeholderTextColor={colors.textMuted}
               value={newNotes}
               onChangeText={setNewNotes}
@@ -298,71 +356,62 @@ export default function GearClosetScreen() {
           </View>
         )}
 
-        {/* Compatibility Comparison Mode */}
-        {activeTab === 'compat' && (
-          <View style={styles.compatBannerCard}>
-            <Text style={styles.compatBannerTitle}>🤝 Test & Compatibilidad de Juguetes en Cita</Text>
-            <Text style={styles.compatBannerDesc}>
-              Compara tus implementos y wishlist con la pareja para seleccionar qué juegos y juguetes usar en la próxima escena.
-            </Text>
-            <View style={styles.compatBadgesRow}>
-              <View style={styles.compatBadgeItem}>
-                <Text style={styles.compatBadgeCount}>{gearList.filter((g) => g.intent === 'owned').length}</Text>
-                <Text style={styles.compatBadgeText}>Disponibles</Text>
-              </View>
-              <View style={styles.compatBadgeItem}>
-                <Text style={styles.compatBadgeCount}>{gearList.filter((g) => g.intent !== 'owned').length}</Text>
-                <Text style={styles.compatBadgeText}>En Wishlist</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Gear / Wishlist List */}
+        {/* List */}
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           {filteredItems.length === 0 ? (
             <View style={styles.emptyBox}>
-              <Text style={styles.emptyText}>No hay elementos guardados en esta sección.</Text>
+              <Text style={styles.emptyText}>No hay elementos guardados.</Text>
             </View>
           ) : (
-            filteredItems.map((item) => (
-              <View key={item.id} style={styles.gearCard}>
-                {item.photoUri ? (
-                  <Image source={{ uri: item.photoUri }} style={styles.gearImage} />
-                ) : (
-                  <View style={styles.gearPlaceholderImage}>
-                    <Text style={styles.gearPlaceholderText}>
-                      {item.category === 'Látex / Ropa' ? '🖤' : item.category === 'Ataduras' ? '🪢' : '🧸'}
-                    </Text>
-                  </View>
-                )}
+            filteredItems.map((item) => {
+              const isSelected = selectedGearIds.has(item.id);
+              return (
+                <TouchableOpacity 
+                  key={item.id} 
+                  style={[
+                    styles.gearCard, 
+                    isShareMode && styles.gearCardSelectable,
+                    isSelected && styles.gearCardSelected
+                  ]}
+                  activeOpacity={isShareMode ? 0.7 : 1}
+                  onPress={() => isShareMode ? toggleSelection(item.id) : null}
+                >
+                  {isShareMode && (
+                    <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                      {isSelected && <Text style={styles.checkMark}>✓</Text>}
+                    </View>
+                  )}
+                  {item.photoUri ? (
+                    <Image source={{ uri: item.photoUri }} style={styles.gearImage} />
+                  ) : (
+                    <View style={styles.gearPlaceholderImage}>
+                      <Text style={styles.gearPlaceholderText}>
+                        {item.category === 'Látex / Ropa' ? '🖤' : item.category === 'Ataduras' ? '🪢' : '🧸'}
+                      </Text>
+                    </View>
+                  )}
 
-                <View style={{ flex: 1, gap: 2 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={styles.gearName}>{item.name}</Text>
-                    {item.intent !== 'owned' && (
-                      <View style={styles.wishlistTag}>
-                        <Text style={styles.wishlistTagText}>🔮 Wishlist</Text>
-                      </View>
-                    )}
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={styles.gearName}>{item.name}</Text>
+                      {item.intent !== 'owned' && (
+                        <View style={styles.wishlistTag}>
+                          <Text style={styles.wishlistTagText}>🔮 Wishlist</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.gearCategory}>Categoría: {item.category}</Text>
+                    {item.notes ? <Text style={styles.gearNotes}>"{item.notes}"</Text> : null}
                   </View>
-                  <Text style={styles.gearCategory}>Categoría: {item.category}</Text>
-                  {item.notes ? <Text style={styles.gearNotes}>"{item.notes}"</Text> : null}
 
-                  <View style={styles.condBadge}>
-                    <Text style={styles.condText}>
-                      {item.condition === 'excellent' && '🟢 Estado: Excelente'}
-                      {item.condition === 'good' && '🟡 Estado: Bueno'}
-                      {item.condition === 'needs_care' && '🔴 Requiere desinfección / revisión'}
-                    </Text>
-                  </View>
-                </View>
-
-                <TouchableOpacity style={styles.deleteBtn} onPress={() => handleRemoveGear(item.id)}>
-                  <Text style={styles.deleteText}>✕</Text>
+                  {!isShareMode && (
+                    <TouchableOpacity style={styles.deleteBtn} onPress={() => handleRemoveGear(item.id)}>
+                      <Text style={styles.deleteText}>✕</Text>
+                    </TouchableOpacity>
+                  )}
                 </TouchableOpacity>
-              </View>
-            ))
+              );
+            })
           )}
           <View style={{ height: 60 }} />
         </ScrollView>
@@ -378,22 +427,36 @@ const styles = StyleSheet.create({
   header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
   backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
   backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
-  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xl, flex: 1 },
   subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm },
 
-  latexBanner: {
-    backgroundColor: 'rgba(192, 132, 252, 0.1)',
+  shareToggleBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceLight,
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: colors.border,
+  },
+  shareToggleBtnActive: { backgroundColor: colors.danger + '20', borderColor: colors.danger },
+  shareToggleText: { color: colors.text, fontSize: fontSize.xs, fontWeight: '700' },
+  shareToggleTextActive: { color: colors.danger },
+
+  shareActionsCard: {
+    backgroundColor: 'rgba(192, 132, 252, 0.1)',
     borderRadius: radii.lg,
     padding: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    marginBottom: spacing.sm,
   },
-  latexBannerTitle: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '800' },
-  latexBannerDesc: { color: colors.textMuted, fontSize: fontSize.xs, marginTop: 2 },
-  latexBannerArrow: { color: colors.primary, fontSize: 18, fontWeight: '900', marginLeft: spacing.sm },
+  shareTitle: { color: colors.primary, fontSize: fontSize.md, fontWeight: '800' },
+  shareSubtitle: { color: colors.textMuted, fontSize: fontSize.xs, marginBottom: spacing.sm },
+  shareActionButtons: { flexDirection: 'row', gap: spacing.sm },
+  shareCopyBtn: { flex: 1, backgroundColor: colors.surface, paddingVertical: 10, borderRadius: radii.md, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  shareSessionBtn: { flex: 1, backgroundColor: colors.primary, paddingVertical: 10, borderRadius: radii.md, alignItems: 'center' },
+  shareBtnText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '700' },
+  shareBtnTextSession: { color: '#000', fontSize: fontSize.sm, fontWeight: '900' },
 
   viewTabs: { flexDirection: 'row', gap: spacing.xs, marginVertical: spacing.xs },
   viewTab: {
@@ -468,22 +531,6 @@ const styles = StyleSheet.create({
   cancelBtn: { paddingVertical: 10, paddingHorizontal: spacing.md },
   cancelBtnText: { color: colors.textMuted, fontSize: fontSize.xs },
 
-  compatBannerCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.xs,
-    gap: 4,
-  },
-  compatBannerTitle: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '800' },
-  compatBannerDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 18 },
-  compatBadgesRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xs },
-  compatBadgeItem: { backgroundColor: colors.surfaceLight, borderRadius: radii.md, padding: spacing.xs, paddingHorizontal: spacing.md, alignItems: 'center' },
-  compatBadgeCount: { color: colors.primary, fontSize: fontSize.md, fontWeight: '800' },
-  compatBadgeText: { color: colors.textMuted, fontSize: 10 },
-
   list: { gap: spacing.sm, paddingTop: spacing.xs },
   gearCard: {
     backgroundColor: colors.surface,
@@ -494,6 +541,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+  },
+  gearCardSelectable: {
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  gearCardSelected: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(192, 132, 252, 0.05)',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkMark: {
+    color: '#000',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   gearImage: { width: 64, height: 64, borderRadius: radii.md },
   gearPlaceholderImage: {
@@ -512,11 +585,8 @@ const styles = StyleSheet.create({
   gearNotes: { color: colors.primary, fontSize: fontSize.xs, fontStyle: 'italic' },
   wishlistTag: { backgroundColor: 'rgba(192, 132, 252, 0.2)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   wishlistTagText: { color: colors.primary, fontSize: 10, fontWeight: '800' },
-  condBadge: { marginTop: 2 },
-  condText: { color: colors.textDim, fontSize: 10, fontWeight: '600' },
   deleteBtn: { padding: 8 },
   deleteText: { color: colors.danger, fontSize: 16, fontWeight: '700' },
-
   emptyBox: { padding: spacing.xl, alignItems: 'center' },
   emptyText: { color: colors.textMuted, fontSize: fontSize.sm },
 });

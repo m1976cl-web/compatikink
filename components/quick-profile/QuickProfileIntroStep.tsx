@@ -168,7 +168,7 @@ export function QuickProfileIntroStep({
           value={hardLimitsInput}
           onChangeText={setHardLimitsInput}
           placeholder="Ej: Scat, Sangre, Sin preservativo"
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
         />
 
         <Text style={styles.fieldLabel}>⚠️ Límites Suaves (Condicionales, sep. por coma)</Text>
@@ -177,7 +177,7 @@ export function QuickProfileIntroStep({
           value={softLimitsInput}
           onChangeText={setSoftLimitsInput}
           placeholder="Ej: Ataduras muy apretadas, Humillación verbal"
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
         />
       </View>
 

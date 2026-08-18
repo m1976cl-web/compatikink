@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   sideChipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
   sideChipText: { color: colors.textMuted, fontFamily: fonts.bodySemi, fontSize: fontSize.xs },
   sideChipTextOn: { color: colors.onPrimary },
-  blindHint: { color: colors.textDim, fontSize: 11, marginVertical: spacing.sm, lineHeight: 16 },
+  blindHint: { color: colors.textMuted, fontSize: 11, marginVertical: spacing.sm, lineHeight: 16 },
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
   card: {
     backgroundColor: colors.surface,

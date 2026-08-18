@@ -376,7 +376,7 @@ export default function AuthScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Ej: Alex"
-                  placeholderTextColor={colors.textDim}
+                  placeholderTextColor={colors.textMuted}
                   value={vaultNick}
                   onChangeText={setVaultNick}
                   autoCapitalize="none"
@@ -389,7 +389,7 @@ export default function AuthScreen() {
             <TextInput
               style={styles.input}
               placeholder="Mínimo 4 dígitos"
-              placeholderTextColor={colors.textDim}
+              placeholderTextColor={colors.textMuted}
               value={vaultPin}
               onChangeText={setVaultPin}
               keyboardType="numeric"
@@ -463,7 +463,7 @@ export default function AuthScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Ej: Alex"
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
                 value={nickname}
                 onChangeText={setNickname}
               />
@@ -509,7 +509,7 @@ export default function AuthScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Ej: 9999"
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
                 value={duressPinInput}
                 onChangeText={setDuressPinInput}
                 keyboardType="numeric"
@@ -601,7 +601,7 @@ export default function AuthScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="usuario@ejemplo.com"
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -614,7 +614,7 @@ export default function AuthScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder="Mínimo 6 caracteres"
-                    placeholderTextColor={colors.textDim}
+                    placeholderTextColor={colors.textMuted}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   emptyLogsText: {
-    color: colors.textDim,
+    color: colors.textMuted,
     fontSize: fontSize.xs,
     fontStyle: 'italic',
   },
@@ -792,6 +792,6 @@ const styles = StyleSheet.create({
   },
   logHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   logTag: { color: colors.text, fontSize: fontSize.xs, fontFamily: fonts.bodySemi },
-  logTime: { color: colors.textDim, fontSize: 10 },
+  logTime: { color: colors.textMuted, fontSize: 10 },
   logDetails: { color: colors.textMuted, fontSize: 11, fontFamily: fonts.body },
 });

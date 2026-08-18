@@ -97,5 +97,5 @@ const styles = StyleSheet.create({
   },
   actionBtnText: { color: colors.onPrimary, fontSize: fontSize.xs, fontWeight: 'bold' },
   closeBtn: { paddingVertical: 6 },
-  closeBtnText: { color: colors.textDim, fontSize: fontSize.xs, fontFamily: fonts.body },
+  closeBtnText: { color: colors.textMuted, fontSize: fontSize.xs, fontFamily: fonts.body },
 });

@@ -372,7 +372,7 @@ function NumberField({
         onChangeText={onChange}
         keyboardType="decimal-pad"
         placeholder="—"
-        placeholderTextColor={colors.textDim}
+        placeholderTextColor={colors.textMuted}
         style={styles.input}
       />
     </View>
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { color: colors.textMuted, fontSize: fontSize.xs, fontFamily: fonts.bodySemi },
   chipTextOn: { color: colors.onPrimary },
-  meta: { color: colors.textDim, fontSize: 11, lineHeight: 16 },
+  meta: { color: colors.textMuted, fontSize: 11, lineHeight: 16 },
   field: { gap: 4 },
   fieldLabel: { color: colors.text, fontFamily: fonts.bodyBold, fontSize: fontSize.sm },
   fieldHint: { color: colors.textMuted, fontSize: 11, lineHeight: 16 },

@@ -306,7 +306,7 @@ export default function PartnerChatScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder="Ej: Masaje de 10 min, Cumplir regla de etiqueta..."
-                    placeholderTextColor={colors.textDim}
+                    placeholderTextColor={colors.textMuted}
                     value={chTitleInput}
                     onChangeText={setChTitleInput}
                   />
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingVertical: spacing.xs,
   },
-  timerBarLabel: { color: colors.textDim, fontSize: 10, fontFamily: fonts.bodySemi },
+  timerBarLabel: { color: colors.textMuted, fontSize: 10, fontFamily: fonts.bodySemi },
   timerChips: { flexDirection: 'row', gap: 4 },
   timerChip: {
     paddingHorizontal: 8,
@@ -438,8 +438,8 @@ const styles = StyleSheet.create({
   msgEphemeralBorder: { borderStyle: 'dashed' },
 
   msgMetaHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  senderName: { fontSize: 10, fontFamily: fonts.bodySemi, color: colors.textDim, fontWeight: '800' },
-  timerBadge: { fontSize: 9, color: colors.textDim },
+  senderName: { fontSize: 10, fontFamily: fonts.bodySemi, color: colors.textMuted, fontWeight: '800' },
+  timerBadge: { fontSize: 9, color: colors.textMuted },
 
   lockedCover: {
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   acceptChBtnText: { color: '#07050a', fontSize: 10, fontWeight: '900' },
   chCompletedText: { color: colors.success, fontSize: 10, fontWeight: '800', marginTop: 2 },
 
-  timeText: { fontSize: 8, color: colors.textDim, alignSelf: 'flex-end', marginTop: 2 },
+  timeText: { fontSize: 8, color: colors.textMuted, alignSelf: 'flex-end', marginTop: 2 },
 
   challengeFormBox: {
     backgroundColor: colors.surface,

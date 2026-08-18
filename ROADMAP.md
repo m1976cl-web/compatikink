@@ -36,9 +36,9 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] G5: Sala de Trofeos interactiva (Vitrina de pedestales 3D con resplandor, modal de inspección táctil y compartir logros)
 - [x] P1: Indicador de Nivel de Privacidad y Auditoría Criptográfica (Escudo 100% ZK, desglose de 5 capas y recomendaciones)
 - [x] AI1-4: Suite de Inteligencia Artificial Íntima (AI1 Resumen narrativo de reporte, AI2 Sugerencia de 3 próximos pasos, AI3 Asistente de negociación con agenda guiada, AI4 Roleplay contextual con Nox y arquetipos)
-- [ ] P3-1 Onboarding Wizard interactivo
+- [x] P3-1 Onboarding Wizard interactivo (Privacidad ZK, configuración de rol, intereses y rutas de inicio rápido)
 - [ ] P3-2 Sistema de Badges y ranking
-- [ ] P3-3 Galería de fotos y comparador de juguetes
+- [x] P3-3 Galería de fotos, Showcase de Gear y Módulo privado "Mis Sesiones" con Debrief (1-7, roles, sensaciones, emociones) y Bag Check Pre/Post
 - [x] P3-4 Deep Links y QR interactivo para invitaciones presenciales (Pestañas QR, Chat, PIN y zoom full screen)
 - [ ] P3-5 Mini‑guías educativas (Latex, cuidados)
 - [ ] P3-6 Notificaciones After‑care mejoradas

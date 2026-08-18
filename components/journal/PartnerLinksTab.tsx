@@ -34,7 +34,7 @@ export function PartnerLinksTab({
         <TextInput
           style={styles.input}
           placeholder="Ej: Morgan, Sam, Mi Sumisa..."
-          placeholderTextColor={colors.textDim}
+          placeholderTextColor={colors.textMuted}
           value={newPartnerName}
           onChangeText={setNewPartnerName}
         />

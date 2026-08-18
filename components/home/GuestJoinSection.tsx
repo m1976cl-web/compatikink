@@ -63,7 +63,7 @@ export function GuestJoinSection({ guestCode, onChangeCode, onLayout }: GuestJoi
           <TextInput
             style={styles.inputInvite}
             placeholder={t('guest.placeholder')}
-            placeholderTextColor={colors.textDim}
+            placeholderTextColor={colors.textMuted}
             value={guestCode}
             onChangeText={onChangeCode}
             autoCapitalize="characters"

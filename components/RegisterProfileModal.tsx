@@ -125,7 +125,7 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
             <TextInput
               style={styles.input}
               placeholder="Ej: Alex"
-              placeholderTextColor={colors.textDim}
+              placeholderTextColor={colors.textMuted}
               value={nickname}
               onChangeText={setNickname}
               autoFocus
@@ -135,7 +135,7 @@ export function RegisterProfileModal({ visible, onClose, onSuccess }: Props) {
             <TextInput
               style={[styles.input, styles.pinInput]}
               placeholder="••••"
-              placeholderTextColor={colors.textDim}
+              placeholderTextColor={colors.textMuted}
               value={pin}
               onChangeText={setPin}
               keyboardType="numeric"

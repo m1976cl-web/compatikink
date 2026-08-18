@@ -312,7 +312,7 @@ export default function BluePagesScreen() {
                 value={avatarEmoji}
                 onChangeText={setAvatarEmoji}
                 placeholder="Ej: 💙, 👑, 🐰, 🖤"
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
               />
 
               <Text style={styles.fieldLabel}>Nombre de Creador/a *</Text>
@@ -321,7 +321,7 @@ export default function BluePagesScreen() {
                 value={creatorName}
                 onChangeText={setCreatorName}
                 placeholder="Ej: Mistress Roxana, KinkBunny..."
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
               />
 
               <Text style={styles.fieldLabel}>Handle / Usuario (opcional)</Text>
@@ -330,7 +330,7 @@ export default function BluePagesScreen() {
                 value={handle}
                 onChangeText={setHandle}
                 placeholder="Ej: @MistressRox"
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
               />
 
               <Text style={styles.fieldLabel}>Plataforma Principal *</Text>
@@ -358,7 +358,7 @@ export default function BluePagesScreen() {
                 value={profileUrl}
                 onChangeText={setProfileUrl}
                 placeholder="Ej: https://onlyfans.com/tu_usuario"
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
               />
 
               <Text style={styles.fieldLabel}>Oferta o Descuento Especial (opcional)</Text>
@@ -367,7 +367,7 @@ export default function BluePagesScreen() {
                 value={promoDiscount}
                 onChangeText={setPromoDiscount}
                 placeholder="Ej: 🔥 30% OFF en tu primer mes"
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
               />
 
               <Text style={styles.fieldLabel}>Etiquetas de Fetiches (sep. por coma)</Text>
@@ -376,7 +376,7 @@ export default function BluePagesScreen() {
                 value={fetishTagsInput}
                 onChangeText={setFetishTagsInput}
                 placeholder="Ej: Shibari, Látex, Dominación, ASMR"
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
               />
 
               <Text style={styles.fieldLabel}>Descripción / Bio</Text>
@@ -385,7 +385,7 @@ export default function BluePagesScreen() {
                 value={bio}
                 onChangeText={setBio}
                 placeholder="Describe tu contenido, frecuencia de publicación, estilo..."
-                placeholderTextColor={colors.textDim}
+                placeholderTextColor={colors.textMuted}
                 multiline
               />
             </ScrollView>
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   publishBtnText: { fontFamily: fonts.bodySemi, color: '#ffffff', fontSize: fontSize.xs, fontWeight: '800' },
 
   filterSection: { marginVertical: 4 },
-  filterLabel: { color: colors.textDim, fontSize: 10, fontFamily: fonts.bodySemi, marginBottom: 4 },
+  filterLabel: { color: colors.textMuted, fontSize: 10, fontFamily: fonts.bodySemi, marginBottom: 4 },
   chipScroll: { flexDirection: 'row', gap: spacing.xs, paddingBottom: 4 },
   platformChip: {
     paddingVertical: spacing.xs,
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   tagChipActive: { backgroundColor: colors.accentSoft, borderColor: colors.primary },
-  tagChipText: { color: colors.textDim, fontSize: 10, fontFamily: fonts.bodySemi },
+  tagChipText: { color: colors.textMuted, fontSize: 10, fontFamily: fonts.bodySemi },
   tagChipTextActive: { color: colors.primary, fontWeight: '800' },
 
   scroll: { gap: spacing.md, paddingTop: spacing.xs },
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   avatarEmoji: { fontSize: 32 },
   creatorName: { color: '#ffffff', fontSize: fontSize.md, fontFamily: fonts.bodySemi, fontWeight: '800' },
-  handleText: { color: colors.textDim, fontSize: 11 },
+  handleText: { color: colors.textMuted, fontSize: 11 },
   verifiedCheck: { color: '#38bdf8', fontSize: 10, fontWeight: '800' },
   platformBadge: { borderRadius: radii.sm, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2 },
   platformBadgeText: { fontSize: 10, fontWeight: '800' },
