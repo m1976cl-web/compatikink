@@ -34,6 +34,13 @@ const LABS = [
     descKey: 'labs.sissy.desc',
     accent: '#fbbf24',
   },
+  {
+    route: '/chastity',
+    emoji: '🔒',
+    titleKey: 'labs.chastity.title',
+    descKey: 'labs.chastity.desc',
+    accent: '#a78bfa',
+  },
 ] as const;
 
 /** Shown only when EXPO_PUBLIC_MVP=0 (FetishSuite sibling). Preview / demo. */

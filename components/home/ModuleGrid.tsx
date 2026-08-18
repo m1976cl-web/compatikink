@@ -46,6 +46,14 @@ const MVP_SUITE_BLOCK = new Set([
   '/foot-fetish',
   '/tribute',
   '/sissy-training',
+  '/chastity',
+  '/chastity-wearer',
+  '/chastity-keyholder',
+  '/chastity-protocol',
+  '/chastity-tools',
+  '/chastity-cage',
+  '/chastity-belt',
+  '/chastity-fit',
 ]);
 
 export function ModuleGrid({

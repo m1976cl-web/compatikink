@@ -108,6 +108,14 @@ export default function RootLayout() {
             <Stack.Screen name="foot-fetish"          options={{ title: 'Foot Fetish',               headerShown: false }} />
             <Stack.Screen name="tribute"              options={{ title: 'Tribute',                   headerShown: false }} />
             <Stack.Screen name="sissy-training"       options={{ title: 'Sissy Training',            headerShown: false }} />
+            <Stack.Screen name="chastity"             options={{ title: 'Castidad',                  headerShown: false }} />
+            <Stack.Screen name="chastity-wearer"      options={{ title: 'Castidad · Portador',       headerShown: false }} />
+            <Stack.Screen name="chastity-keyholder"   options={{ title: 'Castidad · Keyholder',      headerShown: false }} />
+            <Stack.Screen name="chastity-protocol"    options={{ title: 'Castidad · Protocolo',      headerShown: false }} />
+            <Stack.Screen name="chastity-tools"       options={{ title: 'Castidad · Herramientas',   headerShown: false }} />
+            <Stack.Screen name="chastity-cage"        options={{ title: 'Castidad · Jaula',          headerShown: false }} />
+            <Stack.Screen name="chastity-belt"        options={{ title: 'Castidad · Cinturón',       headerShown: false }} />
+            <Stack.Screen name="chastity-fit"         options={{ title: 'Castidad · Estilo y talla', headerShown: false }} />
           </Stack>
         </Suspense>
         <OfficeModeModal />

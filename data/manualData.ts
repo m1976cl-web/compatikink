@@ -540,7 +540,7 @@ registerCustomActivity(newCustomActivity);`,
       'Almacenamiento local privado en la bóveda o envío cifrado al Keyholder',
     ],
     stepByStepGuide: [
-      '1. En la pantalla Chastity (app/chastity.tsx), seleccionar la pestaña "Verificación de Foto".',
+      '1. En la pantalla Herramientas de Castidad (/chastity-tools), pestaña de check-in local.',
       '2. Presionar "Tomar Foto de Check-in".',
       '3. Capturar la imagen utilizando la cámara de la app.',
       '4. Seleccionar el estado de la piel e ingresar observaciones.',

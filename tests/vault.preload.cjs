@@ -58,6 +58,17 @@ fs.writeFileSync(
   `module.exports = { NativeModule: class {}, requireNativeModule: () => ({}) };`
 );
 
+const clipboardStub = path.join(stubsDir, 'expo-clipboard.js');
+fs.writeFileSync(
+  clipboardStub,
+  `
+module.exports = {
+  setStringAsync: async () => true,
+  getStringAsync: async () => '',
+};
+`
+);
+
 const safeAreaStub = path.join(stubsDir, 'safe-area-context.js');
 fs.writeFileSync(
   safeAreaStub,
@@ -90,6 +101,9 @@ Module._resolveFilename = function (request, parent, isMain, options) {
   }
   if (request === 'react-native-safe-area-context') {
     return safeAreaStub;
+  }
+  if (request === 'expo-clipboard' || request.endsWith('expo-clipboard')) {
+    return clipboardStub;
   }
   if (request === 'react-native' || request.startsWith('react-native/')) {
     return originalResolveFilename.call(this, 'react-native-web', parent, isMain, options);

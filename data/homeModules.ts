@@ -70,6 +70,7 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
   { title: 'Foot Fetish',          description: 'Subset privado + compare (no dating)',                  mark: '🦶', category: 'scenes', route: '/foot-fetish'          },
   { title: 'Cum Tribute',          description: 'Petición/respuesta cifrada entre dos adultos',          mark: '✉️', category: 'scenes', route: '/tribute'              },
   { title: 'Sissy Training',       description: 'Protocolo PIN + aftercare · roleplay 18+',              mark: '🎀', category: 'scenes', route: '/sissy-training'       },
+  { title: 'Castidad',             description: 'Tallas locales + portador / keyholder / protocolo · ZK', mark: '🔒', category: 'scenes', route: '/chastity'             },
 
   // Social
   { title: 'Blog & Escritos',      description: 'Diario privado y publicaciones',       mark: '✍️', category: 'social', route: '/writings'          },
@@ -92,7 +93,6 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
   { title: 'Music Sync',           description: 'Teledildonics & estimulación BPM',     mark: '⚡', category: 'ai', route: '/music-sync'   },
   { title: 'Roleplay IA',          description: 'Ensayo confidencial de dinámicas',     mark: '🤖', category: 'ai', route: '/ai-roleplay'  },
   { title: 'Escenas IA',           description: 'Rutinas personalizadas por IA',        mark: '🧠', category: 'ai', route: '/scene-ai'     },
-  { title: 'Castidad',             description: 'Keyholding y temporizadores',          mark: '🔒', category: 'ai', route: '/chastity'     },
   { title: 'Hardware Sync',        description: 'QIUI / Lovense Bluetooth',             mark: '📡', category: 'ai', route: '/hardware'     },
   { title: 'Economía D/s',         description: 'Moneda de tareas y premios',           mark: '🪙', category: 'ai', route: '/task-economy' },
   { title: 'Analítica',            description: 'Subspace tracker y gráficos',          mark: '📊', category: 'ai', route: '/analytics'    },

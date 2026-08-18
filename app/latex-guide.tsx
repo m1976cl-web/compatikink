@@ -10,11 +10,14 @@ import { useRouter } from 'expo-router';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useTranslation } from '@/lib/i18n';
+import { LatexMeasurementForm } from '@/components/latex/LatexMeasurementForm';
 
 export default function LatexGuideScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
-  const [activeTab, setActiveTab] = useState<'wash' | 'shine' | 'dangers' | 'repair' | 'storage'>('wash');
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<'wash' | 'shine' | 'dangers' | 'repair' | 'storage' | 'measures'>('wash');
 
   return (
     <ScreenContainer title="" hideHeader>
@@ -38,6 +41,7 @@ export default function LatexGuideScreen() {
             { id: 'dangers', label: '🚫 Enemigos', emoji: '🚫' },
             { id: 'repair', label: '🩹 Reparación', emoji: '🩹' },
             { id: 'storage', label: '📦 Almacén', emoji: '📦' },
+            { id: 'measures', label: t('latex.measure.tab'), emoji: '📏' },
           ].map((tab) => (
             <TouchableOpacity
               key={tab.id}
@@ -172,6 +176,12 @@ export default function LatexGuideScreen() {
                 <Text style={styles.repairStepTitle}>5. Curado de 24 Horas</Text>
                 <Text style={styles.repairStepBody}>Deja vulcanizar la unión durante 24 horas antes de ponerte la prenda o someterla a tensión.</Text>
               </View>
+            </View>
+          )}
+
+          {activeTab === 'measures' && (
+            <View style={styles.sectionCard}>
+              <LatexMeasurementForm />
             </View>
           )}
 

@@ -98,6 +98,14 @@ export function isModuleVisibleInMode(route: string | undefined, isMvpOnly: bool
     '/foot-fetish',
     '/tribute',
     '/sissy-training',
+    '/chastity',
+    '/chastity-wearer',
+    '/chastity-keyholder',
+    '/chastity-protocol',
+    '/chastity-tools',
+    '/chastity-cage',
+    '/chastity-belt',
+    '/chastity-fit',
   ];
 
   if (route && FROZEN_SOCIAL_ROUTES.includes(route)) {

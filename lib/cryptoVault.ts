@@ -66,6 +66,7 @@ export const SENSITIVE_KEY_PREFIXES = [
   'linked_',
   'questionnaire_draft_',
   'fetish_lab_',
+  'chastity_',
 ] as const;
 
 export interface VaultMeta {

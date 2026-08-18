@@ -16,8 +16,34 @@ import {
   isMarketplaceItemAllowed,
   makeFootResponse,
 } from '../lib/fetishLabs';
+import {
+  CHASTITY_ITEMS_BY_FLOW,
+  CHASTITY_KEYHOLDER_ITEMS,
+  CHASTITY_LAB_KEYS,
+  CHASTITY_LAB_MIN_AGE,
+  CHASTITY_PROTOCOL_ITEMS,
+  CHASTITY_WEARER_ITEMS,
+  chastityCopyIsAdultOnly,
+  compareChastityFlow,
+  computeChastitySnapshot,
+  defaultChastityResponse,
+  makeChastityResponse,
+} from '../lib/chastityLabs';
 
-const LAB_ROUTES = ['/marketplace-dark', '/foot-fetish', '/tribute', '/sissy-training'] as const;
+const LAB_ROUTES = [
+  '/marketplace-dark',
+  '/foot-fetish',
+  '/tribute',
+  '/sissy-training',
+  '/chastity',
+  '/chastity-wearer',
+  '/chastity-keyholder',
+  '/chastity-protocol',
+  '/chastity-tools',
+  '/chastity-cage',
+  '/chastity-belt',
+  '/chastity-fit',
+] as const;
 
 async function run() {
   console.log('Fetish Labs preview slice…\n');
@@ -67,12 +93,50 @@ async function run() {
     assert.equal(isSensitiveStorageKey(key), true, `${key} must seal as fetish_lab_`);
   }
 
+  for (const key of Object.values(CHASTITY_LAB_KEYS)) {
+    assert.equal(isSensitiveStorageKey(key), true, `${key} must seal as fetish_lab_`);
+  }
+  assert.equal(isSensitiveStorageKey('chastity_4day_starter_v1'), true);
+  assert.equal(isSensitiveStorageKey('fetish_lab_chastity_checkin_v1'), true);
+  assert.equal(isSensitiveStorageKey('fetish_lab_chastity_sizing_v1'), true);
+  assert.equal(isSensitiveStorageKey('fetish_lab_latex_measurements_v1'), true);
+
+  assert.equal(CHASTITY_LAB_MIN_AGE, 18);
+  assert.equal(CHASTITY_WEARER_ITEMS.length, 10);
+  assert.equal(CHASTITY_KEYHOLDER_ITEMS.length, 10);
+  assert.equal(CHASTITY_PROTOCOL_ITEMS.length, 10);
+  for (const flow of Object.values(CHASTITY_ITEMS_BY_FLOW)) {
+    assert.ok(flow.every((a) => a.adultsOnly === true));
+  }
+
+  const eager = CHASTITY_WEARER_ITEMS.map((a) => makeChastityResponse(a.id, 'love'));
+  assert.equal(computeChastitySnapshot(eager), 'structured');
+  const hard = [
+    ...CHASTITY_WEARER_ITEMS.slice(0, 3).map((a) => makeChastityResponse(a.id, 'hard_limit')),
+    ...CHASTITY_WEARER_ITEMS.slice(3).map((a) => defaultChastityResponse(a.id)),
+  ];
+  assert.equal(computeChastitySnapshot(hard), 'limits');
+
+  const wearerMine = [makeChastityResponse('cw_hygiene', 'love')];
+  const wearerGuest = [makeChastityResponse('cw_hygiene', 'curious')];
+  const chastityReport = compareChastityFlow('wearer', wearerMine, wearerGuest, t);
+  assert.equal(chastityReport.length, 1);
+  assert.equal(chastityReport[0].section, 'explore_together');
+
   await setLocale('es');
   assert.ok(t('labs.adults_only').includes('18'));
+  assert.ok(t('labs.chastity.title').length > 3);
+  assert.ok(t('labs.chastity.cage.title').length > 4);
+  assert.ok(t('latex.measure.field.neckCircum').length > 4);
+  assert.ok(chastityCopyIsAdultOnly(t), 'chastity copy must stay adult-only');
   await setLocale('en');
   assert.equal(t('labs.market.no_pay'), 'no in-app payment');
+  assert.ok(t('labs.chastity.invite').includes('ZK'));
+  assert.ok(chastityCopyIsAdultOnly(t), 'en chastity copy must stay adult-only');
   await setLocale('pt');
   assert.ok(t('labs.sissy.aftercare_list').length > 4);
+  assert.ok(t('labs.chastity.protocol.title').length > 4);
+  assert.ok(chastityCopyIsAdultOnly(t), 'pt chastity copy must stay adult-only');
   await setLocale('es');
 
   console.log('  ✅ Fetish Labs data, compare, registry, vault keys, i18n\n');

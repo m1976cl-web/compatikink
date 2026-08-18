@@ -72,6 +72,8 @@ First slice local/ZK. Hidden from beta home (`EXPO_PUBLIC_MVP=1`). Preview with 
 - [x] Foot fetish (`/foot-fetish`) — subset + compare privado (no dating feed)
 - [x] Cum tribute (`/tribute`) — petición/respuesta cifrada iniciador↔invitado; sin galería
 - [x] Sissy training (`/sissy-training`) — protocolo PIN + aftercare; roleplay 18+ (no feed público)
+- [x] Castidad hub (`/chastity`) — 3 mini-apps originales (portador / keyholder / protocolo), compare ZK, invite; no Typeform/Oxy checkout
+- [x] Tallas locales de castidad (`/chastity-cage` `/chastity-belt` `/chastity-fit`) + ficha látex 28 puntos (`/latex-guide` tab medidas) en bóveda; export markdown/JSON; sin tienda
 Deliberadamente no construido: pagos, upload público a Storage, CDN de media, bienes ilegales.
 
 ---

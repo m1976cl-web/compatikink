@@ -1,7 +1,7 @@
 /**
  * Fetish Labs — experimental preview modules (gated, not core).
  *
- * Marketplace Dark / Foot / Tribute / Sissy training.
+ * Marketplace Dark / Foot / Tribute / Sissy training / Castidad hub.
  * All intimate state stays in the local vault (`fetish_lab_*` → ck1: when unlocked).
  * Never upload plaintext prefs, genital photos, tribute media, or marketplace PII.
  *
