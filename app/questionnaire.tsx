@@ -32,6 +32,7 @@ export default function QuestionnaireScreen() {
   const [guestNotes, setGuestNotes] = useState('');
   const [step, setStep] = useState<'intro' | 'categories' | 'questions'>('intro');
   const [isExpressMode, setIsExpressMode] = useState(params.mode === 'express');
+  const [demoMode, setDemoMode] = useState(false);
   const [enabledCategories, setEnabledCategories] = useState<ActivityCategory[]>([...CATEGORY_ORDER]);
   const [customActivities, setCustomActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
@@ -132,6 +133,8 @@ export default function QuestionnaireScreen() {
         setGuestNickname={setGuestNickname}
         guestNotes={guestNotes}
         setGuestNotes={setGuestNotes}
+        demoMode={demoMode}
+        setDemoMode={setDemoMode}
         onSelectExpressMode={() => {
           setIsExpressMode(true);
           setStep('questions');
@@ -171,6 +174,7 @@ export default function QuestionnaireScreen() {
       difficultyFilter={difficultyFilter}
       searchQuery={searchQuery}
       isExpressMode={isExpressMode}
+      demoMode={demoMode}
       onFinish={handleFinish}
       loading={loading}
       onBack={() => setStep(isExpressMode ? 'intro' : 'categories')}

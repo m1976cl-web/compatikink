@@ -46,6 +46,13 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] Guía especializada de Látex (`/latex-guide`)
 - [x] Split modular de `lib/storage.ts` en `lib/storage/*`
 - [ ] Pasada humana E2E registrada en `docs/BETA_HAPPY_PATH.md`  
+- [ ] UX-1: Micro-animaciones en flujo de cuestionario (fade-in secuencial, slide en transiciones)
+- [ ] UX-2: Modo Demo con respuestas aleatorias realistas para el cuestionario
+- [ ] UX-3: Toggle de tema en ajustes (tema oscuro por defecto, ya implementado)
+- [ ] QIUI-1: Integración Bluetooth QIUI (lib/qiui.ts — scan, connect, lock/unlock, mock mode)
+- [ ] QIUI-2: Panel de dispositivos QIUI en hub de castidad (components/chastity/QIUIDevicePanel.tsx)
+- [ ] SEC-1: Suite de tests de seguridad para vault (seal/open round-trip, PIN incorrecto, duress, lockout)
+- [ ] BOT-1: Roadmap actualizado con checklist para seguimiento por bots de automatización
 
 ---
 
@@ -76,7 +83,15 @@ First slice local/ZK. Hidden from beta home (`EXPO_PUBLIC_MVP=1`). Preview with 
 - [x] Tallas locales de castidad (`/chastity-cage` `/chastity-belt` `/chastity-fit`) + ficha látex 28 puntos (`/latex-guide` tab medidas) en bóveda; export markdown/JSON; sin tienda
 Deliberadamente no construido: pagos, upload público a Storage, CDN de media, bienes ilegales.
 
----
+### Bot Automation Checklist
+> Entries below are designed for CI/CD bots to track implementation status.
+
+- [ ] All TypeScript compiles without errors (`pnpm exec tsc --noEmit`)
+- [ ] Vault security tests pass (`pnpm run test:vault:all`)
+- [ ] Web build succeeds (`pnpm run build:web`)
+- [ ] Demo mode generates valid responses
+- [ ] QIUI mock scan returns simulated devices
+- [ ] Theme defaults to dark on fresh install
 
 ## Comandos
 

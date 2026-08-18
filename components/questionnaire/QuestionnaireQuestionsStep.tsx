@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -8,6 +8,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
@@ -23,6 +24,7 @@ import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { ActivityCategory, DifficultyLevel, Rating, Activity } from '@/types';
 import { getCategoryLabel, getActivityName, getActivityDescription } from '@/data/activities';
 import { writeJsonStorage } from '@/lib/cryptoVault';
+import { generateDemoResponses } from '@/lib/demoMode';
 
 export const EXPRESS_ACTIVITY_IDS = [
   'pe_d/s_dynamic',
@@ -46,6 +48,7 @@ export interface QuestionnaireQuestionsStepProps {
   difficultyFilter: DifficultyLevel | 'all';
   searchQuery: string;
   isExpressMode?: boolean;
+  demoMode?: boolean;
   onFinish: (responses: any[]) => void;
   loading: boolean;
   onBack: () => void;
@@ -58,6 +61,7 @@ export function QuestionnaireQuestionsStep({
   difficultyFilter,
   searchQuery,
   isExpressMode,
+  demoMode,
   onFinish,
   loading,
   onBack,
@@ -73,6 +77,14 @@ export function QuestionnaireQuestionsStep({
     return q.activities.filter((a) => EXPRESS_ACTIVITY_IDS.includes(a.id));
   }, [q.activities, isExpressMode]);
 
+  // Demo Mode Auto-Fill
+  useEffect(() => {
+    if (demoMode && activeActivities.length > 0) {
+      const demoResponses = generateDemoResponses(activeActivities);
+      onFinish(demoResponses);
+    }
+  }, [demoMode, activeActivities]);
+
   // Auto-Save Draft Progress to ZK Storage
   useEffect(() => {
     if (q.responses && Object.keys(q.responses).length > 0) {
@@ -83,6 +95,28 @@ export function QuestionnaireQuestionsStep({
       }).catch(() => {});
     }
   }, [q.responses, q.currentIndex]);
+
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const bounceAnim = useRef(new Animated.Value(1)).current;
+  const prevIndex = useRef(q.currentIndex);
+
+  useEffect(() => {
+    if (q.currentIndex !== prevIndex.current) {
+      const isNext = q.currentIndex > prevIndex.current;
+      slideAnim.setValue(isNext ? 100 : -100);
+      
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 50,
+      }).start();
+
+      prevIndex.current = q.currentIndex;
+    } else {
+      slideAnim.setValue(0);
+    }
+  }, [q.currentIndex, slideAnim]);
 
   if (viewMode === 'swipe') {
     return (
@@ -107,6 +141,14 @@ export function QuestionnaireQuestionsStep({
 
   const handleRatingSelect = (rating: Rating) => {
     q.setRating(rating);
+
+    bounceAnim.setValue(0.9);
+    Animated.spring(bounceAnim, {
+      toValue: 1,
+      friction: 4,
+      useNativeDriver: true,
+    }).start();
+
     if (fastMode) {
       if (rating === 'hard_limit' || rating === 'not_interested' || !showDetails) {
         if (rating !== 'hard_limit' && rating !== 'not_interested') {
@@ -159,11 +201,15 @@ export function QuestionnaireQuestionsStep({
             showTimeEstimate
           />
 
-          <Text style={styles.activityName}>{getActivityName(q.currentActivity)}</Text>
-          <Text style={styles.description}>{getActivityDescription(q.currentActivity)}</Text>
+          <Animated.View style={{ transform: [{ translateX: slideAnim }] }}>
+            <Text style={styles.activityName}>{getActivityName(q.currentActivity)}</Text>
+            <Text style={styles.description}>{getActivityDescription(q.currentActivity)}</Text>
+          </Animated.View>
 
           <Text style={styles.sectionLabel}>¿Qué te parece?</Text>
-          <RatingPicker value={q.currentResponse.rating} onChange={handleRatingSelect} />
+          <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
+            <RatingPicker value={q.currentResponse.rating} onChange={handleRatingSelect} />
+          </Animated.View>
 
           {/* Details toggle for positive rating responses in fast mode */}
           {q.currentResponse.rating !== 'hard_limit' &&

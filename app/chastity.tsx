@@ -12,6 +12,7 @@ import {
   CHASTITY_ITEMS_BY_FLOW,
   type ChastityFlowId,
 } from '@/lib/chastityLabs';
+import { QIUIDevicePanel } from '@/components/chastity/QIUIDevicePanel';
 
 const FLOWS: { id: ChastityFlowId; route: string; emoji: string; accent: string }[] = [
   { id: 'wearer', route: '/chastity-wearer', emoji: '🔐', accent: '#c084fc' },
@@ -88,6 +89,9 @@ function CastidadHubContent() {
             <Text style={styles.cardTitle}>{t('labs.chastity.tools.title')}</Text>
             <Text style={styles.cardDesc}>{t('labs.chastity.tools.desc')}</Text>
           </TouchableOpacity>
+
+          <Text style={styles.kicker}>🔗 DISPOSITIVOS INTELIGENTES</Text>
+          <QIUIDevicePanel />
 
           <TouchableOpacity style={styles.inviteBtn} onPress={() => router.push('/invite')}>
             <Text style={styles.inviteBtnText}>{t('labs.chastity.invite')}</Text>
