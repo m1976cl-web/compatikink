@@ -13,6 +13,7 @@ import { Button } from '@/components/Button';
 import { PronounsPicker } from '@/components/PronounsPicker';
 import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { AppHeader } from '@/components/AppHeader';
+import { FlowBar } from '@/components/FlowBar';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { ExperienceLevel } from '@/types';
 
@@ -59,6 +60,7 @@ export function QuestionnaireIntroStep({
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.intro}>
+        <FlowBar step={1} />
         <AppHeader
           brand
           title="Antes de empezar"

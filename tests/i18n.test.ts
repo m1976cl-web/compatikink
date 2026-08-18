@@ -56,7 +56,14 @@ async function testI18nEngine() {
   assert.equal(getActivityName(ropeAct), 'Cordas (shibari)');
   assert.ok(t('talk.bo_rope').includes('circulação') || t('talk.bo_rope').includes('Circulação'));
   assert.equal(t('home.hello', { name: 'Alex' }), 'Olá, Alex');
+  assert.equal(t('flow.step_of', { current: '2', total: '3' }), 'Passo 2 de 3');
+  assert.equal(t('path.step3_title'), 'Relatório pronto');
   console.log('  ✅ Portuguese UI + catalog + talk tips resolve');
+
+  await setLocale('es');
+  assert.equal(t('banner.after_answers_title'), 'Ahora invita');
+  assert.equal(t('flow.step_of', { current: '2', total: '3' }), 'Paso 2 de 3');
+  console.log('  ✅ Core path flow keys resolve in ES/PT');
 
   // Reset to default
   await setLocale('es');

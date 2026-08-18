@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
+import { FlowBar } from '@/components/FlowBar';
 import { ActivityTooltipModal } from '@/components/ActivityTooltipModal';
 import { CustomActivityModal } from '@/components/CustomActivityModal';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
@@ -60,6 +61,7 @@ export function QuestionnaireCategoryStep({
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.intro}>
+        <FlowBar step={1} />
         <Text style={styles.introTitle}>Filtro de Categorías y Ambientes</Text>
         <Text style={styles.introText}>
           Selecciona las categorías, ambientes o busca por palabra clave para personalizar las actividades que responderás.

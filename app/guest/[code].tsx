@@ -23,6 +23,7 @@ import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import { AppHeader } from '@/components/AppHeader';
+import { FlowBar } from '@/components/FlowBar';
 import { NoxHost } from '@/components/nox';
 import { CATEGORY_LABELS, ExperienceLevel, UserProfile, ActivityCategory, Rating } from '@/types';
 import { getSessionByInviteCode, submitGuestResponses, parseInviteSecretFromUrl } from '@/lib/sessions';
@@ -162,6 +163,7 @@ export default function GuestQuestionnaireScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.consent}>
+          <FlowBar guest />
           <AppHeader
             brand
             title="Antes de responder"
@@ -228,6 +230,7 @@ export default function GuestQuestionnaireScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScrollView contentContainerStyle={styles.consent}>
+          <FlowBar guest />
           <Text style={styles.consentTitle}>Filtro de Categorías</Text>
           <Text style={styles.consentText}>
             Desmarca las categorías que no te interesen para omitir esas preguntas automáticamente.
@@ -299,6 +302,9 @@ function GuestQuestionnaireActiveFlow({
   if (viewMode === 'swipe') {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <View style={styles.flowPad}>
+          <FlowBar guest />
+        </View>
         <SwipeDeckView
           activities={q.activities}
           responses={q.responses}
@@ -337,6 +343,7 @@ function GuestQuestionnaireActiveFlow({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.scroll}>
+          <FlowBar guest />
           {/* Top Control Bar */}
           <View style={styles.controlHeader}>
             <TouchableOpacity onPress={onBack} style={styles.backLink}>
@@ -424,6 +431,7 @@ function GuestQuestionnaireActiveFlow({
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  flowPad: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
   flex: { flex: 1 },
   scroll: { padding: spacing.lg, paddingBottom: spacing.xl },
   consent: { padding: spacing.lg, gap: spacing.md },

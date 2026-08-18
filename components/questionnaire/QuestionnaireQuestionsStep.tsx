@@ -16,6 +16,7 @@ import { RolePicker } from '@/components/RolePicker';
 import { IntensityPicker } from '@/components/IntensityPicker';
 import { ProgressBar, ProgressLabel } from '@/components/ProgressBar';
 import { QuestionnaireProgressBar } from '@/components/QuestionnaireProgressBar';
+import { FlowBar } from '@/components/FlowBar';
 import { SwipeDeckView } from '@/components/SwipeDeckView';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
@@ -86,6 +87,9 @@ export function QuestionnaireQuestionsStep({
   if (viewMode === 'swipe') {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <View style={styles.flowPad}>
+          <FlowBar step={1} />
+        </View>
         <SwipeDeckView
           activities={activeActivities}
           responses={q.responses}
@@ -126,6 +130,7 @@ export function QuestionnaireQuestionsStep({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.scroll}>
+          <FlowBar step={1} />
           {/* Top Control Bar */}
           <View style={styles.controlHeader}>
             <TouchableOpacity onPress={onBack} style={styles.backLink}>
@@ -214,6 +219,10 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  flowPad: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
   },
   flex: {
     flex: 1,

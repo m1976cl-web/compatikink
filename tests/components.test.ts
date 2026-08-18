@@ -289,6 +289,34 @@ async function testComponentLogic() {
   assert.equal(nox.isNoxSceneId('invite'), true);
   assert.equal(nox.isNoxSceneId('dating'), false);
   console.log(`  ✅ NoxHost registry verified (${nox.NOX_SCENE_IDS.length} scenes)`);
+
+  // ─── 14. Core path stepper state ───────────────────────────────────
+  console.log('\n14. Testing core path stepper state...');
+  const { getCorePathState } = await import('../lib/corePath');
+  const locked = getCorePathState(null, false, []);
+  assert.equal(locked.currentStep, 1);
+  assert.equal(locked.step2Locked, true);
+  assert.equal(locked.step3Locked, true);
+
+  const readyToInvite = getCorePathState(
+    { nickname: 'Alex', baseResponses: [{ activityId: 'bo_rope', rating: 'like', role: 'flexible', intensity: 2 }] } as any,
+    true,
+    []
+  );
+  assert.equal(readyToInvite.currentStep, 2);
+  assert.equal(readyToInvite.step1, 'done');
+  assert.equal(readyToInvite.step2Locked, false);
+  assert.equal(readyToInvite.step3Locked, true);
+
+  const reportReady = getCorePathState(
+    { nickname: 'Alex', baseResponses: [{ activityId: 'bo_rope', rating: 'like', role: 'flexible', intensity: 2 }] } as any,
+    true,
+    [{ status: 'complete', initiatorToken: 'tok' } as any]
+  );
+  assert.equal(reportReady.currentStep, 3);
+  assert.equal(reportReady.step3, 'done');
+  assert.equal(reportReady.step3Locked, false);
+  console.log('  ✅ Core path locks later steps until answers / guest complete');
 }
 
 testComponentLogic()

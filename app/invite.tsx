@@ -5,6 +5,8 @@ import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { AppHeader } from '@/components/AppHeader';
+import { FlowBar } from '@/components/FlowBar';
+import { NextStepBanner } from '@/components/NextStepBanner';
 import { NoxHost } from '@/components/nox';
 import {
   colors,
@@ -144,6 +146,15 @@ export default function InviteScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
+        <FlowBar step={2} />
+        {isComplete ? (
+          <NextStepBanner
+            variant="report"
+            onPress={() => router.replace({ pathname: '/report', params: { token } })}
+          />
+        ) : (
+          <NextStepBanner variant="wait" />
+        )}
         <AppHeader
           brand
           title={t('invite.share_title')}
@@ -177,23 +188,6 @@ export default function InviteScreen() {
 
         <Text style={styles.hint}>{t('invite.whatsapp_warn')}</Text>
         <Button title={t('invite.share_full')} onPress={shareInvite} variant="secondary" />
-
-        <TouchableOpacity
-          style={styles.selfReportBtn}
-          onPress={() => router.push({ pathname: '/report', params: { token: session.initiatorToken, selfMode: 'true' } })}
-        >
-          <Text style={styles.selfReportBtnText}>📊 Ver Mis Propios Resultados & Mapa de Gustos</Text>
-          <Text style={styles.selfReportBtnSub}>Explora tus límites duros, aficiones y preferencias sin esperar al invitado</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.profileCtaCard}
-          onPress={() => router.push('/profile')}
-        >
-          <Text style={styles.profileCtaBadge}>✨ PASO 2 RECOMENDADO</Text>
-          <Text style={styles.profileCtaTitle}>Completa tu Perfil & Álbum Cifrado (FetLife Style)</Text>
-          <Text style={styles.profileCtaSub}>Sube fotos/videos con permisos de visibilidad (Público, Solo Amigos Mutuos, Autorizados o Bóveda)</Text>
-        </TouchableOpacity>
 
         <TouchableOpacity style={styles.qrCard} onPress={() => setShowQrModal(true)}>
           <Text style={styles.qrCardTitle}>Código QR (Local Offline)</Text>
@@ -243,7 +237,7 @@ export default function InviteScreen() {
 
         {isComplete ? (
           <Button
-            title="Ver reporte de compatibilidad"
+            title={t('path.cta_report')}
             onPress={() => router.replace({ pathname: '/report', params: { token } })}
           />
         ) : (
@@ -253,6 +247,17 @@ export default function InviteScreen() {
             variant="ghost"
           />
         )}
+
+        <Button
+          title="Ver solo mis resultados"
+          variant="ghost"
+          onPress={() =>
+            router.push({
+              pathname: '/report',
+              params: { token: session.initiatorToken, selfMode: 'true' },
+            })
+          }
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -422,55 +427,5 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: fontSize.md,
     letterSpacing: 2,
-  },
-  selfReportBtn: {
-    backgroundColor: 'rgba(192, 132, 252, 0.15)',
-    borderWidth: 1.5,
-    borderColor: colors.neonPurple,
-    borderRadius: radii.xl,
-    padding: spacing.md,
-    alignItems: 'center',
-    gap: 4,
-    marginVertical: spacing.xs,
-  },
-  selfReportBtnText: {
-    color: colors.neonPurple,
-    fontFamily: fonts.displaySemi,
-    fontSize: fontSize.sm,
-    fontWeight: '800',
-  },
-  selfReportBtnSub: {
-    color: colors.textMuted,
-    fontFamily: fonts.body,
-    fontSize: fontSize.xs,
-    textAlign: 'center',
-  },
-  profileCtaCard: {
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderWidth: 1.5,
-    borderColor: '#38bdf8',
-    borderRadius: radii.xl,
-    padding: spacing.md,
-    alignItems: 'center',
-    gap: 4,
-    marginVertical: spacing.xs,
-  },
-  profileCtaBadge: {
-    color: '#38bdf8',
-    fontSize: 10,
-    fontFamily: fonts.bodyBold,
-    letterSpacing: 1,
-  },
-  profileCtaTitle: {
-    color: colors.text,
-    fontFamily: fonts.displaySemi,
-    fontSize: fontSize.sm,
-    fontWeight: '800',
-  },
-  profileCtaSub: {
-    color: colors.textMuted,
-    fontFamily: fonts.body,
-    fontSize: fontSize.xs,
-    textAlign: 'center',
   },
 });

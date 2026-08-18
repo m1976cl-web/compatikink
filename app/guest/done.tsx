@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { AppHeader } from '@/components/AppHeader';
+import { FlowBar } from '@/components/FlowBar';
 import { NoxHost } from '@/components/nox';
 import {
   colors,
@@ -56,6 +57,7 @@ export default function GuestDoneScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
+        <FlowBar guest />
         <AppHeader
           brand
           title="Gracias"

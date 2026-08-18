@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -24,6 +24,7 @@ import { QuickInviteForm } from '@/components/home/QuickInviteForm';
 import { SessionList } from '@/components/home/SessionList';
 import { ModuleGrid } from '@/components/home/ModuleGrid';
 import { HomeActions } from '@/components/home/HomeActions';
+import { NextStepBanner } from '@/components/NextStepBanner';
 
 import { colors, fonts, gradients, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -33,9 +34,11 @@ import { useVaultSubscription } from '@/hooks/useVaultSubscription';
 import { useQuickInvite } from '@/hooks/useQuickInvite';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { isMvpMode } from '@/lib/featureFlags';
+import { getCorePathState } from '@/lib/corePath';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const { isDesktop } = useResponsive();
 
   const { profile, sessions, sceneAgreements, loadHomeData, handleLogout, handlePanicWipe } =
@@ -61,8 +64,6 @@ export default function HomeScreen() {
 
   const heroFade = useRef(new Animated.Value(0)).current;
   const heroSlide = useRef(new Animated.Value(18)).current;
-  const scrollRef = useRef<ScrollView>(null);
-  const guestSectionY = useRef(0);
 
   useEffect(() => {
     const checkOnboarding = async () => {
@@ -84,7 +85,6 @@ export default function HomeScreen() {
     if (!onboardingChecked) return;
     loadHomeData();
 
-    // Background Prefetch Core Routes for Instant Navigation
     if (router && typeof (router as any).prefetch === 'function') {
       try {
         (router as any).prefetch('/questionnaire');
@@ -108,18 +108,20 @@ export default function HomeScreen() {
 
   if (!onboardingChecked) return null;
 
-  const hasResponses = Boolean(profile?.baseResponses && profile.baseResponses.length > 0);
+  const path = getCorePathState(profile, vaultOpen, sessions);
+  const showAfterAnswersBanner = from === 'answers' && path.hasResponses && path.currentStep === 2;
 
-  const sessionsBlock = (
-    <SessionList
-      vaultOpen={vaultOpen}
-      sessions={sessions}
-      sceneAgreements={sceneAgreements}
-      profile={profile}
-      onRequestInvite={() => invite.setShowQuickInvite(true)}
-      onDebrief={setDebriefTarget}
-    />
-  );
+  const sessionsBlock =
+    sessions.length > 0 ? (
+      <SessionList
+        vaultOpen={vaultOpen}
+        sessions={sessions}
+        sceneAgreements={sceneAgreements}
+        profile={profile}
+        onRequestInvite={() => invite.setShowQuickInvite(true)}
+        onDebrief={setDebriefTarget}
+      />
+    ) : null;
 
   const accountBlock = (
     <HomeActions
@@ -130,6 +132,39 @@ export default function HomeScreen() {
       onLogout={handleLogout}
       onPanicWipe={handlePanicWipe}
     />
+  );
+
+  const startColumn = (
+    <View style={styles.pathCol}>
+      {showAfterAnswersBanner ? (
+        <NextStepBanner variant="invite" onPress={() => invite.setShowQuickInvite(true)} />
+      ) : null}
+      {path.completeSession && !showAfterAnswersBanner ? (
+        <NextStepBanner
+          variant="report"
+          onPress={() =>
+            router.push({
+              pathname: '/report',
+              params: { token: path.completeSession!.initiatorToken },
+            })
+          }
+        />
+      ) : null}
+      <CorePathBanner
+        profile={profile}
+        vaultOpen={vaultOpen}
+        sessions={sessions}
+        onInvite={() => invite.setShowQuickInvite(true)}
+      />
+      <QuickInviteForm invite={invite} />
+      <ProfileBar />
+    </View>
+  );
+
+  const guestColumn = (
+    <View style={styles.pathCol}>
+      <GuestJoinSection guestCode={guestCode} onChangeCode={setGuestCode} />
+    </View>
   );
 
   return (
@@ -154,49 +189,27 @@ export default function HomeScreen() {
         />
       ) : null}
 
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll}>
         <HeroSection
           loggedIn={Boolean(profile)}
           profile={profile}
           vaultOpen={vaultOpen}
           heroFade={heroFade}
           heroSlide={heroSlide}
-          onOpenQuickInvite={() => invite.setShowQuickInvite(true)}
-          onScrollToGuest={() =>
-            scrollRef.current?.scrollTo({
-              y: Math.max(0, guestSectionY.current - 24),
-              animated: true,
-            })
-          }
         />
 
-        <CorePathBanner
-          hasProfile={Boolean(profile)}
-          hasResponses={hasResponses}
-          vaultOpen={vaultOpen}
-          onInvite={() => invite.setShowQuickInvite(true)}
-        />
-
-        <HeroDashboardBanner />
-
-        <ProfileBar />
+        <View style={isDesktop ? styles.columns : styles.columnsStack}>
+          {startColumn}
+          {guestColumn}
+        </View>
 
         {!isMvpMode ? (
           <>
+            <HeroDashboardBanner />
             <FetishSuiteSection />
             <FetishLabsSection />
           </>
         ) : null}
-
-        <GuestJoinSection
-          guestCode={guestCode}
-          onChangeCode={setGuestCode}
-          onLayout={(e) => {
-            guestSectionY.current = e.nativeEvent.layout.y;
-          }}
-        />
-
-        <QuickInviteForm invite={invite} />
 
         {isMvpMode ? (
           <>
@@ -252,6 +265,9 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  columns: { flexDirection: 'row', gap: spacing.lg, alignItems: 'flex-start', marginBottom: spacing.lg },
+  columnsStack: { flexDirection: 'column', gap: spacing.md, marginBottom: spacing.lg },
+  pathCol: { flex: 1, minWidth: 0 },
   desktopGrid: { flexDirection: 'row', gap: spacing.lg, alignItems: 'flex-start' },
   desktopCol: { flex: 1, gap: spacing.lg, minWidth: 0 },
   footnote: {

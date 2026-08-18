@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing } from '@/constants/theme';
+import { FlowBar } from '@/components/FlowBar';
 import { ActivityResponse, ExperienceLevel, Rating, RolePreference, UserProfile, FetishBadge } from '@/types';
 import { QUICK_PROFILE_ACTIVITIES } from '@/data/quickProfile';
 import {
@@ -200,7 +201,7 @@ export default function QuickProfileScreen() {
         ['onboarding_done', 'true'],
       ]);
 
-      router.replace('/');
+      router.replace({ pathname: '/', params: { from: 'answers' } });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'No se pudo guardar el perfil.';
       notify('Error', message);

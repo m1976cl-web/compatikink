@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import { FlowBar } from '@/components/FlowBar';
 import { ActivityResponse, Rating, RolePreference } from '@/types';
 import { QUICK_PROFILE_ACTIVITIES } from '@/data/quickProfile';
 
@@ -43,6 +44,7 @@ export function QuickProfileQuestionsStep({
 
   return (
     <View style={styles.questionContainer}>
+      <FlowBar step={1} />
       {/* Progress Bar */}
       <View style={styles.progressSection}>
         <View style={styles.progressBarBg}>

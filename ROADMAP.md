@@ -12,6 +12,7 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] Google Sign-In (código) — activar provider + secrets; ver `docs/GOOGLE_AUTH.md`  
 - [x] Schema ZK aplicado en `piegesepycvipfzjbraz`  
 - [x] Sprint **beta usable**: home mínimo + `CorePathBanner` + happy path doc + reload vault  
+- [x] UX slice: stepper 3 pasos (todo/doing/done) + home 2 columnas + FlowBar + banners de siguiente paso  
 - [x] Deep links AASA / assetlinks (`public/.well-known/` + `docs/DEEP_LINKS.md`) + invite `?k=` fallback  
 - [x] Reporte accionable (banner hard limits + guión 10 min)  
 - [x] i18n ES / EN / PT en happy path + catálogo + tips de conversación  

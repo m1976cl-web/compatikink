@@ -5,6 +5,7 @@ import { ExperienceLevel } from '@/types';
 import { PronounsPicker } from '@/components/PronounsPicker';
 import { ExperiencePicker } from '@/components/ExperiencePicker';
 import { AppHeader } from '@/components/AppHeader';
+import { FlowBar } from '@/components/FlowBar';
 
 const PRIMARY_ROLE_OPTIONS = ['Dom', 'Sub', 'Switch', 'Top', 'Bottom', 'Master', 'Slave', 'Rigger', 'Brat'];
 
@@ -57,6 +58,7 @@ export function QuickProfileIntroStep({
 }: QuickProfileIntroStepProps) {
   return (
     <>
+      <FlowBar step={1} />
       <View style={styles.heroSection}>
         <AppHeader
           brand

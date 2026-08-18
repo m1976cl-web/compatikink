@@ -6,7 +6,6 @@ import { NoxHost } from '@/components/nox';
 import { colors, fonts, fontSize, spacing, typography } from '@/constants/theme';
 import { UserProfile } from '@/types';
 import { VaultLockGateAPI } from '@/lib/cryptoVault';
-import { GoogleAuthButton } from '@/components/GoogleAuthButton';
 import { useTranslation } from '@/lib/i18n';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 
@@ -16,8 +15,6 @@ interface HeroSectionProps {
   vaultOpen: boolean;
   heroFade: Animated.Value;
   heroSlide: Animated.Value;
-  onOpenQuickInvite: () => void;
-  onScrollToGuest: () => void;
 }
 
 export function HeroSection({
@@ -26,8 +23,6 @@ export function HeroSection({
   vaultOpen,
   heroFade,
   heroSlide,
-  onOpenQuickInvite,
-  onScrollToGuest,
 }: HeroSectionProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -60,61 +55,22 @@ export function HeroSection({
           : t('home.support_guest')}
       </Text>
 
-      <View style={styles.ctaGroup}>
-        {/* Prominent Google Auth Button at top of Hero */}
-        <View style={{ marginBottom: spacing.xs }}>
-          <GoogleAuthButton />
-        </View>
-
-        {loggedIn ? (
-          <>
-            <Button
-              title={t('home.cta_invite')}
-              onPress={onOpenQuickInvite}
-              style={styles.ctaPrimary}
-            />
-            <Button
-              title={t('home.cta_respond')}
-              variant="secondary"
-              onPress={() => router.push('/quick-profile')}
-              style={styles.ctaSecondary}
-            />
-            <Button
-              title={vaultOpen ? t('home.cta_lock') : t('home.cta_unlock')}
-              variant="ghost"
-              onPress={() => {
-                if (vaultOpen) VaultLockGateAPI.lock();
-                else router.push('/auth' as any);
-              }}
-            />
-          </>
-        ) : (
-          <>
-            <Button
-              title={t('home.cta_start')}
-              onPress={() => router.push('/quick-profile')}
-              style={styles.ctaPrimary}
-            />
-            <Button
-              title={t('home.cta_invited')}
-              variant="secondary"
-              onPress={onScrollToGuest}
-              style={styles.ctaSecondary}
-            />
-            <Button
-              title={t('home.cta_vault')}
-              variant="ghost"
-              onPress={() => router.push('/auth')}
-            />
-          </>
-        )}
-      </View>
+      {loggedIn ? (
+        <Button
+          title={vaultOpen ? t('home.cta_lock') : t('home.cta_unlock')}
+          variant="ghost"
+          onPress={() => {
+            if (vaultOpen) VaultLockGateAPI.lock();
+            else router.push('/auth' as any);
+          }}
+        />
+      ) : null}
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { marginBottom: spacing.xxl, paddingTop: spacing.md },
+  hero: { marginBottom: spacing.lg, paddingTop: spacing.md },
   langRow: { alignItems: 'flex-end', marginBottom: spacing.sm },
   brand: {
     fontFamily: fonts.display,
@@ -140,7 +96,4 @@ const styles = StyleSheet.create({
     maxWidth: 520,
   },
   heroSupport: { ...typography.bodyMuted, marginTop: spacing.sm, maxWidth: 480 },
-  ctaGroup: { marginTop: spacing.lg, gap: spacing.sm, maxWidth: 360 },
-  ctaPrimary: { width: '100%' },
-  ctaSecondary: { width: '100%' },
 });

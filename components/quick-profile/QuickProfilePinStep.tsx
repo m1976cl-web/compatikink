@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { colors, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import { FlowBar } from '@/components/FlowBar';
 
 export interface QuickProfilePinStepProps {
   pin: string;
@@ -17,6 +18,7 @@ export function QuickProfilePinStep({
 }: QuickProfilePinStepProps) {
   return (
     <>
+      <FlowBar step={1} />
       <View style={styles.heroSection}>
         <Text style={styles.heroEmoji}>🔐</Text>
         <Text style={styles.heroTitle}>Protege tu Perfil en Bóveda</Text>

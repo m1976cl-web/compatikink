@@ -16,6 +16,7 @@ import { SceneDebriefModal } from '@/components/SceneDebriefModal';
 import { ConversationGuideModal } from '@/components/ConversationGuideModal';
 import { SkeletonCardGroup } from '@/components/SkeletonLoader';
 import { ReportAnalysisLoader } from '@/components/feedback/ReportAnalysisLoader';
+import { FlowBar } from '@/components/FlowBar';
 import { NoxHost } from '@/components/nox';
 import { colors, fontSize, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -211,6 +212,9 @@ export default function ReportScreen() {
   if (!unlocked) {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <View style={styles.flowPad}>
+          <FlowBar step={3} />
+        </View>
         <View style={styles.center}>
           <VaultLockGate
             title="Reporte cifrado"
@@ -236,6 +240,9 @@ export default function ReportScreen() {
   if (!report) {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <View style={styles.flowPad}>
+          <FlowBar step={3} />
+        </View>
         <View style={styles.center}>
           <Text style={styles.title}>Sin reporte</Text>
           <Text style={styles.muted}>Crea una sesión o espera a que respondan.</Text>
@@ -250,6 +257,7 @@ export default function ReportScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
+        <FlowBar step={3} />
         <VaultLockGate showLockButton>
           <NoxHost scene="report" variant="compact" />
 
@@ -416,6 +424,7 @@ export default function ReportScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  flowPad: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
   scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
   center: {
     flex: 1,
