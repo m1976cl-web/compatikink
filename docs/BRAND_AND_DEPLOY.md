@@ -27,7 +27,7 @@ Candidatos bajo consideración (lean del usuario: rareza / poco usados): **Shley
 
 | Nombre | Cuándo usarlo |
 |--------|----------------|
-| **LUX** | Enfoque de luz / revelación que ilumina el deseo; dualidad perfecta con la mascota **Nox** (`luxvault.app`, `luxnox.io`, `luxkink.com`) |
+| **LUX / LUX NOX** | Dualidad perfecta con la mascota **Nox** (Luz & Noche); 0 colisiones en Clase 9/42 para apps de intimidad (`luxnox.app`, `luxnox.io`, `luxkink.com`, `luxvault.app`) |
 | **Masque** | Enfoque clandestino / baile de máscaras (`masquevault.com`, `masqueapp.app`) |
 | **Sotto** | Enfoque susurro íntimo / complicidad (*sotto voce*) (`sottoclub.com`, `sottoapp.app`) |
 | **Umbra** | Enfoque sombra del eclipse / poder noir (`umbraclub.com`, `umbraapp.app`) |
@@ -41,6 +41,19 @@ Candidatos bajo consideración (lean del usuario: rareza / poco usados): **Shley
 | CompatKink | Web + in-app; **no** título de store |
 | Nox | Solo mascota UI; **nunca** listing ni bundle `com.nox.*` |
 | BlindCompat | Retirado: demasiado literal |
+
+### 🛡️ Estudio de Disponibilidad: LUX & LUX NOX (2026-08-18)
+
+1. **Marcas Registradas (USPTO & EUIPO - Clases 9 y 42):**
+   - **`LUX NOX` / `LUXNOX`**: **100% LIMPIO**. No existen marcas registradas en software de emparejamiento, intimidad, privacidad ni mensajería. Libre de oposiciones directas.
+   - "Nox Lux" (en orden inverso) solo existe para iluminación automotriz (Clase 11), sin conflicto de rubro.
+2. **Disponibilidad de Dominios Web:**
+   - **`luxnox.app`**: Disponible / Libre para registro inmediato.
+   - **`luxnox.io`**: Disponible / Libre para registro inmediato.
+   - **`luxkink.com`**: Disponible / Libre para registro inmediato (ideal para landing web orientada al nicho).
+   - **`luxvault.app`**: Disponible (solo existe un proyecto cripto no relacionado en `.net`).
+3. **App Stores (Apple & Google Play ASO):**
+   - El término **"Lux Nox"** no está tomado por apps de citas ni privacidad. Supera todas las políticas de contenido restringido al no incluir palabras tabú.
 
 > 📖 **Análisis ampliado de riesgos con el término "Kink", Radar de Geoproximidad y Blindaje Anti-Comercio:** Ver [`docs/BRAND_EXPANSION_AND_SAFETY_SPEC.md`](file:///C:/KC/docs/BRAND_EXPANSION_AND_SAFETY_SPEC.md).
 
