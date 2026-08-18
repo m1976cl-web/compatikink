@@ -25,6 +25,7 @@ import { SessionList } from '@/components/home/SessionList';
 import { ModuleGrid } from '@/components/home/ModuleGrid';
 import { HomeActions } from '@/components/home/HomeActions';
 import { NextStepBanner } from '@/components/NextStepBanner';
+import { Button } from '@/components/Button';
 
 import { colors, fonts, gradients, spacing } from '@/constants/theme';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -158,6 +159,13 @@ export default function HomeScreen() {
       />
       <QuickInviteForm invite={invite} />
       <ProfileBar />
+      <View style={{ marginTop: spacing.md }}>
+        <Button 
+          title="📖 Guías de Seguridad & Cuerdas" 
+          onPress={() => router.push('/specialized-guides' as any)} 
+          variant="secondary"
+        />
+      </View>
     </View>
   );
 

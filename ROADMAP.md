@@ -40,12 +40,12 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] P3-2 Sistema de Badges, XP y Niveles de Exploración (10 rangos de nivel, catálogo de 14 medallas por rareza, widget de XP y Sala de Trofeos interactiva)
 - [x] P3-3 Galería de fotos, Showcase de Gear y Módulo privado "Mis Sesiones" con Debrief (1-7, roles, sensaciones, emociones) y Bag Check Pre/Post
 - [x] P3-4 Deep Links y QR interactivo para invitaciones presenciales (Pestañas QR, Chat, PIN y zoom full screen)
-- [ ] P3-5 Mini‑guías educativas (Latex, cuidados)
-- [ ] P3-6 Notificaciones After‑care mejoradas
+- [x] P3-5 Mini‑guías educativas (Cuerdas/Yute, Higiene de materiales, Botiquín EMT/Rescate y Protocolo SSC/RACK)
+- [x] P3-6 Notificaciones y Check-in de After‑care (Evaluación 12h/24h/48h, guía de recuperación Nox y vinculación con Mis Sesiones)
 - [x] P3-7 Personalización de avatar y perfil de intereses (Catálogo de 10 Avatares Nox con aura luminosa, arquetipos íntimos, badges de afinidad y asignación post-quiz)
 - [x] Guía especializada de Látex (`/latex-guide`)
 - [x] Split modular de `lib/storage.ts` en `lib/storage/*`
-- [ ] Pasada humana E2E registrada en `docs/BETA_HAPPY_PATH.md`  
+- [x] Pasada humana E2E registrada en `docs/BETA_HAPPY_PATH.md`  
 - [x] UX-1: Micro-animaciones en flujo de cuestionario (fade-in secuencial, slide en transiciones)
 - [x] UX-2: Modo Demo con respuestas aleatorias realistas para el cuestionario
 - [x] UX-3: Toggle de tema en ajustes (tema oscuro por defecto, ya implementado)

@@ -42,11 +42,13 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
   { title: 'Pass & Play',          description: 'Mismo dispositivo, cortina de privacidad',       mark: '🎮', category: 'explore', route: '/pass-and-play'       },
   { title: 'Manual',               description: 'Guía de módulos y seguridad',                    mark: '📖', category: 'explore', route: '/manual'              },
   { title: 'Glosario',             description: 'Términos y consentimiento',                      mark: '📚', category: 'explore', route: '/glossary'            },
+  { title: 'Guías Especializadas', description: 'Cuerdas, higiene, botiquín y SSC', mark: '📖', category: 'explore', route: '/specialized-guides' },
   { title: 'Guía de seguridad',    description: 'SSC/RACK y protocolos',                          mark: '🛡️', category: 'explore', route: '/safety-guide'        },
   { title: 'Panel Admin',          description: 'Gestión maestro de perfiles',                    mark: '👑', category: 'explore', route: '/admin-dashboard'     },
   { title: 'Auditoría PenTest',    description: 'Diagnóstico de seguridad (Exclusivo Admin)',      mark: '🛡️', category: 'explore', route: '/security-audit'      },
 
   // Escenas
+  { title: 'Check-in Aftercare',   description: 'Bienestar y recuperación emocional',             mark: '🌿', category: 'scenes', route: '/aftercare-checkin'    },
   { title: 'Escena en Vivo',       description: 'Monitor inmersivo con safeword por voz y Aftercare',    mark: '⚡', category: 'scenes', route: '/live-scene'           },
   { title: 'Creador de Escenas',   description: 'Diseñador de secuencias de escena personalizadas',      mark: '🎬', category: 'scenes', route: '/scene-builder'        },
   { title: 'Ruleta Kink',          description: 'Oráculo de fantasías y retos en pareja',                mark: '🔮', category: 'scenes', route: '/kink-roulette'        },

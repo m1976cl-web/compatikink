@@ -11,6 +11,11 @@ import {
   createEmptyPrivateSession,
   deletePrivateSession
 } from '@/lib/privateSessions';
+import { 
+  scheduleAftercareReminder, 
+  getPendingAftercareReminders, 
+  ScheduledAftercareReminder 
+} from '@/lib/aftercare';
 import { BagCheckModal } from '@/components/sessions/BagCheckModal';
 import { colors, fonts, fontSize, radii, spacing, typography } from '@/constants/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,6 +33,7 @@ export default function PrivateSessionsScreen() {
   const [sessions, setSessions] = useState<PrivateSession[]>([]);
   const [activeSession, setActiveSession] = useState<PrivateSession | null>(null);
   const [isBagCheckVisible, setIsBagCheckVisible] = useState(false);
+  const [pendingReminders, setPendingReminders] = useState<ScheduledAftercareReminder[]>([]);
 
   useEffect(() => {
     loadSessions();
@@ -46,6 +52,9 @@ export default function PrivateSessionsScreen() {
       const dateB = b.date || '';
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     }));
+    
+    const rems = await getPendingAftercareReminders();
+    setPendingReminders(rems);
   };
 
   const handleCreateNew = async (initialGearIds?: string) => {
@@ -294,6 +303,28 @@ export default function PrivateSessionsScreen() {
               />
             </View>
 
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>⏰ Programar Recordatorio de Aftercare</Text>
+              <Text style={styles.desc}>Recibirás una alerta en la Bóveda para hacer un check-in de bienestar físico y emocional tras la sesión.</Text>
+              <View style={styles.repeatRow}>
+                {[12, 24, 48].map(h => (
+                  <TouchableOpacity 
+                    key={h}
+                    style={styles.repeatBtn}
+                    onPress={async () => {
+                      if (!activeSession) return;
+                      await handleSaveSession(); // Save session first to have a title
+                      await scheduleAftercareReminder(activeSession.id, activeSession.title || 'Sesión', h);
+                      Alert.alert('Programado', `Recordatorio configurado en ${h} horas.`);
+                      loadSessions();
+                    }}
+                  >
+                    <Text style={styles.repeatBtnText}>+{h}h</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
             <TouchableOpacity style={styles.saveBtn} onPress={handleSaveSession}>
               <Text style={styles.saveBtnText}>💾 Guardar Sesión en Bóveda</Text>
             </TouchableOpacity>
@@ -336,6 +367,22 @@ export default function PrivateSessionsScreen() {
           </TouchableOpacity>
 
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}>
+            {pendingReminders.length > 0 && (
+              <View style={{ marginBottom: spacing.md }}>
+                <Text style={{ color: colors.primary, fontWeight: 'bold', marginBottom: spacing.xs }}>🔔 Recordatorios de Aftercare Pendientes</Text>
+                {pendingReminders.map(rem => (
+                  <TouchableOpacity 
+                    key={rem.id} 
+                    style={styles.reminderCard}
+                    onPress={() => router.push(`/aftercare-checkin?sessionId=${rem.sessionId}&sessionTitle=${encodeURIComponent(rem.sessionTitle)}&scheduledForHours=${rem.hoursAfter}&reminderId=${rem.id}`)}
+                  >
+                    <Text style={styles.reminderText}>🌿 Hacer Check-in: {rem.sessionTitle}</Text>
+                    <Text style={styles.reminderSubText}>Programado para +{rem.hoursAfter}h</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
             {sessions.length === 0 ? (
               <Text style={styles.emptyText}>Aún no has registrado ninguna sesión.</Text>
             ) : (
@@ -429,5 +476,9 @@ const styles = StyleSheet.create({
   repeatBtnText: { color: colors.text, fontWeight: 'bold', fontSize: fontSize.sm },
 
   saveBtn: { backgroundColor: colors.primary, padding: spacing.md, borderRadius: radii.md, alignItems: 'center', marginTop: spacing.sm },
-  saveBtnText: { color: colors.background, fontWeight: 'bold', fontSize: fontSize.md }
+  saveBtnText: { color: colors.background, fontWeight: 'bold', fontSize: fontSize.md },
+  
+  reminderCard: { backgroundColor: 'rgba(157, 78, 221, 0.1)', padding: spacing.md, borderRadius: radii.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.primary },
+  reminderText: { color: colors.primary, fontWeight: 'bold', fontSize: fontSize.md },
+  reminderSubText: { color: colors.textMuted, fontSize: fontSize.sm, marginTop: spacing.xs }
 });

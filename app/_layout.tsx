@@ -119,6 +119,8 @@ export default function RootLayout() {
             <Stack.Screen name="chastity-fit"         options={{ title: 'Castidad · Estilo y talla', headerShown: false }} />
             <Stack.Screen name="private-sessions"     options={{ title: 'Mis Sesiones',              headerShown: false }} />
             <Stack.Screen name="trophy-room"          options={{ title: 'Sala de Trofeos',           headerShown: false }} />
+            <Stack.Screen name="specialized-guides"   options={{ title: 'Guías Especializadas',      headerShown: false }} />
+            <Stack.Screen name="aftercare-checkin"    options={{ title: 'Check-in de Aftercare',     headerShown: false }} />
           </Stack>
         </Suspense>
         <OfficeModeModal />
