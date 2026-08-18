@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View, Share, Image, TouchableOpacity, Modal } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Share, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +26,7 @@ import {
   createInviteSchemeUrl,
   generateQRCodeSVG,
 } from '@/lib/linking';
+import { QRCodeInviteCard } from '@/components/invite/QRCodeInviteCard';
 import { useTranslation } from '@/lib/i18n';
 
 export default function InviteScreen() {
@@ -34,7 +35,6 @@ export default function InviteScreen() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [guestProfile, setGuestProfile] = useState<GuestProfile | null>(null);
-  const [showQrModal, setShowQrModal] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -60,31 +60,6 @@ export default function InviteScreen() {
     }, 5000);
     return () => clearInterval(interval);
   }, [token, load, router]);
-
-  const copyCode = async () => {
-    if (!session) return;
-    await Clipboard.setStringAsync(session.inviteCode);
-    notify('Copiado', 'Código copiado al portapapeles.');
-  };
-
-  const copyLink = async () => {
-    if (!session) return;
-    const secret = session.inviteSecret;
-    const primary = createInviteWebUrl(session.inviteCode, secret);
-    const fallback = secret
-      ? createInviteWebUrlQueryFallback(session.inviteCode, secret)
-      : null;
-    const payload = fallback
-      ? `${primary}\n\nSi WhatsApp corta el enlace, usa este respaldo (el secreto va en ?k=):\n${fallback}`
-      : primary;
-    await Clipboard.setStringAsync(payload);
-    notify(
-      'Enlace copiado',
-      secret
-        ? 'Incluye #k= (preferido) y un respaldo ?k= por si el chat trunca el fragmento. No borres la parte tras # o ?.'
-        : 'Enlace copiado al portapapeles.'
-    );
-  };
 
   const shareInvite = async () => {
     if (!session) return;
@@ -130,19 +105,6 @@ export default function InviteScreen() {
 
   const isComplete = session.status === 'complete';
 
-  const expiryText = (() => {
-    if (!session.expiresAt) return null;
-    const diff = new Date(session.expiresAt).getTime() - Date.now();
-    if (diff <= 0) return 'Código expirado';
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-    if (hours < 24) return `Expira en ${hours}h`;
-    return `Expira en ${days} día${days > 1 ? 's' : ''}`;
-  })();
-
-  const qrData = createInviteWebUrl(session.inviteCode, session.inviteSecret);
-  const qrSvgUri = generateQRCodeSVG(qrData, 240);
-
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -162,58 +124,13 @@ export default function InviteScreen() {
         />
         <NoxHost scene="invite" variant="banner" />
 
-        <View style={styles.codeBox}>
-          <Text style={styles.codeLabel}>{t('invite.code_label')}</Text>
-          <Text style={styles.code}>{session.inviteCode}</Text>
-          <Text style={styles.codeHint}>{t('invite.one_use')}</Text>
-          {expiryText ? (
-            <Text
-              style={[
-                styles.codeHint,
-                {
-                  color: expiryText.startsWith('Código expirado') ? colors.danger : colors.warning,
-                  marginTop: 4,
-                },
-              ]}
-            >
-              {expiryText}
-            </Text>
-          ) : null}
-        </View>
-
-        <View style={styles.shareRow}>
-          <Button title={t('invite.copy_code')} onPress={copyCode} style={{ flex: 1 }} />
-          <Button title={t('invite.copy_link')} onPress={copyLink} variant="secondary" style={{ flex: 1 }} />
-        </View>
-
-        <Text style={styles.hint}>{t('invite.whatsapp_warn')}</Text>
-        <Button title={t('invite.share_full')} onPress={shareInvite} variant="secondary" />
-
-        <TouchableOpacity style={styles.qrCard} onPress={() => setShowQrModal(true)}>
-          <Text style={styles.qrCardTitle}>Código QR (Local Offline)</Text>
-          <Text style={styles.qrCardSub}>Mostrar para escanear cara a cara (100% cifrado local)</Text>
-        </TouchableOpacity>
-
-        <Modal visible={showQrModal} transparent animationType="fade" onRequestClose={() => setShowQrModal(false)}>
-          <View style={styles.qrOverlay}>
-            <View style={styles.qrModalCard}>
-              <TouchableOpacity style={styles.qrCloseBtn} onPress={() => setShowQrModal(false)}>
-                <Text style={styles.qrCloseText}>✕</Text>
-              </TouchableOpacity>
-              <Text style={styles.qrModalTitle}>Escanear para responder</Text>
-              <Text style={styles.qrModalSub}>El enlace incluye el secreto de cifrado de la sesión (Local SVG Offline).</Text>
-              <View style={styles.qrImageContainer}>
-                <Image
-                  source={{ uri: qrSvgUri }}
-                  style={{ width: 220, height: 220, borderRadius: 12 }}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={styles.qrModalCodeText}>{session.inviteCode}</Text>
-              <Button title="Cerrar" variant="ghost" onPress={() => setShowQrModal(false)} />
-            </View>
-          </View>
-        </Modal>
+        <QRCodeInviteCard
+          inviteCode={session.inviteCode}
+          inviteSecret={session.inviteSecret}
+          expiresAt={session.expiresAt}
+          guestNickname={guestProfile?.nickname}
+          onShareFull={shareInvite}
+        />
 
         {guestProfile ? (
           <View style={styles.profileCard}>
