@@ -42,7 +42,7 @@ Estado operativo y prioridades para agentes. Fuente canónica: `PROJECT.md` + es
 - [x] P3-4 Deep Links y QR interactivo para invitaciones presenciales (Pestañas QR, Chat, PIN y zoom full screen)
 - [ ] P3-5 Mini‑guías educativas (Latex, cuidados)
 - [ ] P3-6 Notificaciones After‑care mejoradas
-- [ ] P3-7 Personalización de avatar y perfil de intereses
+- [x] P3-7 Personalización de avatar y perfil de intereses (Catálogo de 10 Avatares Nox con aura luminosa, arquetipos íntimos, badges de afinidad y asignación post-quiz)
 - [x] Guía especializada de Látex (`/latex-guide`)
 - [x] Split modular de `lib/storage.ts` en `lib/storage/*`
 - [ ] Pasada humana E2E registrada en `docs/BETA_HAPPY_PATH.md`  

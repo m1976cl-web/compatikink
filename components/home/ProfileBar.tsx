@@ -1,5 +1,5 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useHomeStore } from '@/stores/homeStore';
 import { loginProfile, logoutProfile } from '@/lib/storage';
@@ -8,6 +8,8 @@ import { colors, fonts, spacing } from '@/constants/theme';
 import { GoogleAuthButton } from '@/components/GoogleAuthButton';
 import { StreakBadgeWidget } from '@/components/gamification/StreakBadgeWidget';
 import { useTranslation } from '@/lib/i18n';
+import { AvatarArchetypeSelectorModal } from '@/components/profile/AvatarArchetypeSelectorModal';
+import { getUserAvatarSelection, getNoxAvatarById, NoxAvatarItem } from '@/lib/noxAvatars';
 
 export function ProfileBar() {
   const router = useRouter();
@@ -15,6 +17,20 @@ export function ProfileBar() {
   const { profile, loadHomeData } = useHomeStore();
   const [loginNick, setLoginNick] = useState('');
   const [loginPin, setLoginPin] = useState('');
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [avatarItem, setAvatarItem] = useState<NoxAvatarItem | null>(null);
+
+  const loadAvatar = useCallback(async () => {
+    const { avatarId } = await getUserAvatarSelection();
+    setAvatarItem(getNoxAvatarById(avatarId));
+  }, []);
+
+  useEffect(() => {
+    if (profile) {
+      loadAvatar();
+    }
+  }, [profile, loadAvatar]);
 
   const handleLogin = async () => {
     if (!loginNick.trim()) {
@@ -39,6 +55,13 @@ export function ProfileBar() {
     return (
       <View style={styles.container}>
         <View style={styles.profileRow}>
+          {avatarItem && (
+            <TouchableOpacity onPress={() => setModalVisible(true)}>
+              <View style={[styles.avatarFrame, { borderColor: avatarItem.glowColor }]}>
+                <Image source={avatarItem.imageSource} style={styles.avatarImage} />
+              </View>
+            </TouchableOpacity>
+          )}
           <Text style={styles.greeting}>{t('home.hello', { name: profile.nickname })}</Text>
           <StreakBadgeWidget compact />
           {profile.isLocalAdmin ? (
@@ -62,6 +85,12 @@ export function ProfileBar() {
         <View style={{ marginTop: spacing.sm }}>
           <GoogleAuthButton />
         </View>
+
+        <AvatarArchetypeSelectorModal 
+          visible={modalVisible} 
+          onClose={() => setModalVisible(false)} 
+          onSave={loadAvatar}
+        />
       </View>
     );
   }
@@ -104,6 +133,8 @@ export function ProfileBar() {
 const styles = StyleSheet.create({
   container: { padding: spacing.md },
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xs },
+  avatarFrame: { borderWidth: 2, borderRadius: 24, padding: 2, marginRight: spacing.xs },
+  avatarImage: { width: 40, height: 40, borderRadius: 20 },
   greeting: { fontFamily: fonts.bodySemi || fonts.body, color: colors.text, fontSize: 18 },
   adminBadge: {
     backgroundColor: 'rgba(251, 191, 36, 0.2)',

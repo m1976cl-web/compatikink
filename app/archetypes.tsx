@@ -22,6 +22,9 @@ import {
 import { useResponsive } from '@/hooks/useResponsive';
 import { ARCHETYPE_QUESTIONS, calculateArchetypes, ArchetypeResult } from '@/lib/archetypes';
 import { readJsonStorage, writeJsonStorage } from '@/lib/cryptoVault';
+import { getIntimateArchetypes, getNoxAvatarById, saveUserAvatarSelection } from '@/lib/noxAvatars';
+import { notify } from '@/lib/notify';
+import { Image } from 'react-native';
 
 const RESULT_ROWS: { key: keyof ArchetypeResult; label: string }[] = [
   { key: 'dominant', label: 'Dominante' },
@@ -66,6 +69,58 @@ export default function ArchetypesScreen() {
     setAnswers([]);
     setCurrentQ(0);
     setResult(null);
+  };
+
+  const handleAssignAvatar = async () => {
+    if (!result) return;
+    const archs = getIntimateArchetypes();
+    let highestKey = 'dominant';
+    let highestScore = result.dominant || 0;
+    
+    RESULT_ROWS.forEach(row => {
+      const score = result[row.key] as number;
+      if (score > highestScore) {
+        highestScore = score;
+        highestKey = row.key;
+      }
+    });
+
+    let archName = 'Switch';
+    if (highestKey === 'dominant' || highestKey === 'sadist' || highestKey === 'primal') archName = 'Dominante';
+    if (highestKey === 'submissive' || highestKey === 'masochist') archName = 'Sumiso/a';
+    if (highestKey === 'rigger') archName = 'Rigger';
+    if (highestKey === 'ropeBunny') archName = 'Rope Bunny';
+    
+    const recommended = archs.find(a => a.name === archName) || archs[0];
+    await saveUserAvatarSelection(recommended.recommendedAvatarId, recommended.name);
+    notify('Avatar Asignado', `Has asignado el avatar de ${recommended.name} a tu perfil.`);
+  };
+
+  const getRecommendedAvatarItem = () => {
+    if (!result) return null;
+    const archs = getIntimateArchetypes();
+    let highestKey = 'dominant';
+    let highestScore = result.dominant || 0;
+    
+    RESULT_ROWS.forEach(row => {
+      const score = result[row.key] as number;
+      if (score > highestScore) {
+        highestScore = score;
+        highestKey = row.key;
+      }
+    });
+
+    let archName = 'Switch';
+    if (highestKey === 'dominant' || highestKey === 'sadist' || highestKey === 'primal') archName = 'Dominante';
+    if (highestKey === 'submissive' || highestKey === 'masochist') archName = 'Sumiso/a';
+    if (highestKey === 'rigger') archName = 'Rigger';
+    if (highestKey === 'ropeBunny') archName = 'Rope Bunny';
+    
+    const recommended = archs.find(a => a.name === archName) || archs[0];
+    return {
+      archName: recommended.name,
+      avatar: getNoxAvatarById(recommended.recommendedAvatarId)
+    };
   };
 
   const handleShareResult = () => {
@@ -127,6 +182,26 @@ export default function ArchetypesScreen() {
                   );
                 })}
               </View>
+
+              {getRecommendedAvatarItem() && (
+                <View style={styles.recommendedContainer}>
+                  <Text style={styles.recommendedTitle}>Avatar Recomendado</Text>
+                  <View style={styles.recommendedAvatarRow}>
+                    <View style={[styles.recommendedAvatarFrame, { borderColor: getRecommendedAvatarItem()!.avatar.glowColor }]}>
+                      <Image source={getRecommendedAvatarItem()!.avatar.imageSource} style={styles.recommendedAvatarImage} />
+                    </View>
+                    <View style={styles.recommendedInfo}>
+                      <Text style={styles.recommendedName}>{getRecommendedAvatarItem()!.avatar.name}</Text>
+                      <Text style={styles.recommendedArch}>{getRecommendedAvatarItem()!.archName} {getRecommendedAvatarItem()!.avatar.emoji}</Text>
+                    </View>
+                  </View>
+                  <Button 
+                    title="🎭 Asignar este Avatar a mi Perfil" 
+                    onPress={handleAssignAvatar}
+                    style={{ marginTop: spacing.md }}
+                  />
+                </View>
+              )}
 
               <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.md }}>
                 <Button title="Compartir perfil" onPress={handleShareResult} style={{ flex: 1 }} />
@@ -211,8 +286,50 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   resetBtnText: {
-    fontFamily: fonts.bodySemi,
-    color: colors.text,
-    fontSize: fontSize.xs,
+    color: colors.primaryLight,
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.md,
+  },
+  recommendedContainer: {
+    backgroundColor: colors.surfaceElevated,
+    padding: spacing.md,
+    borderRadius: radii.md,
+    marginTop: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  recommendedTitle: {
+    color: colors.primaryLight,
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    marginBottom: spacing.sm,
+  },
+  recommendedAvatarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recommendedAvatarFrame: {
+    borderWidth: 2,
+    borderRadius: 30,
+    padding: 2,
+  },
+  recommendedAvatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  recommendedInfo: {
+    marginLeft: spacing.md,
+    flex: 1,
+  },
+  recommendedName: {
+    color: colors.primaryLight,
+    fontFamily: fonts.bodyBold,
+    fontSize: 18,
+  },
+  recommendedArch: {
+    color: colors.primary,
+    fontFamily: fonts.bodyMedium,
+    fontSize: 14,
   },
 });
