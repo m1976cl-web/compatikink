@@ -10,6 +10,7 @@ import { StreakBadgeWidget } from '@/components/gamification/StreakBadgeWidget';
 import { useTranslation } from '@/lib/i18n';
 import { AvatarArchetypeSelectorModal } from '@/components/profile/AvatarArchetypeSelectorModal';
 import { getUserAvatarSelection, getNoxAvatarById, NoxAvatarItem } from '@/lib/noxAvatars';
+import { XPLevelWidget } from '@/components/gamification/XPLevelWidget';
 
 export function ProfileBar() {
   const router = useRouter();
@@ -63,7 +64,10 @@ export function ProfileBar() {
             </TouchableOpacity>
           )}
           <Text style={styles.greeting}>{t('home.hello', { name: profile.nickname })}</Text>
-          <StreakBadgeWidget compact />
+          <View style={{ flexDirection: 'row', gap: spacing.xs, alignItems: 'center' }}>
+            <StreakBadgeWidget compact />
+            <XPLevelWidget compact />
+          </View>
           {profile.isLocalAdmin ? (
             <View style={styles.adminBadge}>
               <Text style={styles.adminBadgeText}>👑 ADMINISTRADOR</Text>

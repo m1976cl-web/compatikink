@@ -118,6 +118,7 @@ export default function RootLayout() {
             <Stack.Screen name="chastity-belt"        options={{ title: 'Castidad · Cinturón',       headerShown: false }} />
             <Stack.Screen name="chastity-fit"         options={{ title: 'Castidad · Estilo y talla', headerShown: false }} />
             <Stack.Screen name="private-sessions"     options={{ title: 'Mis Sesiones',              headerShown: false }} />
+            <Stack.Screen name="trophy-room"          options={{ title: 'Sala de Trofeos',           headerShown: false }} />
           </Stack>
         </Suspense>
         <OfficeModeModal />
