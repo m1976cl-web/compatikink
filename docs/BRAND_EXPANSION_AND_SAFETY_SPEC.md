@@ -22,14 +22,28 @@ $$\text{App en Tiendas: } \mathbf{[Nombre\ Discreto]} \longrightarrow \text{Clai
 
 ### 1.3 Matriz de Nombres Evaluados y Disponibilidad de Dominios
 
+#### A. Nombres Misteriosos, Evocativos y Clandestinos (Alta Curiosidad / Store-Safe)
+| Nombre Candidato | Enfoque / Vibe | `.com` | `.app` | `.io` | Evaluación Estratégica & Registro |
+|---|---|:---:|:---:|:---:|---|
+| **Masque** / **Masquely** | Baile de máscaras, desinhibición elegante | `masquevault.com` (Libre)<br>`masquely.com` (Libre) | `masqueapp.app` (Libre) | `masquevault.io` (Libre) | **Top Misterio:** Evoca confidencialidad, antifaz veneciano y liberación de deseos sin juicio. |
+| **Sotto** *(Sotto Voce)* | Susurro íntimo, secreto de pareja | `sottoclub.com` (Libre)<br>`sottovoceapp.com` (Libre) | `sottoapp.app` (Libre) | `sottoapp.io` (Libre) | **Top Elegancia:** En italiano "en voz baja", lo que se confiesa solo en la intimidad. |
+| **Umbra** | Sombra del eclipse, universo noir | `umbraclub.com` (Libre)<br>`umbrasafe.com` (Libre) | `umbraapp.app` (Libre) | `umbrasafe.io` (Libre) | **Top Fuerza:** La zona más profunda y protegida de la sombra; magnético y sugerente. |
+| **Tryst** / **Trystly** | Encuentro secreto entre amantes | `trystly.com` (Libre)<br>`trystvault.com` (Libre) | `trystly.app` (Libre) | `trystapp.io` (Libre) | **Muy Sugerente:** Cita íntima clandestina acordada a escondidas del mundo. |
+| **Arcana** | Secretos profundos, conocimiento oculto | `arcanaly.com` (Libre) | `arcanapp.app` (Libre)<br>`arcanavault.app` (Libre) | `arcanavault.io` (Libre) | **Místico:** Los misterios que solo se revelan a quien posee la llave. |
+| **Vesper** | Crepúsculo, estrella de la tarde | `vesperkink.com` (Libre) | `vesperapp.app` (Libre) | `vespervault.io` (Libre) | **Sofisticado:** Glamour nocturno y seducción clásica al caer el sol. |
+| **Auranox** | Energía y mística de la noche | `auranox.com` (Libre) | `auranox.app` (Libre) | `auranox.io` (Libre) | **Identidad Nox Segura:** Mantiene la personalidad de Nox evitando colisiones de marca. |
+| **Tacita** / **Tacit** | Acuerdo tácito, pacto sin palabras | `tacitavault.com` (Libre) | `tacitapp.app` (Libre) | `tacitvault.io` (Libre) | **Discreto:** La complicidad mutua que no requiere explicaciones al exterior. |
+| **Enclave** | Territorio cerrado, refugio autónomo | `enclavevault.com` (Libre) | `enclaveapp.app` (Libre) | 🔴 | **Exclusivo:** Espacio seguro de reglas y acuerdos propios. |
+| **Ciphra** / **Cyphra** | Código secreto, cifrado mutuo | `ciphrapp.com` (Libre) | `ciphrapp.app` (Libre) | `ciphra.io` (Libre) | **Criptográfico:** Símbolo de pacto indescifrable entre dos personas. |
+
+#### B. Nombres Descriptivos y Funcionales
 | Nombre Candidato | Enfoque / Vibe | `.com` | `.app` | `.io` | Evaluación Estratégica |
 |---|---|:---:|:---:|:---:|---|
-| **BlindCompat** | Asimétrico / Ciego | 🟢 Libre | 🟢 Libre | 🟢 Libre | **Muy Recomendado:** Explica el diferencial del test a ciegas, 100% amigable para tiendas y seguro. |
-| **Nox** / **Nox App** | Mascota Noir / IA | `noxintimate.com` (Libre) | `noxvault.app` (Libre) | 🔴 | **Muy Recomendado:** Marca con personalidad propia, estética látex/cyber-noir, ultra discreto en el móvil. |
-| **CompatKink** | Descriptivo directo | 🟢 Libre | 🟢 Libre | 🟢 Libre | Excelente para versión Web App / PWA; requiere mitigación en tiendas nativas. |
-| **Velour** | Sensual / Textura | `velourkink.com` (Libre) | `velourapp.io` (Libre) | 🔴 | Sofisticado, elegante y evoca bienestar íntimo de alta gama. |
-| **SyncPair** | Sincronización deseos | `compatpair.com` (Libre) | `syncpair.app` (Libre) | 🟢 Libre | Enfoque directo en conexión de parejas y acuerdos mutuos. |
-| **NoirKink** / **IntimaKink** | Lifestyle / Fetiche | 🟢 Libre | 🟢 Libre | 🟢 Libre | Para posicionamiento editorial maduro y sex-positive. |
+| **BlindCompat** | Asimétrico / Ciego | 🟢 Libre | 🟢 Libre | 🟢 Libre | Descriptivo directo: test ciego y compatibilidad asimétrica. |
+| **CompatKink** | Descriptivo de nicho | 🟢 Libre | 🟢 Libre | 🟢 Libre | Marca ideal para la Web App / PWA y comunidad sex-positive. |
+| **Velour** | Sensual / Textura | `velourkink.com` (Libre) | `velourapp.io` (Libre) | 🔴 | Sensualidad, tacto suave y bienestar íntimo. |
+| **SyncPair** | Sincronización de acuerdos | `compatpair.com` (Libre) | `syncpair.app` (Libre) | 🟢 Libre | Enfoque directo en conexión de pareja y acuerdos mutuos. |
+| **NoirKink** / **IntimaKink** | Lifestyle / Fetiche | 🟢 Libre | 🟢 Libre | 🟢 Libre | Posicionamiento editorial y formativo. |
 
 ---
 
