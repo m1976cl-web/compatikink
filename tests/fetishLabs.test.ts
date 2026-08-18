@@ -38,9 +38,12 @@ async function run() {
     assert.ok(copyLooksAdultOnly(task.title), `sissy title not adult-only: ${task.title}`);
   }
 
-  const love = makeFootResponse('ff_massage', 'love', 'give', 3);
-  const loveRecv = makeFootResponse('ff_massage', 'love', 'receive', 3);
+  const love = makeFootResponse('ff_massage', 'love', 'flexible', 3);
+  const loveRecv = makeFootResponse('ff_massage', 'love', 'flexible', 3);
   assert.equal(classifyFetishPair(love, loveRecv), 'mutual_match');
+  const give = makeFootResponse('ff_massage', 'love', 'give', 3);
+  const recv = makeFootResponse('ff_massage', 'love', 'receive', 3);
+  assert.equal(classifyFetishPair(give, recv), 'role_mismatch');
 
   const limit = makeFootResponse('ff_massage', 'hard_limit', 'flexible', 1);
   assert.equal(classifyFetishPair(love, limit), 'hard_limit_conflict');
