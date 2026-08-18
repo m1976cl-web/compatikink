@@ -85,8 +85,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     ...(Platform.OS === 'web'
       ? ({
-          backgroundImage:
-            'radial-gradient(ellipse 90% 50% at 80% 100%, rgba(154,107,79,0.06) 0%, transparent 50%)',
+          backgroundImage: gradients.inkRadialHint,
         } as object)
       : {
           // Native: soft top wash via overlay strip

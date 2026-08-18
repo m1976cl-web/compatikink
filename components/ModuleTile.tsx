@@ -152,11 +152,9 @@ export function ModuleTile({
 
 const styles = StyleSheet.create({
   tile: {
-    backgroundColor: Platform.OS === 'web'
-      ? 'rgba(21, 13, 36, 0.65)'
-      : colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: radii.lg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.borderSubtle,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
@@ -196,14 +194,14 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: fonts.bodySemi,
     fontSize: fontSize.md,
-    color: colors.text,
+    color: '#ffffff',
     letterSpacing: 0.2,
   },
   description: {
     fontFamily: fonts.body,
     fontSize: fontSize.sm,
-    color: colors.textMuted,
-    lineHeight: 18,
+    color: '#d8b4fe',
+    lineHeight: 20,
   },
   chevron: {
     fontFamily: fonts.display,

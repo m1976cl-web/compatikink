@@ -19,8 +19,8 @@ export const colors = {
   surface: '#150d24',
   surfaceLight: '#1d1230',
   surfaceElevated: '#26173e',
-  border: '#352054',
-  borderSubtle: 'rgba(192, 132, 252, 0.25)',
+  border: '#4c2882',
+  borderSubtle: 'rgba(192, 132, 252, 0.35)',
 
   // Brand accent — Glossy Neon Purple & Magenta
   primary: '#c084fc',
@@ -37,9 +37,9 @@ export const colors = {
   info: '#38bdf8',
 
   // Text
-  text: '#f3e8ff',
-  textMuted: '#c084fc',
-  textDim: '#7e22ce',
+  text: '#ffffff',
+  textMuted: '#d8b4fe',
+  textDim: '#c084fc',
   onPrimary: '#07050a',
 
   // Legacy & Neon aliases
@@ -93,10 +93,10 @@ export const radii = {
 };
 
 export const fontSize = {
-  xs: 11,
-  sm: 13,
-  md: 15,
-  lg: 18,
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 19,
   xl: 24,
   xxl: 32,
   hero: 40,
@@ -148,19 +148,19 @@ export const typography = {
   body: {
     fontFamily: fonts.body,
     fontSize: fontSize.md,
-    lineHeight: 22,
+    lineHeight: 24,
     color: colors.text,
   } as TextStyle,
   bodyMuted: {
     fontFamily: fonts.body,
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     lineHeight: 22,
     color: colors.textMuted,
   } as TextStyle,
   label: {
     fontFamily: fonts.bodySemi,
     fontSize: fontSize.xs,
-    letterSpacing: 1.4,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
     color: colors.textMuted,
   } as TextStyle,

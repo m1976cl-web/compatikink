@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   wrap: {
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.borderSubtle,
     padding: spacing.lg,
     marginBottom: spacing.lg,
@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: fonts.displaySemi,
     fontSize: fontSize.xl,
-    color: colors.text,
+    color: '#ffffff',
   },
   desc: {
     fontFamily: fonts.body,
     fontSize: fontSize.sm,
-    color: colors.textMuted,
-    lineHeight: 20,
+    color: '#d8b4fe',
+    lineHeight: 22,
   },
   warn: {
     fontFamily: fonts.bodySemi,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   steps: { gap: spacing.sm, marginTop: spacing.xs },
   step: {
     borderRadius: radii.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.borderSubtle,
     padding: spacing.md,
     gap: spacing.xs,
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
@@ -225,14 +225,14 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: fonts.bodySemi,
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: '#ffffff',
   },
   badgeTextDone: { color: colors.success },
   stepCopy: { flex: 1, minWidth: 0 },
   stepTitle: {
     fontFamily: fonts.bodySemi,
     fontSize: fontSize.md,
-    color: colors.text,
+    color: '#ffffff',
   },
   stepStatus: {
     fontFamily: fonts.body,
@@ -244,8 +244,8 @@ const styles = StyleSheet.create({
   stepHint: {
     fontFamily: fonts.body,
     fontSize: fontSize.xs,
-    color: colors.textMuted,
-    lineHeight: 18,
+    color: '#d8b4fe',
+    lineHeight: 20,
   },
   dimText: { color: colors.textMuted },
   cta: { marginTop: spacing.xs },

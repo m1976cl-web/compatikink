@@ -48,9 +48,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   secondary: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(192, 132, 252, 0.12)',
+    borderWidth: 1.5,
+    borderColor: colors.borderSubtle || colors.primary,
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -71,9 +71,10 @@ const styles = StyleSheet.create({
   },
   secondaryText: {
     color: colors.text,
+    fontFamily: fonts.bodyBold,
   },
   ghostText: {
-    color: colors.primary,
+    color: colors.primaryLight || '#e9d5ff',
   },
   dangerText: {
     color: colors.text,

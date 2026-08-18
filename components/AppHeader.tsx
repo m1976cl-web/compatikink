@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.bodyMuted,
     marginTop: spacing.sm,
+    color: colors.textMuted,
   },
   rightHeaderRow: {
     flexDirection: 'row',
@@ -142,8 +143,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   searchBtn: {
-    backgroundColor: 'rgba(192, 132, 252, 0.15)',
-    borderWidth: 1,
+    backgroundColor: 'rgba(192, 132, 252, 0.2)',
+    borderWidth: 1.5,
     borderColor: '#c084fc',
     borderRadius: 8,
     paddingHorizontal: 8,
@@ -151,9 +152,8 @@ const styles = StyleSheet.create({
   },
   searchBtnText: {
     color: '#c084fc',
-    fontSize: 10,
-    fontFamily: fonts.bodySemi,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
   },
   netBadge: {
     flexDirection: 'row',
@@ -161,15 +161,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 7,
     paddingVertical: 4,
-    borderWidth: 1,
+    borderWidth: 1.5,
     gap: 4,
   },
   netOnline: {
-    backgroundColor: 'rgba(74, 222, 128, 0.12)',
+    backgroundColor: 'rgba(74, 222, 128, 0.2)',
     borderColor: '#4ade80',
   },
   netOffline: {
-    backgroundColor: 'rgba(248, 113, 113, 0.15)',
+    backgroundColor: 'rgba(248, 113, 113, 0.2)',
     borderColor: '#f87171',
   },
   netDot: {
@@ -184,9 +184,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f87171',
   },
   netBadgeText: {
-    fontSize: 10,
-    fontFamily: fonts.bodySemi,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
   },
   netTextOnline: {
     color: '#4ade80',
@@ -196,7 +195,7 @@ const styles = StyleSheet.create({
   },
   officeBtn: {
     backgroundColor: 'rgba(16, 124, 65, 0.15)',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#107c41',
     borderRadius: 8,
     paddingHorizontal: 8,
@@ -204,13 +203,12 @@ const styles = StyleSheet.create({
   },
   officeBtnText: {
     color: '#4ade80',
-    fontSize: 10,
-    fontFamily: fonts.bodySemi,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
   },
   googleHeaderBtn: {
     backgroundColor: 'rgba(66, 133, 244, 0.2)',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#4285F4',
     borderRadius: 8,
     paddingHorizontal: 8,
@@ -218,9 +216,8 @@ const styles = StyleSheet.create({
   },
   googleHeaderBtnText: {
     color: '#38bdf8',
-    fontSize: 10,
-    fontFamily: fonts.bodySemi,
-    fontWeight: '800',
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
   },
   right: {
     paddingTop: spacing.xs,
