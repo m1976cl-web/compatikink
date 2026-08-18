@@ -27,6 +27,7 @@ Candidatos bajo consideración (lean del usuario: rareza / poco usados): **Shley
 
 | Nombre | Cuándo usarlo |
 |--------|----------------|
+| **LUX** | Enfoque de luz / revelación que ilumina el deseo; dualidad perfecta con la mascota **Nox** (`luxvault.app`, `luxnox.io`, `luxkink.com`) |
 | **Masque** | Enfoque clandestino / baile de máscaras (`masquevault.com`, `masqueapp.app`) |
 | **Sotto** | Enfoque susurro íntimo / complicidad (*sotto voce*) (`sottoclub.com`, `sottoapp.app`) |
 | **Umbra** | Enfoque sombra del eclipse / poder noir (`umbraclub.com`, `umbraapp.app`) |
