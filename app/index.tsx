@@ -18,6 +18,7 @@ import { HeroSection } from '@/components/home/HeroSection';
 import { CorePathBanner } from '@/components/home/CorePathBanner';
 import { ProfileBar } from '@/components/home/ProfileBar';
 import { FetishSuiteSection } from '@/components/home/FetishSuiteSection';
+import { FetishLabsSection } from '@/components/home/FetishLabsSection';
 import { GuestJoinSection } from '@/components/home/GuestJoinSection';
 import { QuickInviteForm } from '@/components/home/QuickInviteForm';
 import { SessionList } from '@/components/home/SessionList';
@@ -180,7 +181,12 @@ export default function HomeScreen() {
 
         <ProfileBar />
 
-        {!isMvpMode ? <FetishSuiteSection /> : null}
+        {!isMvpMode ? (
+          <>
+            <FetishSuiteSection />
+            <FetishLabsSection />
+          </>
+        ) : null}
 
         <GuestJoinSection
           guestCode={guestCode}

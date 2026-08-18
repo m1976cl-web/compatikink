@@ -42,6 +42,10 @@ const MVP_SUITE_BLOCK = new Set([
   '/ds-tasks',
   '/task-economy',
   '/ephemeral-wishes',
+  '/marketplace-dark',
+  '/foot-fetish',
+  '/tribute',
+  '/sissy-training',
 ]);
 
 export function ModuleGrid({

@@ -65,6 +65,7 @@ export const SENSITIVE_KEY_PREFIXES = [
   'ephemeral_',
   'linked_',
   'questionnaire_draft_',
+  'fetish_lab_',
 ] as const;
 
 export interface VaultMeta {
@@ -475,7 +476,8 @@ export function getStaticDecoyValueForKey(key: string): string {
     key.startsWith('ephemeral_') ||
     key.startsWith('linked_') ||
     key.startsWith('partner_') ||
-    key.startsWith('joint_')
+    key.startsWith('joint_') ||
+    key.startsWith('fetish_lab_')
   ) {
     return JSON.stringify([]);
   }

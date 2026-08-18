@@ -17,6 +17,7 @@
     "test:notifications": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/localNotifications.test.ts",
     "test:landing": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/landing.test.ts",
     "test:components": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/components.test.ts",
+    "test:fetish-labs": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/fetishLabs.test.ts",
     "test:vault:dstasks": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault/dsTasks.test.ts",
     "test:vault:edgecases": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault/dsTasksEdgeCases.test.ts",
     "test:vault:redteam": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault/redteamThreatModel.test.ts",
@@ -27,7 +28,7 @@
     "test:vault:fluidity": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault/fluidityAndPerformance.test.ts",
     "test:vault:wild": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault/wildFeed.test.ts",
     "test:vault:p2p": "pnpm exec tsx -r ./tests/vault.preload.cjs tests/vault/supabaseAuthAndP2P.test.ts",
-    "test:vault:all": "pnpm run test:vault && pnpm run test:vault:rotation && pnpm run test:vault:canary && pnpm run test:vault:dstasks && pnpm run test:vault:edgecases && pnpm run test:vault:redteam && pnpm run test:vault:compliance && pnpm run test:vault:profile && pnpm run test:vault:desktop && pnpm run test:vault:fetlife && pnpm run test:vault:fluidity && pnpm run test:vault:wild && pnpm run test:vault:p2p && pnpm run test:compatibility && pnpm run test:integration && pnpm run test:i18n && pnpm run test:gemini && pnpm run test:notifications && pnpm run test:landing && pnpm run test:components",
+    "test:vault:all": "pnpm run test:vault && pnpm run test:vault:rotation && pnpm run test:vault:canary && pnpm run test:vault:dstasks && pnpm run test:vault:edgecases && pnpm run test:vault:redteam && pnpm run test:vault:compliance && pnpm run test:vault:profile && pnpm run test:vault:desktop && pnpm run test:vault:fetlife && pnpm run test:vault:fluidity && pnpm run test:vault:wild && pnpm run test:vault:p2p && pnpm run test:compatibility && pnpm run test:integration && pnpm run test:i18n && pnpm run test:gemini && pnpm run test:notifications && pnpm run test:landing && pnpm run test:components && pnpm run test:fetish-labs",
     "build:web": "node node_modules/@expo/cli/build/bin/cli export --platform web && node scripts/prepare-gh-pages.js",
     "predeploy": "npm run build:web",
     "deploy": "gh-pages -d dist --dotfiles"

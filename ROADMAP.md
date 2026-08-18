@@ -65,6 +65,14 @@ Ver [`docs/PUBLIC_PROFILE_VS_VAULT.md`](./docs/PUBLIC_PROFILE_VS_VAULT.md):
   - [x] Sistema de **Denuncias (Reports)** para usuario específico, posteo de feed o mensaje directo (con tipificación de motivos y cola de moderación).
   - [x] Sistema de **Bloqueo Mutuo Bidireccional (Mutual Block)**: el usuario bloqueado no puede ver el perfil de quien lo bloqueó y se bloquea recíprocamente la mensajería, invitaciones y visibilidad de posteos.  
 
+### Experimental — Fetish Labs (preview, gated; naming paused)
+First slice local/ZK. Hidden from beta home (`EXPO_PUBLIC_MVP=1`). Preview with `EXPO_PUBLIC_MVP=0` or home toggle **⚡ Todos**.
+- [x] Marketplace Dark (`/marketplace-dark`) — catálogo legal + wishlist bóveda; sin checkout
+- [x] Foot fetish (`/foot-fetish`) — subset + compare privado (no dating feed)
+- [x] Cum tribute (`/tribute`) — petición/respuesta cifrada iniciador↔invitado; sin galería
+- [x] Sissy training (`/sissy-training`) — protocolo PIN + aftercare; roleplay 18+ (no feed público)
+Deliberadamente no construido: pagos, upload público a Storage, CDN de media, bienes ilegales.
+
 ---
 
 ## Comandos

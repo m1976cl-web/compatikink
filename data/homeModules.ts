@@ -66,6 +66,10 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
   { title: 'Calendario',           description: 'Escenas y aftercare',                                   mark: '📅', category: 'scenes', route: '/calendar'             },
   { title: 'Playlists',            description: 'Ambientes sonoros sensuales',                           mark: '🎵', category: 'scenes', route: '/playlists'            },
   { title: 'Gear Closet',          description: 'Inventario de equipo y juguetes',                       mark: '⚙️', category: 'scenes', route: '/gear-closet'          },
+  { title: 'Marketplace Dark',     description: 'Catálogo discreto legal · wishlist en bóveda',          mark: '🛍️', category: 'scenes', route: '/marketplace-dark'    },
+  { title: 'Foot Fetish',          description: 'Subset privado + compare (no dating)',                  mark: '🦶', category: 'scenes', route: '/foot-fetish'          },
+  { title: 'Cum Tribute',          description: 'Petición/respuesta cifrada entre dos adultos',          mark: '✉️', category: 'scenes', route: '/tribute'              },
+  { title: 'Sissy Training',       description: 'Protocolo PIN + aftercare · roleplay 18+',              mark: '🎀', category: 'scenes', route: '/sissy-training'       },
 
   // Social
   { title: 'Blog & Escritos',      description: 'Diario privado y publicaciones',       mark: '✍️', category: 'social', route: '/writings'          },

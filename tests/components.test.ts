@@ -162,6 +162,9 @@ async function testComponentLogic() {
   }
   assert.equal(getScreenStatus('/dating').status, 'preview', 'dating must be Demo/preview, not READY');
   assert.equal(getScreenStatus('/kink-feed').status, 'preview', 'kink-feed must be Demo/preview');
+  for (const lab of ['/marketplace-dark', '/foot-fetish', '/tribute', '/sissy-training']) {
+    assert.equal(getScreenStatus(lab).status, 'preview', `${lab} must stay preview (Fetish Labs)`);
+  }
   console.log(
     `  ✅ Screen Registry verified (${screenKeys.length} screens, ${SCREEN_STATS.ready} READY / ${SCREEN_STATS.preview} PREVIEW)`
   );

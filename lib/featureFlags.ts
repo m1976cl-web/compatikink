@@ -94,6 +94,10 @@ export function isModuleVisibleInMode(route: string | undefined, isMvpOnly: bool
     '/linked-couples',
     '/ds-tasks',
     '/task-economy',
+    '/marketplace-dark',
+    '/foot-fetish',
+    '/tribute',
+    '/sissy-training',
   ];
 
   if (route && FROZEN_SOCIAL_ROUTES.includes(route)) {
