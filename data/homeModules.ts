@@ -73,6 +73,7 @@ export const STATIC_MODULES: Omit<ModuleDef, 'onPress'>[] = [
   { title: 'Cum Tribute',          description: 'Petición/respuesta cifrada entre dos adultos',          mark: '✉️', category: 'scenes', route: '/tribute'              },
   { title: 'Sissy Training',       description: 'Protocolo PIN + aftercare · roleplay 18+',              mark: '🎀', category: 'scenes', route: '/sissy-training'       },
   { title: 'Castidad',             description: 'Tallas locales + portador / keyholder / protocolo · ZK', mark: '🔒', category: 'scenes', route: '/chastity'             },
+  { title: 'Leisure Suite',        description: 'Juego guiado 18+ (caza, consentimiento, escena, aftercare)', mark: '🕹️', category: 'scenes', route: '/leisure'            },
 
   // Social
   { title: 'Blog & Escritos',      description: 'Diario privado y publicaciones',       mark: '✍️', category: 'social', route: '/writings'          },

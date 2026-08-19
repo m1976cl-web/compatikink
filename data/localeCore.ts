@@ -337,6 +337,13 @@ export const CORE_UI: Record<SupportedLocale, Dict> = {
     'labs.sissy.ac4': 'La palabra de seguridad sigue valiendo después.',
     'labs.sissy.session': 'Invitar a la otra persona (sesión ZK)',
 
+    'labs.leisure.title': 'Leisure Suite',
+    'labs.leisure.desc': 'Juego guiado 18+: caza de tesoro, quiz de consentimiento, escena y aftercare. En bóveda.',
+    'labs.leisure.lead':
+      'Cuatro pasos locales. El progreso se cifra en esta bóveda (ck1:). No está en el home MVP.',
+    'labs.leisure.legal':
+      'Adultos 18+. Consentimiento continuo. Puedes parar en cualquier paso. No es consejo médico ni legal.',
+
     'labs.chastity.title': 'Castidad',
     'labs.chastity.desc': 'Tallas locales por medida, más portador / keyholder / protocolo. Sin tienda.',
     'labs.chastity.lead':
@@ -951,6 +958,13 @@ export const CORE_UI: Record<SupportedLocale, Dict> = {
     'labs.sissy.ac4': 'The safeword still counts afterwards.',
     'labs.sissy.session': 'Invite the other person (ZK session)',
 
+    'labs.leisure.title': 'Leisure Suite',
+    'labs.leisure.desc': 'Guided 18+ game: scavenger hunt, consent quiz, scene, aftercare. Vault-only.',
+    'labs.leisure.lead':
+      'Four local steps. Progress is sealed in this vault (ck1:). Not on the MVP home.',
+    'labs.leisure.legal':
+      'Adults 18+. Ongoing consent. You can stop at any step. Not medical or legal advice.',
+
     'labs.chastity.title': 'Chastity',
     'labs.chastity.desc': 'Local size-by-measure bands, plus wearer / keyholder / protocol. No shop.',
     'labs.chastity.lead':
@@ -1564,6 +1578,13 @@ export const CORE_UI: Record<SupportedLocale, Dict> = {
     'labs.sissy.ac3': 'Queres falar ou silêncio?',
     'labs.sissy.ac4': 'A palavra de segurança continua a valer depois.',
     'labs.sissy.session': 'Convidar a outra pessoa (sessão ZK)',
+
+    'labs.leisure.title': 'Leisure Suite',
+    'labs.leisure.desc': 'Jogo guiado 18+: caça ao tesouro, quiz de consentimento, cena e aftercare. No cofre.',
+    'labs.leisure.lead':
+      'Quatro passos locais. O progresso fica selado neste cofre (ck1:). Fora do home MVP.',
+    'labs.leisure.legal':
+      'Adultos 18+. Consentimento contínuo. Podes parar em qualquer passo. Não é conselho médico nem jurídico.',
 
     'labs.chastity.title': 'Castidade',
     'labs.chastity.desc': 'Tamanhos locais por medida, mais portador / keyholder / protocolo. Sem loja.',

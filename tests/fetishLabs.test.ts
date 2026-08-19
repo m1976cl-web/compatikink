@@ -43,6 +43,7 @@ const LAB_ROUTES = [
   '/chastity-cage',
   '/chastity-belt',
   '/chastity-fit',
+  '/leisure',
 ] as const;
 
 async function run() {
@@ -100,6 +101,7 @@ async function run() {
   assert.equal(isSensitiveStorageKey('fetish_lab_chastity_checkin_v1'), true);
   assert.equal(isSensitiveStorageKey('fetish_lab_chastity_sizing_v1'), true);
   assert.equal(isSensitiveStorageKey('fetish_lab_latex_measurements_v1'), true);
+  assert.equal(isSensitiveStorageKey('fetish_lab_leisure_progress_v1'), true);
 
   assert.equal(CHASTITY_LAB_MIN_AGE, 18);
   assert.equal(CHASTITY_WEARER_ITEMS.length, 10);
@@ -125,6 +127,7 @@ async function run() {
 
   await setLocale('es');
   assert.ok(t('labs.adults_only').includes('18'));
+  assert.ok(t('labs.leisure.title').length > 3);
   assert.ok(t('labs.chastity.title').length > 3);
   assert.ok(t('labs.chastity.cage.title').length > 4);
   assert.ok(t('latex.measure.field.neckCircum').length > 4);

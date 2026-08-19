@@ -1,33 +1,54 @@
 # AGENTS.md — Handoff para agentes de IA
 
-Instrucciones operativas para cualquier agente (Antigravity, Grok Build, Cursor, etc.) que trabaje en **CompatKink** en `C:\KC`.
+Instrucciones operativas para cualquier agente (Cursor Cloud, Antigravity, Grok, etc.) que trabaje en **CompatKink**.
 
-Para un prompt largo listo para pegar: ver **`ANTIGRAVITY_PROMPT.md`**.  
-Guía narrativa ampliada: **`ANTIGRAVITY.md`**.
+- **Fuente de verdad:** GitHub [`m1976cl-web/compatikink`](https://github.com/m1976cl-web/compatikink) rama `main`.
+- **Este PC (backup local):** `C:\KC\compatikink`. Flujo dual: [`docs/CLOUD_AND_LOCAL.md`](docs/CLOUD_AND_LOCAL.md).
+- Prompt largo para pegar: [`ANTIGRAVITY_PROMPT.md`](ANTIGRAVITY_PROMPT.md). Guía narrativa: [`ANTIGRAVITY.md`](ANTIGRAVITY.md).
 
 ---
 
-## Producto (1 párrafo)
+## Producto (estado actual)
 
-App Expo/React Native Web de **compatibilidad íntima asimétrica**: el iniciador invita; el invitado responde sin ver sus respuestas; solo el iniciador ve el reporte completo y filtra qué compartir. Cifrado **zero-knowledge** (Supabase solo ciphertext `ck1:`). Vault cliente PBKDF2 + AES-GCM, PIN canario, panic wipe.
+App Expo/React Native Web de **compatibilidad íntima asimétrica**: el iniciador invita; el invitado responde a ciegas; solo el iniciador ve el reporte completo y filtra qué compartir.
 
-**Estrategia:** core first. Suite social/dating/AI = post-core.
+Cifrado **zero-knowledge**: Supabase solo ve ciphertext `ck1:`. Vault cliente PBKDF2 + AES-GCM, PIN canario, panic wipe.
+
+**Core listo:** stepper de 3 pasos (responder → invitar → reporte), cuestionario + invite/guest, reporte accionable, share filtrado, bóveda/backup, aftercare, Pass & Play, i18n **ES / EN / PT**, host **Nox** por escena.
+
+**Labs (gated, no van al home MVP):** Fetish Labs (marketplace, foot, tribute, sissy), **castidad** (tallas locales + portador/keyholder/protocolo), **medidas de látex** (ficha en `/latex-guide`), **leisure** (`/leisure`, RouteFeatureGuard como castidad). Visible con `EXPO_PUBLIC_MVP=0` o toggle **⚡ Todos**.
+
+**Estrategia:** core first. Suite social/dating/AI = post-core. **Pausa de naming:** no rebrandear a Shleyer / Geheym.
 
 ---
 
 ## Stack y comandos
 
+Repo Expo en la raíz del clone. En este PC:
+
 ```bash
-cd C:\KC
+cd C:\KC\compatikink
 pnpm install
+cp .env.example .env   # rellenar ANON_KEY local; nunca commitear .env
 pnpm start
 pnpm exec tsc --noEmit
 pnpm run test:vault:all
 pnpm run build:web
 ```
 
-- Expo 53 · React 19 · Expo Router · Zustand · Supabase · TypeScript  
-- Env: `.env.example` → `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+Sincronizar este PC con GitHub (ff-only, no auto-commit):
+
+```powershell
+cd C:\KC\compatikink
+.\scripts\sync-local.ps1
+```
+
+Cloud agent / clone fresco: trabajar desde la raíz del repo (no hace falta `C:\KC\…`).
+
+- Expo 53 · React 19 · Expo Router · Zustand · Supabase · TypeScript
+- Env: `.env.example` → `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_MVP`
+- **Supabase canónico:** `https://piegesepycvipfzjbraz.supabase.co` (ver `docs/GOOGLE_AUTH.md` para OAuth)
+- Cloud: `EXPO_PUBLIC_MVP=1` (core). Labs/leisure: `EXPO_PUBLIC_MVP=0`. Anon key vía secretos de Actions / `.env` local gitignored.
 
 ---
 
@@ -47,48 +68,34 @@ No refactors cosméticos en estos archivos sin necesidad de seguridad o bugfix.
 ## Hecho vs pendiente
 
 ### Hecho
-- Lote A: home Zustand + `components/home/*` + hooks
-- Lote C: expires, rate limit SQL, tokens CSPRNG, refreshSession RPC-only
+- Core stepper + happy path + feature flag MVP (`EXPO_PUBLIC_MVP=1`)
+- i18n ES/EN/PT, Nox, deep links (`docs/DEEP_LINKS.md`), reporte accionable
+- Fetish Labs + castidad (tallas) + medidas látex + leisure **gated**
+- Lote A (home Zustand) + Lote C (expires, rate limit SQL, tokens CSPRNG, refreshSession RPC-only)
 - Tests + CI + threat model + privacy policy
-- Tier 1–2 (gemini-proxy, office mode, aftercare, screen registry…)
-- Split modular `lib/storage.ts` → `lib/storage/*` y `lib/vaultUnified.ts`
-- **U4**: Barra de progreso animada de cuestionario con insignias de categoría y tiempo estimado
-- **U5**: Microinteracciones de feedback (animaciones en RatingPicker y ReportAnalysisLoader)
-- **S4**: Modo Pasar y Jugar presencial (Pass & Play) con cortina de privacidad
-- **E3**: Glosario interactivo (Término del Día, 5 categorías, favoritos ZK, términos relacionados, mini-quiz)
-- **U2**: Sistema integral de vibración y hápticos multi-nivel con switch de preferencias
-- **G1**: Contador de rachas (Streaks) con llama dinámica, 7 días de historial y widget animado
-- **P5**: Trust & Safety (denuncias tipificadas y bloqueo mutuo bidireccional en feed/dating/admin)
-- **G4**: Desafíos diarios (ciclo de 31 días, XP, racha y tarjeta interactiva en home)
-- **S1**: Cards de compatibilidad compartibles (formatos 9:16 Story, 1:1 Post y Badge, ZK-safe)
-- **P2**: Modo Privado Instantáneo / Botón de Pánico FAB (camuflaje Calculadora/Notas con bloqueo de bóveda)
-- **S3**: Foro y Comunidades de Buenas Prácticas (8 áreas temáticas especializadas, hilos y respuestas)
-- **S2**: Modo Abre-hielos post-reporte (23 preguntas guiadas en 6 categorías, consejos y generador personalizado)
-- **E1**: Biblioteca de Artículos y Guías Educativas (6 artículos extensos, 6 categorías, lector inmersivo y bookmarks ZK)
-- **G5**: Sala de Trofeos interactiva (Vitrina de pedestales 3D con resplandor, modal de inspección táctil y compartir logros)
-- **P1**: Indicador de Nivel de Privacidad y Auditoría Criptográfica (Escudo 100% ZK, desglose de 5 capas y recomendaciones)
-- **AI1-4**: Suite de Inteligencia Artificial Íntima (AI1 Resumen narrativo de reporte, AI2 Sugerencia de 3 próximos pasos, AI3 Asistente de negociación con agenda guiada, AI4 Roleplay contextual con Nox y arquetipos)
+- Split `lib/storage.ts` → `lib/storage/*` y `lib/vaultUnified.ts`
+- U4/U5, S4, E3, U2, G1, P5, G4, S1, P2, S3, S2, E1, G5, P1, AI1–4
 
 ### Pendiente prioritario
-1. Pasada humana E2E — `docs/BETA_HAPPY_PATH.md`  
-2. Deep links HTTPS / AASA  
-3. Reporte accionable  
-4. Biometría + PIN 6+  
-5. Dominio propio — `docs/BRAND_AND_DEPLOY.md`  
-6. Social H3 — `docs/PUBLIC_PROFILE_VS_VAULT.md` (post-core)  
+1. Pasada humana E2E continua — `docs/BETA_HAPPY_PATH.md`
+2. Biometría + PIN 6+
+3. Dominio propio — `docs/BRAND_AND_DEPLOY.md`
+4. Rate limit por IP (Edge / WAF)
+5. Social H3 — `docs/PUBLIC_PROFILE_VS_VAULT.md` (post-core)
 
-Detalle: `ROADMAP.md`, `docs/IMPROVEMENT_REVIEW.md`, `docs/BETA_HAPPY_PATH.md`.
+Detalle: `ROADMAP.md`, `docs/IMPROVEMENT_REVIEW.md`, `docs/CLOUD_AND_LOCAL.md`.
 
 ---
 
 ## Guardrails
 
-1. Nunca plaintext de respuestas en Supabase.  
-2. Nunca commitear secretos / `.env` real.  
-3. Nunca `globalThis.prompt` para backup/PIN en nativo.  
-4. No force-push ni schema destructivo sin confirmación del usuario.  
-5. Adultos 18+; consentimiento; no consejo médico/legal.  
+1. Nunca plaintext de respuestas en Supabase (solo `ck1:`).
+2. Nunca commitear secretos / `.env` / `.env.txt` / `.docx` de marca.
+3. Nunca `globalThis.prompt` para backup/PIN en nativo.
+4. No force-push ni schema destructivo sin confirmación del usuario.
+5. Adultos 18+; consentimiento; no consejo médico/legal.
 6. Preferir cambios pequeños + tests en crypto/compat/sesiones.
+7. Cloud: commit + push a `main`; nunca `--force` a `main`.
 
 ---
 
@@ -101,14 +108,16 @@ hooks/               useQuickInvite, useBackup, useVaultSubscription…
 stores/homeStore.ts  Zustand
 lib/                 crypto, compatibility, sessions, storage, supabase
 supabase/            schema + migrations + edge functions
-docs/                threat model, hardening, improvement review
+docs/                threat model, hardening, cloud/local, Google Auth
 tests/               vault, compatibility, integration…
+scripts/sync-local.ps1   Backup local ↔ origin/main (este PC)
 ```
 
 ---
 
 ## Al cerrar un cambio
 
-1. Actualizar checkbox en `ROADMAP.md` si aplica.  
-2. Dejar nota breve en el commit/PR: qué, por qué, cómo probar.  
+1. Actualizar checkbox en `ROADMAP.md` si aplica.
+2. Dejar nota breve en el commit/PR: qué, por qué, cómo probar.
 3. No expandir dating/feed/AI salvo tarea explícita.
+4. Push a `origin/main` para que Cloud Agents y este PC compartan el mismo backup.

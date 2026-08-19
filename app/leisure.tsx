@@ -1,48 +1,52 @@
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { colors, fonts } from '@/constants/theme';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { colors, fonts, fontSize, spacing, typography } from '@/constants/theme';
+import { ScreenContainer } from '@/components/ScreenContainer';
+import { RouteFeatureGuard } from '@/components/RouteFeatureGuard';
+import { NoxHost } from '@/components/nox';
+import { AdultConsentBanner } from '@/components/fetishLabs/AdultConsentBanner';
+import { LeisureGame } from '@/components/leisure/LeisureGame';
+import { useResponsive } from '@/hooks/useResponsive';
+import { useTranslation } from '@/lib/i18n';
+
+function LeisureContent() {
+  const router = useRouter();
+  const { isDesktop } = useResponsive();
+  const { t } = useTranslation();
+
+  return (
+    <ScreenContainer title="" hideHeader>
+      <View style={[styles.container, isDesktop && styles.containerDesktop]}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>{t('nav.back')}</Text>
+          </TouchableOpacity>
+          <NoxHost scene="privacy" variant="compact" />
+          <Text style={styles.title}>{t('labs.leisure.title')}</Text>
+          <Text style={styles.subtitle}>{t('labs.leisure.lead')}</Text>
+        </View>
+        <AdultConsentBanner extra={t('labs.leisure.legal')} />
+        <LeisureGame />
+      </View>
+    </ScreenContainer>
+  );
+}
 
 export default function LeisureScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Leisure Suite Larry</Text>
-      <Text style={styles.subtitle}>�Bienvenido! Esta es una versi�n preliminar del juego.</Text>
-      <TouchableOpacity style={styles.button} onPress={() => console.log('Start game placeholder')}>
-        <Text style={styles.buttonText}>Comenzar</Text>
-      </TouchableOpacity>
-    </View>
+    <RouteFeatureGuard route="/leisure" title="Leisure Suite">
+      <LeisureContent />
+    </RouteFeatureGuard>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    backgroundColor: colors.background,
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: fonts.displaySemi,
-    color: colors.text,
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: fonts.body,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  button: {
-    backgroundColor: colors.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: colors.background,
-    fontFamily: fonts.bodySemi,
-    fontSize: 16,
-  },
+  container: { flex: 1, paddingHorizontal: spacing.md },
+  containerDesktop: { maxWidth: 720, alignSelf: 'center', width: '100%' },
+  header: { paddingTop: spacing.md, paddingBottom: spacing.xs, gap: 4 },
+  backBtn: { alignSelf: 'flex-start', marginBottom: 4 },
+  backBtnText: { fontFamily: fonts.bodySemi, color: colors.primary, fontSize: fontSize.sm },
+  title: { fontFamily: fonts.displaySemi, color: colors.text, fontSize: fontSize.xxl },
+  subtitle: { ...typography.bodyMuted, fontSize: fontSize.sm, lineHeight: 20 },
 });

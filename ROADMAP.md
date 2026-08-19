@@ -81,7 +81,8 @@ First slice local/ZK. Hidden from beta home (`EXPO_PUBLIC_MVP=1`). Preview with 
 - [x] Sissy training (`/sissy-training`) — protocolo PIN + aftercare; roleplay 18+ (no feed público)
 - [x] Castidad hub (`/chastity`) — 3 mini-apps originales (portador / keyholder / protocolo), compare ZK, invite; no Typeform/Oxy checkout
 - [x] Tallas locales de castidad (`/chastity-cage` `/chastity-belt` `/chastity-fit`) + ficha látex 28 puntos (`/latex-guide` tab medidas) en bóveda; export markdown/JSON; sin tienda
-Deliberadamente no construido: pagos, upload público a Storage, CDN de media, bienes ilegales.
+- [x] Leisure Suite (`/leisure`) — gated (Escenas + Fetish Labs, `RouteFeatureGuard`); no en home MVP
+Deliberadamente no construido: pagos, upload público a Storage, CDN de media, bienes ilegales. Naming pausado (Shleyer / Geheym).
 
 ### Bot Automation Checklist
 > Entries below are designed for CI/CD bots to track implementation status.
@@ -95,8 +96,9 @@ Deliberadamente no construido: pagos, upload público a Storage, CDN de media, b
 ## Comandos
 
 ```bash
-cd C:\KC
+cd C:\KC\compatikink
 pnpm install
+# este PC ↔ GitHub: .\scripts\sync-local.ps1  (ver docs/CLOUD_AND_LOCAL.md)
 pnpm start
 pnpm exec tsc --noEmit
 pnpm run test:vault:all

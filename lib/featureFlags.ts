@@ -106,6 +106,7 @@ export function isModuleVisibleInMode(route: string | undefined, isMvpOnly: bool
     '/chastity-cage',
     '/chastity-belt',
     '/chastity-fit',
+    '/leisure',
   ];
 
   if (route && FROZEN_SOCIAL_ROUTES.includes(route)) {

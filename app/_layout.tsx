@@ -106,7 +106,7 @@ export default function RootLayout() {
             <Stack.Screen name="guest/done"           options={{ title: 'Listo',                     headerShown: false }} />
             <Stack.Screen name="marketplace-dark"     options={{ title: 'Marketplace Dark',          headerShown: false }} />
             <Stack.Screen name="foot-fetish"          options={{ title: 'Foot Fetish',               headerShown: false }} />
-            // <Stack.Screen name="leisure"               options={{ title: 'Leisure Suite Larry',        headerShown: false }} />
+            <Stack.Screen name="leisure"              options={{ title: 'Leisure Suite Larry',        headerShown: false }} />
             <Stack.Screen name="tribute"              options={{ title: 'Tribute',                   headerShown: false }} />
             <Stack.Screen name="sissy-training"       options={{ title: 'Sissy Training',            headerShown: false }} />
             <Stack.Screen name="chastity"             options={{ title: 'Castidad',                  headerShown: false }} />

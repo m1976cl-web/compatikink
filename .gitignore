@@ -11,5 +11,7 @@ npm-debug.*
 web-build/
 .env
 .env.local
-.agents/  
-.agents/  
+.env.txt
+.env*.local
+*.docx
+.agents/
