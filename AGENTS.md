@@ -48,7 +48,16 @@ Cloud agent / clone fresco: trabajar desde la raíz del repo (no hace falta `C:\
 - Expo 53 · React 19 · Expo Router · Zustand · Supabase · TypeScript
 - Env: `.env.example` → `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_MVP`
 - **Supabase canónico:** `https://piegesepycvipfzjbraz.supabase.co` (ver `docs/GOOGLE_AUTH.md` para OAuth)
-- Cloud: `EXPO_PUBLIC_MVP=1` (core). Labs/leisure: `EXPO_PUBLIC_MVP=0`. Anon key vía secretos de Actions / `.env` local gitignored.
+- Cloud: `EXPO_PUBLIC_MVP=1` (core). Labs/leisure: `EXPO_PUBLIC_MVP=0`. Anon key vía secretos de Actions / Cursor Cloud / `.env` local gitignored.
+
+## Cursor Cloud specific instructions
+
+Cloud Agents corren en Ubuntu y clonan GitHub; **no** usan `C:\KC\...`. Working directory = raíz del repo.
+
+- Bootstrap: [`.cursor/environment.json`](.cursor/environment.json) — `install` = `pnpm install` (Build). Terminal `expo-web` = `pnpm start` (puerto 8081).
+- Secretos en [cursor.com/dashboard/cloud-agents](https://cursor.com/dashboard/cloud-agents) (nombres: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_MVP`). No copiar valores al repo.
+- No commitear `.env`. No force-push a `main`. Si `main` divergió, parar y avisar.
+- Clics humanos, PR vs `main`, y prompt para pegar: [`docs/CLOUD_AND_LOCAL.md`](docs/CLOUD_AND_LOCAL.md).
 
 ---
 
